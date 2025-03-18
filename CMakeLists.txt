@@ -25,7 +25,16 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+set(SOURCES 
+  ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+target_link_libraries(${PROJECT_NAME} yaml-cpp)
 
 include_directories(${PROJECT_NAME} 
   ${CMAKE_CURRENT_LIST_DIR}/include
@@ -33,5 +42,6 @@ include_directories(${PROJECT_NAME}
 )
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME})
 
 ament_package()
