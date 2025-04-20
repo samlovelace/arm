@@ -5,8 +5,20 @@
 
 void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 {
+    std::string shareDirFull = aConfigFilepath; 
     YAML::Node yamlConfig = YAML::LoadFile(aConfigFilepath); 
     LOGD << YAML::Dump(yamlConfig); 
 
+    // Substring to find and remove
+    std::string to_remove = "config.yaml";
+    size_t pos = shareDirFull.find(to_remove);
+    
+    if (pos != std::string::npos) {
+        // Remove the substring
+        shareDirFull.erase(pos, to_remove.length());
+        LOGD << "Package share dir: " << shareDirFull; 
+    }
+
+    mConfig.shareDir = shareDirFull;
     mConfig.manipType = yamlConfig["manipulator"].as<std::string>(); 
 }

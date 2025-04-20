@@ -50,6 +50,6 @@ ament_target_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} urdfdom_model urdfdom_sensor urdfdom_world yaml-cpp)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME}/configuration)
 
 ament_package()

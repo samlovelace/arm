@@ -14,6 +14,7 @@ public:
 
     struct Config   
     {
+        std::string shareDir; 
         std::string manipType; 
     };
 
