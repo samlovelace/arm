@@ -3,7 +3,6 @@
 #include "Logger.h"
 #include "ConfigManager.h"
 #include "Manipulator.h"
-#include "ManipulatorFactory.h"
 
 int main()
 {
@@ -12,9 +11,7 @@ int main()
     auto configManager = ConfigManager::getInstance(); 
     configManager->loadConfig(file); 
 
-    IManipComms* manipComms = ManipulatorFactory::create(configManager->getConfig().manipType); 
-
-    Manipulator* manip = new Manipulator(manipComms); 
+    Manipulator* manip = new Manipulator(configManager->getConfig().manipType); 
 
     return 0; 
 }

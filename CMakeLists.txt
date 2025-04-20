@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(kdl_parser REQUIRED)
-find_package(urdfdom REQUIRED)
+find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
@@ -34,12 +34,20 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp)
-
 include_directories(${PROJECT_NAME} 
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
+  /opt/ros/humble/include/urdf
+  #/opt/ros/humble/include/kdl_parser
 )
+
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp
+  kdl_parser
+  urdf
+)
+
+target_link_libraries(${PROJECT_NAME} urdfdom_model urdfdom_sensor urdfdom_world yaml-cpp)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME})

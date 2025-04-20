@@ -7,7 +7,7 @@
 class Manipulator
 {
 public:
-    Manipulator(IManipComms* aManipComms);
+    Manipulator(const std::string& aManipType);
     ~Manipulator();
 private:
     std::unique_ptr<IManipComms> mManipComms;
