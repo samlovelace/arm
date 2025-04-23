@@ -37,17 +37,15 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 include_directories(${PROJECT_NAME} 
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
-  /opt/ros/humble/include/urdf
-  #/opt/ros/humble/include/kdl_parser
+  /opt/ros/humble/include/kdl_parser
 )
 
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   kdl_parser
-  urdf
 )
 
-target_link_libraries(${PROJECT_NAME} urdfdom_model urdfdom_sensor urdfdom_world yaml-cpp)
+target_link_libraries(${PROJECT_NAME} yaml-cpp)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME}/configuration)
