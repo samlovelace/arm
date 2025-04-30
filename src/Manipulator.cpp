@@ -12,6 +12,22 @@
 #include <unistd.h>
 #include <limits.h>
 
+/**
+ * COuld own a trajectoryPLanner object repsonsible for finding a smooth polynomial to comand the manip through 
+ * to acheive the goal joint pos from the current joint pos. 
+ * 
+ * Take in different types of waypoints and map to joint pos waypoint, then find smooth polynomial trajectory 
+ * 
+ * Joint position waypoint: directly compute smooth polynomial to execute 
+ * Joint vel waypoint? 
+ * 
+ * Task Position waypoint: 
+ *  - inverse kinematics to map to joint space, global would need full system jacobian (including mobile base)
+ *  - command frame: gl, base
+ * 
+ * Task Vel waypoint ? 
+ */
+
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig) 
 {
     //mManipComms = ManipulatorFactory::create(aManipType); 

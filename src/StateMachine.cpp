@@ -3,7 +3,7 @@
 #include <chrono>
 #include "plog/Log.h"
 
-StateMachine::StateMachine() : mRate(std::make_unique<RateController>(1)), mActiveState(STATE::IDLE)
+StateMachine::StateMachine() : mRate(std::make_unique<RateController>(50)), mActiveState(STATE::IDLE)
 {
 
 }
@@ -16,7 +16,7 @@ StateMachine::~StateMachine()
 void StateMachine::run()
 {
     LOGD << "State Machine starting in " << toString(mActiveState);
-    
+
     while(true)
     {
         mRate->start(); 
@@ -26,12 +26,16 @@ void StateMachine::run()
             case StateMachine::STATE::IDLE:
                 /* code */
                 break;
+            case StateMachine::STATE::MOVING: 
+                //mManip->computeTrajectory(goalJntPos); 
+                //mManip->executeTrajectory(); 
+                break; 
             
             default:
                 break;
         }
 
-         mRate->block(); 
+        mRate->block(); 
     }
 }
 
