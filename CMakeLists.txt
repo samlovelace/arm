@@ -12,6 +12,7 @@ find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -26,11 +27,14 @@ if(BUILD_TESTING)
 endif()
 
 set(SOURCES 
+  ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
-)
+  ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
+  )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -43,6 +47,7 @@ include_directories(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   kdl_parser
+  std_msgs
 )
 
 target_link_libraries(${PROJECT_NAME} yaml-cpp)
