@@ -1,14 +1,13 @@
 
 #include "CommandHandler.h"
 #include "RosTopicManager.hpp"
-#include <std_msgs/msg/float64.hpp> 
 #include "plog/Log.h"
 
 CommandHandler::CommandHandler(StateMachine* msm) : mStateMachine(msm) 
 {
     auto topicManager = RosTopicManager::getInstance(); 
-    topicManager->createSubscriber<std_msgs::msg::Float64>("test", 
-                                    std::bind(&CommandHandler::commandCallback, this, std::placeholders::_1)); 
+    topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
+                                    std::bind(&CommandHandler::jointPosWaypointCallback, this, std::placeholders::_1)); 
 
     /**
      * Implement subscriber for custom msgs representing different manip waypoint types i.e joint pos, joint vel, task pos, task vel 
@@ -34,8 +33,19 @@ CommandHandler::~CommandHandler()
 
 }
 
-void CommandHandler::commandCallback(const std_msgs::msg::Float64::SharedPtr aMsg)
+void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
 {
-    LOGD << "GOT A MESSAGE"; 
+    auto currentState = mStateMachine->getActiveState(); 
+
+    if(aNewState != currentState)
+    { 
+        mStateMachine->setActiveState(aNewState); 
+    }
+}
+
+void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
+{
+    
+     
 }
 

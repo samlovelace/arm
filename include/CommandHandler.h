@@ -2,7 +2,7 @@
 #define COMMANDHANDLER_H
  
 #include "StateMachine.h" 
-#include <std_msgs/msg/float64.hpp> 
+#include "arm_idl/msg/joint_position_waypoint.hpp"
 
 class CommandHandler 
 { 
@@ -12,7 +12,7 @@ public:
 
 private:
 
-    void commandCallback(const std_msgs::msg::Float64::SharedPtr aMsg);
+    void jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
 
     StateMachine* mStateMachine; 
    

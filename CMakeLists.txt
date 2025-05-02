@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(arm_idl REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -48,6 +49,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   kdl_parser
   std_msgs
+  arm_idl
 )
 
 target_link_libraries(${PROJECT_NAME} yaml-cpp)
