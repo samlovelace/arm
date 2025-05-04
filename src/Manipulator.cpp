@@ -64,8 +64,6 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig)
 
     KDL::ChainFkSolverPos_recursive fk_solver(chain); 
 
-
-
 }
 
 Manipulator::~Manipulator()
@@ -73,7 +71,47 @@ Manipulator::~Manipulator()
 
 }
 
-bool Manipulator::updateJointPositionGoal(const KDL::JntArray &aNewJntPos)
+bool Manipulator::sendToPose(Manipulator::POSE aPose)
 {
+    if(mArmPoseMap.find(aPose) != mArmPoseMap.end())
+    {
+        setJointPositionGoal(mArmPoseMap.at(aPose)); 
+        return true; 
+    }
+
+    return false; 
+}
+
+void Manipulator::setJointPositionGoal(const KDL::JntArray &aNewJntPos)
+{
+    std::lock_guard<std::mutex> lock(mGoalJntPosMutex); 
+    mGoalJntPos = aNewJntPos; 
+}
+
+void Manipulator::setEnabledState(bool anEnabledFlag)
+{
+    std::lock_guard<std::mutex> lock(mEnabledMutex); 
+    mEnabled = anEnabledFlag; 
+}
+
+bool Manipulator::isEnabled()
+{
+    std::lock_guard<std::mutex> lock(mEnabledMutex); 
+    return mEnabled; 
+}
+
+void Manipulator::controlLoop()
+{
+    // TODO: get arm control rate from config
+    mArmControlRate = std::make_unique<RateController>(25); 
+
+    while(isEnabled())
+    {
+        mArmControlRate->start(); 
+
+        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
+        mManipComms->sendJointCommand(wp); 
     
+        mArmControlRate->block(); 
+    }
 }

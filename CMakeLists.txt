@@ -35,6 +35,7 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/TrajectoryPlanner.cpp
   )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

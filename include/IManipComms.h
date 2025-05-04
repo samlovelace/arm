@@ -2,6 +2,7 @@
 #define IMANIPCOMMS_H
 
 #include <eigen3/Eigen/Dense>
+#include <kdl/jntarray.hpp>
 
 class IManipComms
 {
@@ -11,7 +12,7 @@ public:
 
     virtual bool init() = 0; 
     virtual Eigen::VectorXd getJointPositions() = 0; 
-    virtual void sendJointCommand() = 0; 
+    virtual void sendJointCommand(const KDL::JntArray &aCmd) = 0; 
 
 };
 

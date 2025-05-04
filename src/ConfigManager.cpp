@@ -20,5 +20,5 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     }
 
     mConfig.shareDir = shareDirFull;
-    mConfig.manipType = yamlConfig["manipulator"].as<std::string>(); 
+    mConfig.manipType = yamlConfig["Manipulator"]["type"].as<std::string>(); 
 }

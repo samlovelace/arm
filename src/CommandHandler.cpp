@@ -8,7 +8,14 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
-                                    std::bind(&CommandHandler::jointPosWaypointCallback, this, std::placeholders::_1)); 
+                                                                        std::bind(&CommandHandler::jointPosWaypointCallback, 
+                                                                                  this, 
+                                                                                  std::placeholders::_1)); 
+
+    topicManager->createSubscriber<arm_idl::msg::Enable>("arm/enable", 
+                                                         std::bind(&CommandHandler::enableCallback, 
+                                                                   this, 
+                                                                   std::placeholders::_1)); 
 
     /**
      * Implement subscriber for custom msgs representing different manip waypoint types i.e joint pos, joint vel, task pos, task vel 
@@ -44,9 +51,27 @@ void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
     }
 }
 
+void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnabledCmd)
+{ 
+
+    // determine how to transition the state machine 
+    if(anEnabledCmd->enabled && !mManip->isEnabled())
+    {
+        // send default stow jntPos so the arm doesnt move on first enable
+        mManip->sendToPose(Manipulator::POSE::STOW); 
+        mStateMachine->setActiveState(StateMachine::STATE::IDLE); 
+    }
+    else if (!anEnabledCmd->enabled && mManip->isEnabled())
+    {
+        mStateMachine->setActiveState(StateMachine::STATE::DISABLED); 
+    }
+
+    mManip->setEnabledState(anEnabledCmd->enabled);
+}
+
 void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
-    // convert IDL msg to internal datatype probably KDL::JntArray
+    // convert IDL msg to internal datatype KDL::JntArray
     std::vector<double> cmdPos = aMsg->positions; 
 
     KDL::JntArray jntPos(cmdPos.size()); 
@@ -55,7 +80,7 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
         jntPos(i) = cmdPos[i]; 
     }
 
-    mManip->updateJointPositionGoal(jntPos); 
+    mManip->setJointPositionGoal(jntPos); 
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 

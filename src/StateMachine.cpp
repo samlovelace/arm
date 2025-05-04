@@ -3,7 +3,7 @@
 #include <chrono>
 #include "plog/Log.h"
 
-StateMachine::StateMachine() : mRate(std::make_unique<RateController>(50)), mActiveState(STATE::IDLE)
+StateMachine::StateMachine() : mRate(std::make_unique<RateController>(50)), mActiveState(STATE::DISABLED)
 {
 
 }
@@ -23,12 +23,14 @@ void StateMachine::run()
         
         switch (mActiveState)
         {
+            case StateMachine::STATE::DISABLED: 
+                // arm is not controlled
+                break; 
             case StateMachine::STATE::IDLE:
-                /* code */
+                // arm is active and trying to maintain last goal jnt pos
                 break;
             case StateMachine::STATE::MOVING: 
-                //mManip->computeTrajectory(goalJntPos); 
-                //mManip->executeTrajectory(); 
+                // arm is currently moving to new goal jnt pos
                 break; 
             
             default:
@@ -59,6 +61,9 @@ std::string StateMachine::toString(StateMachine::STATE aState)
     std::string stringToReturn = ""; 
     switch (aState)
     {
+    case StateMachine::STATE::DISABLED: 
+        stringToReturn = "DISABLED"; 
+        break; 
     case StateMachine::STATE::IDLE:
         stringToReturn = "IDLE"; 
         break;
@@ -66,7 +71,7 @@ std::string StateMachine::toString(StateMachine::STATE aState)
         stringToReturn = "MOVING";
         break;
     default:
-        break;
+        stringToReturn = "UNKNOWN";
     }
 
     return stringToReturn; 

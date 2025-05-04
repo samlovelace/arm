@@ -13,6 +13,7 @@ public:
 
     enum class STATE
     {
+        DISABLED,
         IDLE, 
         MOVING,
         NUM_TYPES
