@@ -2,8 +2,9 @@
 #include "CommandHandler.h"
 #include "RosTopicManager.hpp"
 #include "plog/Log.h"
+#include <kdl/jntarray.hpp>
 
-CommandHandler::CommandHandler(StateMachine* msm) : mStateMachine(msm) 
+CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip)
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
@@ -45,7 +46,16 @@ void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
 
 void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
-    
-     
+    // convert IDL msg to internal datatype probably KDL::JntArray
+    std::vector<double> cmdPos = aMsg->positions; 
+
+    KDL::JntArray jntPos(cmdPos.size()); 
+    for(int i = 0; i < cmdPos.size(); i++)
+    {
+        jntPos(i) = cmdPos[i]; 
+    }
+
+    mManip->updateJointPositionGoal(jntPos); 
+    mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 

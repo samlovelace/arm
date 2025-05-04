@@ -72,3 +72,8 @@ Manipulator::~Manipulator()
 {
 
 }
+
+bool Manipulator::updateJointPositionGoal(const KDL::JntArray &aNewJntPos)
+{
+    
+}
