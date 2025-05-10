@@ -27,7 +27,7 @@ int main()
 
     auto manip = std::make_shared<Manipulator>(configManager->getConfig()); 
 
-    auto sm = std::make_shared<StateMachine>(); 
+    auto sm = std::make_shared<StateMachine>(manip); 
     CommandHandler* cm = new CommandHandler(sm, manip); 
     sm->run(); 
 

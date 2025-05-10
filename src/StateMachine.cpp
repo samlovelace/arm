@@ -3,7 +3,9 @@
 #include <chrono>
 #include "plog/Log.h"
 
-StateMachine::StateMachine() : mRate(std::make_unique<RateController>(50)), mActiveState(STATE::DISABLED)
+StateMachine::StateMachine(std::shared_ptr<Manipulator> aManip) : 
+            mRate(std::make_unique<RateController>(50)), mActiveState(STATE::DISABLED), 
+            mManipulator(aManip)
 {
 
 }
@@ -31,6 +33,12 @@ void StateMachine::run()
                 break;
             case StateMachine::STATE::MOVING: 
                 // arm is currently moving to new goal jnt pos
+                if(mManipulator->isArrived())
+                {
+                    LOGD << "Waypoint arrived"; 
+                    setActiveState(StateMachine::STATE::IDLE); 
+                }
+
                 break; 
             
             default:

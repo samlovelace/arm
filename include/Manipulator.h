@@ -5,11 +5,13 @@
 #include <kdl/jntarray.hpp>
 #include <mutex> 
 #include <map> 
+#include <thread> 
 
 #include "IManipComms.h"
 #include "ConfigManager.h"
 #include "RateController.h"
 #include "TrajectoryPlanner.h"
+#include "JointPositionWaypoint.h"
 
 class Manipulator
 {
@@ -25,13 +27,18 @@ public:
     }; 
 
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
+    void setGoalWaypoint(const JointPositionWaypoint& aWp); 
+    JointPositionWaypoint getGoalWaypoint(); 
+    bool isArrived(); 
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
+
+    void startControl(); 
 
     bool isEnabled(); 
 
 private:
-    std::unique_ptr<IManipComms> mManipComms;
+    std::shared_ptr<IManipComms> mManipComms;
     ConfigManager::Config mConfig; 
     std::unique_ptr<TrajectoryPlanner> mTrajectoryPlanner; 
 
@@ -42,8 +49,11 @@ private:
     std::mutex mEnabledMutex; 
     bool mEnabled; 
 
+    JointPositionWaypoint mGoalWaypoint; 
+
     std::map<POSE, KDL::JntArray> mArmPoseMap; 
 
+    std::thread mControlThread; 
     void controlLoop(); 
 
 

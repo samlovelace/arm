@@ -1,12 +1,13 @@
 
 #include "ManipulatorFactory.h"
 #include "plog/Log.h"
+#include "GazeboManipComms.h"
 
-IManipComms* ManipulatorFactory::create(const std::string& aManipType)
+std::shared_ptr<IManipComms> ManipulatorFactory::create(const std::string& aManipType)
 {
-    if("test" == aManipType)
+    if("UR" == aManipType)
     {
-        return nullptr; 
+        return std::make_shared<GazeboManipComms>(); 
     }
     else
     {

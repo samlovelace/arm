@@ -3,6 +3,7 @@
 #include "RosTopicManager.hpp"
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
+#include "JointPositionWaypoint.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip)
 {
@@ -58,29 +59,46 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
     if(anEnabledCmd->enabled && !mManip->isEnabled())
     {
         // send default stow jntPos so the arm doesnt move on first enable
-        mManip->sendToPose(Manipulator::POSE::STOW); 
+        mManip->setEnabledState(anEnabledCmd->enabled); 
+        mManip->startControl(); 
         mStateMachine->setActiveState(StateMachine::STATE::IDLE); 
     }
     else if (!anEnabledCmd->enabled && mManip->isEnabled())
     {
+        mManip->setEnabledState(anEnabledCmd->enabled);
         mStateMachine->setActiveState(StateMachine::STATE::DISABLED); 
     }
-
-    mManip->setEnabledState(anEnabledCmd->enabled);
 }
 
 void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
     // convert IDL msg to internal datatype KDL::JntArray
-    std::vector<double> cmdPos = aMsg->positions; 
 
-    KDL::JntArray jntPos(cmdPos.size()); 
-    for(int i = 0; i < cmdPos.size(); i++)
+    KDL::JntArray jntPos(aMsg->positions.size()); 
+    for(int i = 0; i < aMsg->positions.size(); i++)
     {
-        jntPos(i) = cmdPos[i]; 
+        jntPos(i) = aMsg->positions[i];
     }
 
-    mManip->setJointPositionGoal(jntPos); 
+    KDL::JntArray cmdTol(aMsg->tolerances.size()); 
+    for(int i = 0; i < aMsg->positions.size(); i++)
+    {
+        cmdTol(i) = aMsg->tolerances[i];
+    }
+
+    JointPositionWaypoint wp; 
+    wp.setJointPositionGoal(jntPos); 
+    wp.setArrivalTolerance(cmdTol); 
+
+    // TODO: better general purpose interface, eventually want mManip to operate on a IWaypoint* 
+    // TODO: compare new goal waypoint to current goal waypoint so we arent spamming the setGoalWaypoint()
+    // TODO: maybe some sort of check against current goal, whether new command is same/different, i want to send a goal waypoint
+    //       and generate a smooth trajectory between current and goal, dont need constant waypoints from outsider? IDK 
+    
+    mManip->setGoalWaypoint(wp); 
+
+
+
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 

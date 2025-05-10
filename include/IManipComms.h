@@ -7,11 +7,10 @@
 class IManipComms
 {
 public:
-    IManipComms(/* args */);
     virtual ~IManipComms() = default; 
 
     virtual bool init() = 0; 
-    virtual Eigen::VectorXd getJointPositions() = 0; 
+    virtual KDL::JntArray getJointPositions() = 0; 
     virtual void sendJointCommand(const KDL::JntArray &aCmd) = 0; 
 
 };

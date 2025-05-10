@@ -2,6 +2,7 @@
 #define MANIPULATORFACTORY_H
 
 #include "IManipComms.h"
+#include <memory> 
 
 class ManipulatorFactory
 {
@@ -9,7 +10,7 @@ public:
     ManipulatorFactory(/* args */);
     ~ManipulatorFactory();
 
-    static IManipComms* create(const std::string& aManipType); 
+    static std::shared_ptr<IManipComms> create(const std::string& aManipType); 
 private:
     /* data */
 

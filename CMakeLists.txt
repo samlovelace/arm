@@ -30,6 +30,7 @@ endif()
 set(SOURCES 
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp

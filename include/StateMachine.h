@@ -2,13 +2,14 @@
 #define STATEMACHINE_H
  
 #include "RateController.h"
+#include "Manipulator.h"
 #include <memory>
 #include <mutex> 
  
 class StateMachine 
 { 
 public:
-    StateMachine();
+    StateMachine(std::shared_ptr<Manipulator> aManip);
     ~StateMachine();
 
     enum class STATE
@@ -28,6 +29,8 @@ private:
 
     STATE mActiveState;
     std::mutex mActiveStateMutex;  
+
+    std::shared_ptr<Manipulator> mManipulator; 
 
     std::unique_ptr<RateController> mRate; 
 

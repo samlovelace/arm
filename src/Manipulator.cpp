@@ -11,6 +11,7 @@
 
 #include <unistd.h>
 #include <limits.h>
+#include <thread>
 
 /**
  * COuld own a trajectoryPLanner object repsonsible for finding a smooth polynomial to comand the manip through 
@@ -28,9 +29,12 @@
  * Task Vel waypoint ? 
  */
 
-Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig) 
+Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig)
 {
-    //mManipComms = ManipulatorFactory::create(aManipType); 
+    mManipComms = ManipulatorFactory::create(aConfig.manipType); 
+    
+    //TODO: get this from config 
+    mGoalJntPos = KDL::JntArray(6); 
 
     std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
     LOGW << "urdfFilePath: " << urdfFilePath;
@@ -68,7 +72,10 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig)
 
 Manipulator::~Manipulator()
 {
-
+    if(mControlThread.joinable())
+    {
+        mControlThread.join(); 
+    }
 }
 
 bool Manipulator::sendToPose(Manipulator::POSE aPose)
@@ -100,17 +107,54 @@ bool Manipulator::isEnabled()
     return mEnabled; 
 }
 
+void Manipulator::setGoalWaypoint(const JointPositionWaypoint& aWp)
+{
+    mGoalWaypoint = aWp; 
+} 
+
+JointPositionWaypoint Manipulator::getGoalWaypoint()
+{
+    return mGoalWaypoint;     
+}
+
+bool Manipulator::isArrived()
+{
+    // get the goal waypoint manip is currently tracking
+    JointPositionWaypoint goal = getGoalWaypoint(); 
+    KDL::JntArray curr = mManipComms->getJointPositions(); 
+    KDL::JntArray tol = goal.arrivalTolerance(); 
+
+    for(int i = 0; i < curr.rows(); i++)
+    {
+        // TODO:: this probs wont work that well, need to be arrived for some time or check that vel is really small too
+        if(abs(curr(i)) > tol(i))
+        {
+            return false; 
+        }
+    }
+    return true;  
+}
+
+void Manipulator::startControl()
+{
+    mManipComms->init(); 
+    mControlThread = std::thread(&Manipulator::controlLoop, this); 
+    // anything else?? ? 
+}
+
 void Manipulator::controlLoop()
 {
+    LOGD << "Starting manipulator control loop!"; 
     // TODO: get arm control rate from config
-    mArmControlRate = std::make_unique<RateController>(25); 
+    mArmControlRate = std::make_unique<RateController>(10); 
 
     while(isEnabled())
     {
         mArmControlRate->start(); 
 
-        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
-        mManipComms->sendJointCommand(wp); 
+        //KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
+        JointPositionWaypoint wp = getGoalWaypoint(); 
+        mManipComms->sendJointCommand(wp.jointPositionGoal()); 
     
         mArmControlRate->block(); 
     }
