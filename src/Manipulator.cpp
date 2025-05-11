@@ -34,7 +34,17 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig)
     mManipComms = ManipulatorFactory::create(aConfig.manipType); 
     
     //TODO: get this from config 
-    mGoalJntPos = KDL::JntArray(6); 
+    mGoalWaypoint = JointPositionWaypoint();
+    KDL::JntArray firstWp(6);
+    KDL::JntArray firstTol(6); 
+    for(int i = 0; i < 6; i++)
+    {
+        firstWp(i) = 0.5; 
+        firstTol(i) = 0.1;
+    }
+    mGoalWaypoint.setJointPositionGoal(firstWp); 
+    mGoalWaypoint.setArrivalTolerance(firstTol);  
+
 
     std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
     LOGW << "urdfFilePath: " << urdfFilePath;
