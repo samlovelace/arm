@@ -9,6 +9,14 @@ The **Agnostic Robot Manipulation (ARM)** module is a general-purpose control sy
 - Modular design for easy integration with different robotic platforms.
 - Compatible with various sensors and actuators.
 
+## Dependencies
+
+- Ubuntu 22.04 (developed on)
+- ROS2 Humble
+- Gazebo Ignition-Fortress (arm_simulator)
+- yaml-cpp
+- eigen
+
 ## Installation
 
 To install and set up the ARM module, first create a workspace
