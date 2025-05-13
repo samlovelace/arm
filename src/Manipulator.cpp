@@ -29,12 +29,12 @@
  * Task Vel waypoint ? 
  */
 
-Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig))
+Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig)), 
+mGoalWaypoint(std::make_shared<JointPositionWaypoint>())
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType); 
     
     //TODO: get this from config 
-    mGoalWaypoint = JointPositionWaypoint();
     KDL::JntArray firstWp(6);
     KDL::JntArray firstTol(6); 
     for(int i = 0; i < 6; i++)
@@ -42,8 +42,8 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTra
         firstWp(i) = 0.5; 
         firstTol(i) = 0.1;
     }
-    mGoalWaypoint.setJointPositionGoal(firstWp); 
-    mGoalWaypoint.setArrivalTolerance(firstTol);  
+    mGoalWaypoint->setJointPositionGoal(firstWp); 
+    mGoalWaypoint->setArrivalTolerance(firstTol);  
 
 
     std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
@@ -117,12 +117,12 @@ bool Manipulator::isEnabled()
     return mEnabled; 
 }
 
-void Manipulator::setGoalWaypoint(const JointPositionWaypoint& aWp)
+void Manipulator::setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp)
 {
     mGoalWaypoint = aWp; 
 } 
 
-JointPositionWaypoint Manipulator::getGoalWaypoint()
+std::shared_ptr<JointPositionWaypoint> Manipulator::getGoalWaypoint()
 {
     return mGoalWaypoint;     
 }
@@ -130,9 +130,9 @@ JointPositionWaypoint Manipulator::getGoalWaypoint()
 bool Manipulator::isArrived()
 {
     // get the goal waypoint manip is currently tracking
-    JointPositionWaypoint goal = getGoalWaypoint(); 
+    auto goal = getGoalWaypoint(); 
     KDL::JntArray curr = mManipComms->getJointPositions(); 
-    KDL::JntArray tol = goal.arrivalTolerance(); 
+    KDL::JntArray tol = goal->arrivalTolerance(); 
 
     for(int i = 0; i < curr.rows(); i++)
     {
@@ -162,9 +162,10 @@ void Manipulator::controlLoop()
     while(isEnabled())
     {
         mArmControlRate->start(); 
+        
         KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint(getGoalWaypoint(), mManipComms->getJointPositions(), mManipComms->getJointVelocities());
         mManipComms->sendJointCommand(wp); 
-    
-        mArmControlRate->block(); 
+
+        mArmControlRate->block();
     }
 }

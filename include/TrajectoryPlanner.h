@@ -2,6 +2,7 @@
 #define TRAJECTORYPLANNER_H
  
 #include <kdl/jntarray.hpp>
+#include <memory> 
 #include "ConfigManager.h"
 #include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
@@ -12,7 +13,7 @@ public:
     TrajectoryPlanner(ConfigManager::Config& aConfig);
     ~TrajectoryPlanner();
 
-    KDL::JntArray getNextWaypoint(JointPositionWaypoint aGoalWp, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
+    KDL::JntArray getNextWaypoint(std::shared_ptr<JointPositionWaypoint> aGoalWp, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
 
 private:
     ruckig::Ruckig<6> mPlanner; 

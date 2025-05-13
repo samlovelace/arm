@@ -4,10 +4,11 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "plog/Log.h"
 
-GazeboManipComms::GazeboManipComms() : mJointVelocities(6), mPrevTime(std::chrono::steady_clock::now())
+GazeboManipComms::GazeboManipComms() : mJointVelocities(6), mPrevJointPos(6), mPrevTime(std::chrono::steady_clock::now())
 {
     for(int i = 0; i < 6; i++)
     {
+        mPrevJointPos(i) = 0.0; 
         mJointVelocities(i) = 0.0; 
     }
 
@@ -64,7 +65,6 @@ void GazeboManipComms::sendJointCommand(const KDL::JntArray &aCmd)
         posCmd[i] = aCmd(i); 
     }
 
-    LOGW << "sending jnt pos cmd"; 
     cmd.set__data(posCmd); 
     RosTopicManager::getInstance()->publishMessage<std_msgs::msg::Float64MultiArray>("UR/joint_commands", cmd); 
 }

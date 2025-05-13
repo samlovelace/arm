@@ -27,8 +27,8 @@ public:
     }; 
 
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
-    void setGoalWaypoint(const JointPositionWaypoint& aWp); 
-    JointPositionWaypoint getGoalWaypoint(); 
+    void setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp); 
+    std::shared_ptr<JointPositionWaypoint> getGoalWaypoint(); 
     bool isArrived(); 
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
@@ -49,7 +49,7 @@ private:
     std::mutex mEnabledMutex; 
     bool mEnabled; 
 
-    JointPositionWaypoint mGoalWaypoint; 
+    std::shared_ptr<JointPositionWaypoint> mGoalWaypoint; 
 
     std::map<POSE, KDL::JntArray> mArmPoseMap; 
 

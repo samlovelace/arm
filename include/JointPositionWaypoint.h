@@ -6,8 +6,8 @@
 class JointPositionWaypoint 
 { 
 public:
-    JointPositionWaypoint() {}
-    ~JointPositionWaypoint() {}
+    JointPositionWaypoint();
+    ~JointPositionWaypoint();
 
     inline void setJointPositionGoal(const KDL::JntArray& aGoal) {mGoal = aGoal; }
     inline void setArrivalTolerance(const KDL::JntArray& aTolerance) {mArrivalTolerance = aTolerance; }

@@ -95,7 +95,7 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
     // TODO: maybe some sort of check against current goal, whether new command is same/different, i want to send a goal waypoint
     //       and generate a smooth trajectory between current and goal, dont need constant waypoints from outsider? IDK 
     
-    mManip->setGoalWaypoint(wp); 
+    mManip->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp)); 
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 

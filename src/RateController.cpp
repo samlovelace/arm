@@ -1,6 +1,7 @@
 
 #include "RateController.h"
 #include <thread> 
+#include "plog/Log.h"
 
 RateController::RateController(int aLoopRate)
 {
