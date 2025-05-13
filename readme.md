@@ -17,7 +17,7 @@ The **Agnostic Robot Manipulation (ARM)** module is a general-purpose control sy
 - yaml-cpp
 - eigen
 
-## Installation
+## Install
 
 To install and set up the ARM module, first create a workspace
 
