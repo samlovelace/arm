@@ -96,9 +96,6 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
     //       and generate a smooth trajectory between current and goal, dont need constant waypoints from outsider? IDK 
     
     mManip->setGoalWaypoint(wp); 
-
-
-
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 

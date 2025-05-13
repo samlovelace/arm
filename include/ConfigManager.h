@@ -16,6 +16,7 @@ public:
     {
         std::string shareDir; 
         std::string manipType; 
+        int manipControlRate; 
     };
 
     void loadConfig(const std::string& aConfigFilepath); 

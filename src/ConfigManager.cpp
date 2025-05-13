@@ -21,4 +21,5 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 
     mConfig.shareDir = shareDirFull;
     mConfig.manipType = yamlConfig["Manipulator"]["type"].as<std::string>(); 
+    mConfig.manipControlRate = yamlConfig["Manipulator"]["rate"].as<int>(); 
 }

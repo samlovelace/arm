@@ -29,7 +29,7 @@
  * Task Vel waypoint ? 
  */
 
-Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig)
+Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig))
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType); 
     
@@ -155,16 +155,15 @@ void Manipulator::startControl()
 void Manipulator::controlLoop()
 {
     LOGD << "Starting manipulator control loop!"; 
+    
     // TODO: get arm control rate from config
     mArmControlRate = std::make_unique<RateController>(10); 
 
     while(isEnabled())
     {
         mArmControlRate->start(); 
-
-        //KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
-        JointPositionWaypoint wp = getGoalWaypoint(); 
-        mManipComms->sendJointCommand(wp.jointPositionGoal()); 
+        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint(getGoalWaypoint(), mManipComms->getJointPositions(), mManipComms->getJointVelocities());
+        mManipComms->sendJointCommand(wp); 
     
         mArmControlRate->block(); 
     }

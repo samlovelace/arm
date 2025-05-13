@@ -15,6 +15,11 @@ find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
+# Optional: disable Ruckig examples and tests
+set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RUCKIG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory(dependencies/ruckig)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -44,6 +49,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 include_directories(${PROJECT_NAME} 
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
+  ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include
   /opt/ros/humble/include/kdl_parser
 )
 
@@ -54,7 +60,7 @@ ament_target_dependencies(${PROJECT_NAME}
   arm_idl
 )
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp)
+target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME}/configuration)

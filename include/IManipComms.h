@@ -11,6 +11,7 @@ public:
 
     virtual bool init() = 0; 
     virtual KDL::JntArray getJointPositions() = 0; 
+    virtual KDL::JntArray getJointVelocities() = 0; 
     virtual void sendJointCommand(const KDL::JntArray &aCmd) = 0; 
 
 };
