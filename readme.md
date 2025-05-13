@@ -6,7 +6,7 @@ The **Agnostic Robot Manipulation (ARM)** module is a general-purpose control sy
 
 ## Features
 
-- Modular design for easy integration with different robotic platforms.
+- Modular design for easy integration with different robotic manipulators.
 - Compatible with various sensors and actuators.
 
 ## Dependencies
