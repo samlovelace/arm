@@ -1,0 +1,3 @@
+[submodule "dependencies/ruckig"]
+	path = dependencies/ruckig
+	url = https://github.com/pantor/ruckig.git
