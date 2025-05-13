@@ -1,0 +1,13 @@
+repositories:
+  arm_idl:
+    type: git
+    url: https://github.com/samlovelace/arm_idl.git
+    version: main
+  arm_simulator:
+    type: git
+    url: https://github.com/samlovelace/arm_simulator.git
+    version: ignition-fortress
+  arm_commander:
+    type: git
+    url: https://github.com/samlovelace/arm_commander.git
+    version: main
