@@ -33,6 +33,8 @@ public:
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
 
+    
+
     void startControl(); 
 
     bool isEnabled(); 

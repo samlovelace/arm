@@ -33,17 +33,18 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTra
 mGoalWaypoint(std::make_shared<JointPositionWaypoint>())
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType); 
+    mManipComms->init(); 
     
     //TODO: get this from config 
     KDL::JntArray firstWp(6);
     KDL::JntArray firstTol(6); 
     for(int i = 0; i < 6; i++)
     {
-        firstWp(i) = 0.5; 
-        firstTol(i) = 0.1;
+        firstWp(i) = 1.0; 
+        firstTol(i) = 0.01;
     }
     mGoalWaypoint->setJointPositionGoal(firstWp); 
-    mGoalWaypoint->setArrivalTolerance(firstTol);  
+    mGoalWaypoint->setArrivalTolerance(firstTol); 
 
 
     std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
@@ -120,6 +121,7 @@ bool Manipulator::isEnabled()
 void Manipulator::setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp)
 {
     mGoalWaypoint = aWp; 
+    mTrajectoryPlanner->initializePlanner(aWp, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
 } 
 
 std::shared_ptr<JointPositionWaypoint> Manipulator::getGoalWaypoint()
@@ -147,9 +149,10 @@ bool Manipulator::isArrived()
 
 void Manipulator::startControl()
 {
-    mManipComms->init(); 
+    mTrajectoryPlanner->initializePlanner(mGoalWaypoint, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
     mControlThread = std::thread(&Manipulator::controlLoop, this); 
-    // anything else?? ? 
+    
+    // anything else?? 
 }
 
 void Manipulator::controlLoop()
@@ -162,8 +165,9 @@ void Manipulator::controlLoop()
     while(isEnabled())
     {
         mArmControlRate->start(); 
-        
-        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint(getGoalWaypoint(), mManipComms->getJointPositions(), mManipComms->getJointVelocities());
+
+        auto goal = getGoalWaypoint(); 
+        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
         mManipComms->sendJointCommand(wp); 
 
         mArmControlRate->block();

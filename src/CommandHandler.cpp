@@ -5,7 +5,7 @@
 #include <kdl/jntarray.hpp>
 #include "JointPositionWaypoint.h"
 
-CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip)
+CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip), mJointWaypointRcvd(false)
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
@@ -54,7 +54,6 @@ void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
 
 void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnabledCmd)
 { 
-
     // determine how to transition the state machine 
     if(anEnabledCmd->enabled && !mManip->isEnabled())
     {
@@ -72,6 +71,12 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
 
 void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
+    // if(mJointWaypointRcvd)
+    // {
+    //     return; 
+    // }
+
+    mJointWaypointRcvd = true; 
     // convert IDL msg to internal datatype KDL::JntArray
 
     KDL::JntArray jntPos(aMsg->positions.size()); 

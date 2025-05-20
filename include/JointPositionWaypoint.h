@@ -15,6 +15,8 @@ public:
     inline KDL::JntArray jointPositionGoal() {return mGoal; }
     inline KDL::JntArray arrivalTolerance() {return mArrivalTolerance; }
 
+    std::string toString(); 
+
 private:
     KDL::JntArray mGoal; 
     KDL::JntArray mArrivalTolerance; 

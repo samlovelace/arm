@@ -23,6 +23,8 @@ private:
 
     std::shared_ptr<StateMachine> mStateMachine;
     std::shared_ptr<Manipulator> mManip;  
+
+    bool mJointWaypointRcvd; 
    
 };
 #endif //COMMANDHANDLER_H

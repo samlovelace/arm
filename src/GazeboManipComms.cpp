@@ -4,7 +4,7 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "plog/Log.h"
 
-GazeboManipComms::GazeboManipComms() : mJointVelocities(6), mPrevJointPos(6), mPrevTime(std::chrono::steady_clock::now())
+GazeboManipComms::GazeboManipComms() : mJointVelocities(6), mPrevJointPos(6), mPrevTime(std::chrono::steady_clock::now()), mFirstRcvd(false)
 {
     for(int i = 0; i < 6; i++)
     {
@@ -27,6 +27,8 @@ bool GazeboManipComms::init()
                                                                                                  std::placeholders::_1)); 
 
     RosTopicManager::getInstance()->createPublisher<std_msgs::msg::Float64MultiArray>("UR/joint_commands"); 
+
+    return true; 
 }
 
 KDL::JntArray GazeboManipComms::getJointPositions()
@@ -71,6 +73,7 @@ void GazeboManipComms::sendJointCommand(const KDL::JntArray &aCmd)
 
 void GazeboManipComms::jointPositionCallback(std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
+    mFirstRcvd = true; 
     // get the ros2 topic data and convert to internal representation
     KDL::JntArray jntArray(msg->data.size());
     KDL::JntArray jntVel(msg->data.size()); 
@@ -78,7 +81,6 @@ void GazeboManipComms::jointPositionCallback(std_msgs::msg::Float64MultiArray::S
 
     for(int i = 0; i < msg->data.size(); i++)
     {
-        //LOGW << "Gazebo Joint POS " << i << ": " << msg->data[i]; 
         jntArray(i) = msg->data[i]; 
         jntVel(i) = (jntArray(i) - mPrevJointPos(i)) / (now.time_since_epoch().count() - mPrevTime.time_since_epoch().count()); 
     }
