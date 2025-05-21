@@ -48,7 +48,7 @@ void TrajectoryPlanner::setInitialState(const KDL::JntArray& aPos, const KDL::Jn
     // TODO: get from config 
     mInput.degrees_of_freedom = 6; 
     mInput.max_velocity = {1.5, 1.5, 1.5, 1.5, 1.5, 1.5};
-    mInput.max_acceleration = {1.8, 1.8, 1.8, 1.8, 1.8, 1.8};
+    mInput.max_acceleration = {3.14, 3.14, 3.14, 3.14, 3.14, 3.14};
     mInput.max_jerk = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 }
 

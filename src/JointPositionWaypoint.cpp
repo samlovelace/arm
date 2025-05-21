@@ -7,6 +7,13 @@ JointPositionWaypoint::JointPositionWaypoint() : mGoal(KDL::JntArray(6)), mArriv
 
 }
 
+JointPositionWaypoint::JointPositionWaypoint(const KDL::JntArray& aGoal, const KDL::JntArray& anArrival) : 
+    mGoal(aGoal), mArrivalTolerance(anArrival)
+{
+
+}
+
+
 JointPositionWaypoint::~JointPositionWaypoint()
 {
 

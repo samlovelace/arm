@@ -37,11 +37,13 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/KinematicsHandler.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TrajectoryPlanner.cpp
   )
 

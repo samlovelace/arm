@@ -12,6 +12,8 @@
 #include "RateController.h"
 #include "TrajectoryPlanner.h"
 #include "JointPositionWaypoint.h"
+#include "TaskPositionWaypoint.h"
+#include "KinematicsHandler.h"
 
 class Manipulator
 {
@@ -28,6 +30,8 @@ public:
 
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
     void setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp); 
+    void setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp); 
+
     std::shared_ptr<JointPositionWaypoint> getGoalWaypoint(); 
     bool isArrived(); 
     bool sendToPose(Manipulator::POSE aPose); 
@@ -43,6 +47,7 @@ private:
     std::shared_ptr<IManipComms> mManipComms;
     ConfigManager::Config mConfig; 
     std::unique_ptr<TrajectoryPlanner> mTrajectoryPlanner; 
+    std::shared_ptr<KinematicsHandler> mKinematicsHandler; 
 
     std::mutex mGoalJntPosMutex; 
     KDL::JntArray mGoalJntPos;

@@ -1,10 +1,5 @@
 
 #include "Manipulator.h"
-#include <kdl/tree.hpp>
-#include <kdl/chain.hpp>
-#include <kdl/chainfksolverpos_recursive.hpp>
-#include <kdl/jntarray.hpp>
-#include <kdl_parser/kdl_parser.hpp>
 
 #include "ManipulatorFactory.h"
 #include "plog/Log.h"
@@ -30,7 +25,7 @@
  */
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig)), 
-mGoalWaypoint(std::make_shared<JointPositionWaypoint>())
+mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType); 
     mManipComms->init(); 
@@ -46,39 +41,10 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>())
     mGoalWaypoint->setJointPositionGoal(firstWp); 
     mGoalWaypoint->setArrivalTolerance(firstTol); 
 
-
     std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
     LOGW << "urdfFilePath: " << urdfFilePath;
 
-    KDL::Tree tree; 
-    if(!kdl_parser::treeFromFile(urdfFilePath, tree))
-    {
-        LOGE << "Failed to parse urdf to KDL::Tree"; 
-        return; 
-    } 
-
-    LOGD << "Parsed manipulator with " << tree.getNrOfJoints() << " joints"; 
-
-    KDL::Chain chain; 
-    if(!tree.getChain("base_link", "tool0", chain))
-    {
-        LOGE << "Failed to get chain from base_link to tool0"; 
-        return; 
-    }
-
-    size_t nj = chain.getNrOfJoints(); 
-    KDL::JntArray joint_positions(nj);
-
-    // Set some example joint positions (adjust for your robot)
-    joint_positions(0) = 0.0;
-    joint_positions(1) = -0.5;
-    joint_positions(2) = 1.0;
-    joint_positions(3) = 0.0;
-    joint_positions(4) = 1.2;
-    joint_positions(5) = -0.8;
-
-    KDL::ChainFkSolverPos_recursive fk_solver(chain); 
-
+    mKinematicsHandler->init(urdfFilePath);
 }
 
 Manipulator::~Manipulator()
@@ -166,10 +132,34 @@ void Manipulator::controlLoop()
     {
         mArmControlRate->start(); 
 
-        auto goal = getGoalWaypoint(); 
         KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
         mManipComms->sendJointCommand(wp); 
 
         mArmControlRate->block();
     }
+}
+
+void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
+{
+    KDL::JntArray curPos = mManipComms->getJointPositions(); 
+    KDL::JntArray resultPos; 
+
+    mKinematicsHandler->solveIK(curPos, aWp->getGoalPose(), resultPos);
+
+    if(0 != resultPos.rows())
+    {
+        // TODO: not a huge fan of this section, maybe there is a better way to track a certain goal joint position
+        // TODO: this arrival is nonsensical but i want to test the task pos 
+        std::vector<double> tol = aWp->getArrivalTolerances(); 
+        KDL::JntArray arrival(aWp->getArrivalTolerances().size()); 
+
+        for(int i = 0; i < aWp->getArrivalTolerances().size(); i++)
+        {
+            arrival(i) = tol[i]; 
+        } 
+
+        auto wp = std::make_shared<JointPositionWaypoint>(resultPos, arrival); 
+        setGoalWaypoint(wp);
+    }
+
 }

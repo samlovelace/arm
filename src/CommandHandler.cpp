@@ -3,7 +3,6 @@
 #include "RosTopicManager.hpp"
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
-#include "JointPositionWaypoint.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip), mJointWaypointRcvd(false)
 {
@@ -17,6 +16,11 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                          std::bind(&CommandHandler::enableCallback, 
                                                                    this, 
                                                                    std::placeholders::_1)); 
+
+    topicManager->createSubscriber<arm_idl::msg::TaskPositionWaypoint>("arm/task_position_waypoint", 
+                                                                       std::bind(&CommandHandler::taskPosWaypointCallback, 
+                                                                                this, 
+                                                                                std::placeholders::_1)); 
 
     /**
      * Implement subscriber for custom msgs representing different manip waypoint types i.e joint pos, joint vel, task pos, task vel 
@@ -60,12 +64,12 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
         // send default stow jntPos so the arm doesnt move on first enable
         mManip->setEnabledState(anEnabledCmd->enabled); 
         mManip->startControl(); 
-        mStateMachine->setActiveState(StateMachine::STATE::IDLE); 
+        setNewActiveState(StateMachine::STATE::IDLE); 
     }
     else if (!anEnabledCmd->enabled && mManip->isEnabled())
     {
         mManip->setEnabledState(anEnabledCmd->enabled);
-        mStateMachine->setActiveState(StateMachine::STATE::DISABLED); 
+        setNewActiveState(StateMachine::STATE::DISABLED); 
     }
 }
 
@@ -102,5 +106,19 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
     
     mManip->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp)); 
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
+}
+
+void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
+{
+    geometry_msgs::msg::Quaternion q = aMsg->pose.orientation;
+    KDL::Rotation rot = KDL::Rotation::Quaternion(q.x, q.y, q.z, q.w);
+
+    KDL::Vector position(aMsg->pose.position.x, aMsg->pose.position.y, aMsg->pose.position.z);
+    KDL::Frame goalPose(rot, position);
+
+    auto wp = std::make_shared<TaskPositionWaypoint>(goalPose, aMsg->tolerance, aMsg->command_frame.data);
+
+    mManip->setTaskGoal(wp); 
+    setNewActiveState(StateMachine::STATE::MOVING); 
 }
 
