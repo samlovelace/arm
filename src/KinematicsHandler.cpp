@@ -1,6 +1,7 @@
 
 #include "KinematicsHandler.h"
 #include "plog/Log.h"
+#include "Utils.h"
 
 KinematicsHandler::KinematicsHandler()
 {
@@ -27,9 +28,18 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
         throw std::runtime_error("Failed to extract KDL chain from tree");
     }
 
+    KDL::JntArray q_min(mChain.getNrOfJoints()); 
+    KDL::JntArray q_max(mChain.getNrOfJoints()); 
+
+    for(int i =0; i < mChain.getNrOfJoints(); i++)
+    {
+        q_min(i) = -M_PI; 
+        q_max(i) = M_PI; 
+    }
+
     mFkSolver = std::make_shared<KDL::ChainFkSolverPos_recursive>(mChain);
     mVelSolver = std::make_shared<KDL::ChainIkSolverVel_pinv>(mChain);
-    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR>(mChain, *mFkSolver, *mVelSolver, 100, 1e-6);
+    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain,q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-4);
 
     LOGD << "KinematicsHandler initialized successfully"; 
     return true; 
@@ -37,14 +47,17 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
+    utils::logFrame(aGoalPose); 
+
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
 
-    if (result >= 0) {
-        LOGD << "IK succeeded!";
-    } else {
-        LOGE << "IK failed with error code " << result;
-    }
+    KDL::Frame fkPose;
+    int fkResult = mFkSolver->JntToCart(aResultOut, fkPose);
 
+    KDL::Frame err = aGoalPose * fkPose.Inverse(); 
+
+    LOGW << "Task Error: ";
+    utils::logFrame(err); 
 
 }

@@ -4,7 +4,7 @@
 #include <kdl/tree.hpp>
 #include <kdl/chain.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
-#include <kdl/chainiksolverpos_nr.hpp>
+#include <kdl/chainiksolverpos_nr_jl.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl_parser/kdl_parser.hpp>
@@ -27,7 +27,7 @@ private:
 
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 
-    std::shared_ptr<KDL::ChainIkSolverPos_NR> mIkSolver; 
+    std::shared_ptr<KDL::ChainIkSolverPos_NR_JL> mIkSolver; 
 
 };
 #endif //KINEMATICSHANDLER_H

@@ -75,6 +75,11 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
 
 void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
+    if(!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept joint position waypoint"; 
+        return; 
+    }
     // if(mJointWaypointRcvd)
     // {
     //     return; 
@@ -110,6 +115,12 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
 
 void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
 {
+    if(!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
+        return; 
+    }
+
     geometry_msgs::msg::Quaternion q = aMsg->pose.orientation;
     KDL::Rotation rot = KDL::Rotation::Quaternion(q.x, q.y, q.z, q.w);
 

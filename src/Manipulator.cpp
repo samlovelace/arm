@@ -3,6 +3,7 @@
 
 #include "ManipulatorFactory.h"
 #include "plog/Log.h"
+#include "Utils.h"
 
 #include <unistd.h>
 #include <limits.h>
@@ -142,9 +143,11 @@ void Manipulator::controlLoop()
 void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
 {
     KDL::JntArray curPos = mManipComms->getJointPositions(); 
-    KDL::JntArray resultPos; 
+    KDL::JntArray resultPos(6); 
 
     mKinematicsHandler->solveIK(curPos, aWp->getGoalPose(), resultPos);
+
+    utils::printJntArray(resultPos, "IK Results"); 
 
     if(0 != resultPos.rows())
     {
