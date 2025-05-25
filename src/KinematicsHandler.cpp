@@ -31,15 +31,27 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
     KDL::JntArray q_min(mChain.getNrOfJoints()); 
     KDL::JntArray q_max(mChain.getNrOfJoints()); 
 
-    for(int i =0; i < mChain.getNrOfJoints(); i++)
+    urdf::Model mModel; 
+    if(!mModel.initFile(anUrdfPath))
     {
-        q_min(i) = -M_PI; 
-        q_max(i) = M_PI; 
+        LOGE << "Could not parse model from urdf"; 
+        return false; 
+    }
+
+    int numJnt = 0; 
+    for (const auto& joint : mModel.joints_) 
+    {
+        if(joint.second->limits)
+        {
+            q_min(numJnt); 
+            q_max(numJnt); 
+            numJnt++; 
+        }
     }
 
     mFkSolver = std::make_shared<KDL::ChainFkSolverPos_recursive>(mChain);
     mVelSolver = std::make_shared<KDL::ChainIkSolverVel_pinv>(mChain);
-    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain,q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-4);
+    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-4);
 
     LOGD << "KinematicsHandler initialized successfully"; 
     return true; 
@@ -61,3 +73,4 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
     utils::logFrame(err); 
 
 }
+

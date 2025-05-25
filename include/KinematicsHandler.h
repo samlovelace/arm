@@ -8,8 +8,7 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl_parser/kdl_parser.hpp>
-
-
+#include <urdf/model.h>
  
 class KinematicsHandler 
 { 

@@ -59,6 +59,7 @@ include_directories(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   kdl_parser
+  urdf
   std_msgs
   arm_idl
 )
