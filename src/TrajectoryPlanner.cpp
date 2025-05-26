@@ -2,7 +2,7 @@
 #include "TrajectoryPlanner.h"
 #include "plog/Log.h"
 
-TrajectoryPlanner::TrajectoryPlanner(ConfigManager::Config& aConfig) : mPlanner(1/(float)aConfig.manipControlRate), mInput(), mOutput(), mInitialSet(false)
+TrajectoryPlanner::TrajectoryPlanner(ConfigManager::Config& aConfig) : mPlanner(1/(float)aConfig.manipControlRate), mInput(), mOutput()
 {
 
 }
@@ -63,8 +63,9 @@ KDL::JntArray TrajectoryPlanner::getNextWaypoint()
         }
 
         mOutput.pass_to_input(mInput);
-    } else {
-        // Handle error if needed
+    } else 
+    {
+        // Handle error
     }
 
     return newJntPos;

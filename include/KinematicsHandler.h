@@ -19,10 +19,12 @@ public:
     bool init(const std::string& anUrdfPath); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
 
+    KDL::JntArray getJointLimits(const std::string& aLimitType); 
 private:
 
     KDL::Tree mTree; 
     KDL::Chain mChain; 
+    urdf::Model mModel; 
 
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 

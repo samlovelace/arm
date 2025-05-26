@@ -28,26 +28,14 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
         throw std::runtime_error("Failed to extract KDL chain from tree");
     }
 
-    KDL::JntArray q_min(mChain.getNrOfJoints()); 
-    KDL::JntArray q_max(mChain.getNrOfJoints()); 
-
-    urdf::Model mModel; 
     if(!mModel.initFile(anUrdfPath))
     {
         LOGE << "Could not parse model from urdf"; 
         return false; 
     }
 
-    int numJnt = 0; 
-    for (const auto& joint : mModel.joints_) 
-    {
-        if(joint.second->limits)
-        {
-            q_min(numJnt); 
-            q_max(numJnt); 
-            numJnt++; 
-        }
-    }
+    KDL::JntArray q_min = getJointLimits("lower"); 
+    KDL::JntArray q_max = getJointLimits("upper"); 
 
     mFkSolver = std::make_shared<KDL::ChainFkSolverPos_recursive>(mChain);
     mVelSolver = std::make_shared<KDL::ChainIkSolverVel_pinv>(mChain);
@@ -72,5 +60,39 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
     LOGW << "Task Error: ";
     utils::logFrame(err); 
 
+}
+
+KDL::JntArray KinematicsHandler::getJointLimits(const std::string& aLimitType)
+{
+    int jntNum = 0; 
+    KDL::JntArray limits(mChain.getNrOfJoints()); 
+
+    for(const auto& joint : mModel.joints_)
+    {
+        if(joint.second->limits)
+        {
+            if("effort" == aLimitType)
+            {
+                limits(jntNum) = joint.second->limits->effort; 
+            }
+            else if("velocity" == aLimitType)
+            {
+                limits(jntNum) = joint.second->limits->velocity; 
+            }
+            else if("upper" == aLimitType)
+            {
+                limits(jntNum) = joint.second->limits->upper; 
+            }
+            else if("lower" == aLimitType)
+            {
+                limits(jntNum) = joint.second->limits->lower; 
+            }
+        
+            jntNum++; 
+        }
+
+    }
+
+    return limits; 
 }
 
