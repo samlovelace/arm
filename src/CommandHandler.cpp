@@ -80,14 +80,7 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
         LOGW << "Manipulator not enabled. Cannot accept joint position waypoint"; 
         return; 
     }
-    // if(mJointWaypointRcvd)
-    // {
-    //     return; 
-    // }
-
-    mJointWaypointRcvd = true; 
-    // convert IDL msg to internal datatype KDL::JntArray
-
+    
     KDL::JntArray jntPos(aMsg->positions.size()); 
     for(int i = 0; i < aMsg->positions.size(); i++)
     {

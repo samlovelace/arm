@@ -39,6 +39,7 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
         firstWp(i) = 1.0; 
         firstTol(i) = 0.01;
     }
+
     mGoalWaypoint->setJointPositionGoal(firstWp); 
     mGoalWaypoint->setArrivalTolerance(firstTol); 
 
@@ -126,8 +127,7 @@ void Manipulator::controlLoop()
 {
     LOGD << "Starting manipulator control loop!"; 
     
-    // TODO: get arm control rate from config
-    mArmControlRate = std::make_unique<RateController>(10); 
+    mArmControlRate = std::make_unique<RateController>(mConfig.manipControlRate); 
 
     while(isEnabled())
     {
