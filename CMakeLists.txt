@@ -67,6 +67,5 @@ ament_target_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY configuration/ DESTINATION share/${PROJECT_NAME}/configuration)
 
 ament_package()

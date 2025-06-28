@@ -9,6 +9,8 @@
 #include <kdl/jntarray.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 #include <urdf/model.h>
+
+#include <memory> 
  
 class KinematicsHandler 
 { 
@@ -24,7 +26,7 @@ private:
 
     KDL::Tree mTree; 
     KDL::Chain mChain; 
-    urdf::Model mModel; 
+    std::shared_ptr<urdf::Model> mModel; 
 
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 

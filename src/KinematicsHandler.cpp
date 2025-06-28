@@ -3,7 +3,7 @@
 #include "plog/Log.h"
 #include "Utils.h"
 
-KinematicsHandler::KinematicsHandler()
+KinematicsHandler::KinematicsHandler() : mModel(std::make_shared<urdf::Model>())
 {
 
 }
@@ -28,7 +28,8 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
         throw std::runtime_error("Failed to extract KDL chain from tree");
     }
 
-    if(!mModel.initFile(anUrdfPath))
+    mModel->clear(); 
+    if(!mModel->initFile(anUrdfPath))
     {
         LOGE << "Could not parse model from urdf"; 
         return false; 
@@ -67,7 +68,7 @@ KDL::JntArray KinematicsHandler::getJointLimits(const std::string& aLimitType)
     int jntNum = 0; 
     KDL::JntArray limits(mChain.getNrOfJoints()); 
 
-    for(const auto& joint : mModel.joints_)
+    for(const auto& joint : mModel->joints_)
     {
         if(joint.second->limits)
         {

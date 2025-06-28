@@ -20,8 +20,8 @@ int main()
     rclcpp::init(0, nullptr);
     createLogger();
 
-    std::string package_path = ament_index_cpp::get_package_share_directory("arm");
-    std::string config_path = package_path + "/configuration/config.yaml";
+    std::string package_path = ament_index_cpp::get_package_share_directory("arm_configs");
+    std::string config_path = package_path + "/config.yaml";
     auto configManager = ConfigManager::getInstance(); 
     configManager->loadConfig(config_path); 
 

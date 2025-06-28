@@ -43,7 +43,7 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
     mGoalWaypoint->setJointPositionGoal(firstWp); 
     mGoalWaypoint->setArrivalTolerance(firstTol); 
 
-    std::string urdfFilePath = mConfig.shareDir + mConfig.manipType + "/manipulator.urdf";
+    std::string urdfFilePath = mConfig.shareDir + "manipulators/" + mConfig.manipType + "/manipulator.urdf";
     LOGW << "urdfFilePath: " << urdfFilePath;
 
     mKinematicsHandler->init(urdfFilePath);

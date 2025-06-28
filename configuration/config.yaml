@@ -1,7 +1,0 @@
-Manipulator:
-  type: UR
-  rate: 25 # Hz
-
-StateMachine:
-  rate: 10 # Hz
-
