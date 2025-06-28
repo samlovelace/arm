@@ -28,7 +28,7 @@
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig)), 
 mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
-    mManipComms = ManipulatorFactory::create(aConfig.manipType); 
+    mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
     mManipComms->init(); 
     
     //TODO: get this from config 

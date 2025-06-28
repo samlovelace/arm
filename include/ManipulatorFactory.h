@@ -10,7 +10,7 @@ public:
     ManipulatorFactory(/* args */);
     ~ManipulatorFactory();
 
-    static std::shared_ptr<IManipComms> create(const std::string& aManipType); 
+    static std::shared_ptr<IManipComms> create(const std::string& aManipType, const std::string& aCommsType); 
 private:
     /* data */
 
