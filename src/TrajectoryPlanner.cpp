@@ -2,7 +2,7 @@
 #include "TrajectoryPlanner.h"
 #include "plog/Log.h"
 
-TrajectoryPlanner::TrajectoryPlanner(ConfigManager::Config& aConfig) : mPlanner(1/(float)aConfig.manipControlRate), mInput(), mOutput()
+TrajectoryPlanner::TrajectoryPlanner(ConfigManager::Config& aConfig) : mPlanner(1/(float)aConfig.manipControlRate), mConfig(aConfig), mInput(), mOutput()
 {
 
 }
@@ -45,11 +45,13 @@ void TrajectoryPlanner::setInitialState(const KDL::JntArray& aPos, const KDL::Jn
         mInput.current_acceleration[i] = 0.0; 
     }
 
-    // TODO: get from config 
-    mInput.degrees_of_freedom = 6; 
-    mInput.max_velocity = {1.5, 1.5, 1.5, 1.5, 1.5, 1.5};
-    mInput.max_acceleration = {3.14, 3.14, 3.14, 3.14, 3.14, 3.14};
-    mInput.max_jerk = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
+    mInput.degrees_of_freedom = mConfig.initialPosition.size(); 
+
+    // TODO: get from kinematics handler somehow
+    mInput.max_velocity = {1.5, 1.5, 1.5, 1.5, 1.5, 1.5}; 
+
+    std::copy_n(mConfig.accelLimit.begin(), (int)mInput.degrees_of_freedom, mInput.max_acceleration.begin()); 
+    std::copy_n(mConfig.jerkLimit.begin(), (int)mInput.degrees_of_freedom, mInput.max_jerk.begin()); 
 }
 
 KDL::JntArray TrajectoryPlanner::getNextWaypoint()

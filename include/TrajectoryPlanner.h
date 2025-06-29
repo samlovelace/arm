@@ -21,6 +21,8 @@ private:
     ruckig::InputParameter<6> mInput; 
     ruckig::OutputParameter<6> mOutput; 
 
+    ConfigManager::Config mConfig; 
+
     bool mInitialSet;
     
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
