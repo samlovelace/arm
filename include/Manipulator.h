@@ -63,7 +63,7 @@ private:
     std::thread mControlThread; 
     void controlLoop(); 
 
-
+    void logWaypointError(); 
 
 };
 #endif //MANIPULATOR_H

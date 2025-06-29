@@ -1,6 +1,8 @@
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
+
 #include <string> 
+#include <vector>
 
 class ConfigManager
 {
@@ -18,6 +20,9 @@ public:
         std::string manipType;
         std::string manipCommsType;  
         int manipControlRate; 
+        std::vector<double> initialPosition; 
+        std::vector<double> accelLimit; 
+        std::vector<double> jerkLimit; 
     };
 
     void loadConfig(const std::string& aConfigFilepath); 

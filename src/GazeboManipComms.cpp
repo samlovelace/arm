@@ -82,7 +82,7 @@ void GazeboManipComms::jointPositionCallback(std_msgs::msg::Float64MultiArray::S
     for(int i = 0; i < msg->data.size(); i++)
     {
         jntArray(i) = msg->data[i]; 
-        jntVel(i) = (jntArray(i) - mPrevJointPos(i)) / (now.time_since_epoch().count() - mPrevTime.time_since_epoch().count()); 
+        jntVel(i) = ((jntArray(i) - mPrevJointPos(i)) / (now.time_since_epoch().count() - mPrevTime.time_since_epoch().count())); 
     }
 
     setJointPositions(jntArray); 

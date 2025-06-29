@@ -1,4 +1,8 @@
 repositories:
+  arm_configs:
+    type: git
+    url: https://github.com/samlovelace/arm_configs.git
+    version: main
   arm_idl:
     type: git
     url: https://github.com/samlovelace/arm_idl.git
