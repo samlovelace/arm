@@ -41,6 +41,8 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/MobileArmTaskPlanner.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/PlannerFactory.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp

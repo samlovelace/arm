@@ -6,8 +6,8 @@
 void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 {
     std::string shareDirFull = aConfigFilepath; 
-    YAML::Node yamlConfig = YAML::LoadFile(aConfigFilepath); 
-    LOGD << YAML::Dump(yamlConfig); 
+    mYamlConfig = YAML::LoadFile(aConfigFilepath); 
+    LOGD << YAML::Dump(mYamlConfig); 
 
     // Substring to find and remove
     std::string to_remove = "config.yaml";
@@ -21,10 +21,10 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 
     // TODO: error checking on the things im accessing, im lazy rn
     mConfig.shareDir = shareDirFull;
-    mConfig.manipType = yamlConfig["Manipulator"]["type"].as<std::string>();
-    mConfig.manipCommsType = yamlConfig["Manipulator"]["comms"].as<std::string>();  
-    mConfig.manipControlRate = yamlConfig["Manipulator"]["rate"].as<int>(); 
-    mConfig.initialPosition = yamlConfig["Manipulator"]["initial_positions"].as<std::vector<double>>();
-    mConfig.accelLimit = yamlConfig["Manipulator"]["accel_limits"].as<std::vector<double>>();
-    mConfig.jerkLimit = yamlConfig["Manipulator"]["jerk_limits"].as<std::vector<double>>(); 
+    mConfig.manipType = mYamlConfig["Manipulator"]["type"].as<std::string>();
+    mConfig.manipCommsType = mYamlConfig["Manipulator"]["comms"].as<std::string>();  
+    mConfig.manipControlRate = mYamlConfig["Manipulator"]["rate"].as<int>(); 
+    mConfig.initialPosition = mYamlConfig["Manipulator"]["initial_positions"].as<std::vector<double>>();
+    mConfig.accelLimit = mYamlConfig["Manipulator"]["accel_limits"].as<std::vector<double>>();
+    mConfig.jerkLimit = mYamlConfig["Manipulator"]["jerk_limits"].as<std::vector<double>>(); 
 }

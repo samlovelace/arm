@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <vector>
+#include <yaml-cpp/yaml.h>
 
 class ConfigManager
 {
@@ -27,6 +28,7 @@ public:
 
     void loadConfig(const std::string& aConfigFilepath); 
     Config getConfig() {return mConfig; }
+    YAML::Node& getRawConfig() {return mYamlConfig; }
 
 private:
     ConfigManager(/* args */) {}
@@ -35,6 +37,7 @@ private:
     ConfigManager* mInstance; 
 
     Config mConfig; 
+    YAML::Node mYamlConfig; 
 
 };
 #endif 

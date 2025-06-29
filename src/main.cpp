@@ -6,6 +6,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "StateMachine.h"
 #include "CommandHandler.h"
+#include "PlannerFactory.h"
 #include <rclcpp/rclcpp.hpp>
 
 void handle(int signal)
@@ -24,11 +25,12 @@ int main()
     std::string config_path = package_path + "/config.yaml";
     auto configManager = ConfigManager::getInstance(); 
     configManager->loadConfig(config_path); 
-
+ 
     auto manip = std::make_shared<Manipulator>(configManager->getConfig()); 
+    auto planner = PlannerFactory::create(configManager->getRawConfig()["Planning"]["type"].as<std::string>());
 
     auto sm = std::make_shared<StateMachine>(manip); 
-    CommandHandler* cm = new CommandHandler(sm, manip); 
+    CommandHandler* cm = new CommandHandler(sm, manip, planner);
     sm->run(); 
 
     return 0; 

@@ -4,7 +4,8 @@
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
 
-CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : mStateMachine(msm), mManip(manip), mJointWaypointRcvd(false)
+CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
+    mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner), mJointWaypointRcvd(false)
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
@@ -22,15 +23,10 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                                 this, 
                                                                                 std::placeholders::_1)); 
 
-    /**
-     * Implement subscriber for custom msgs representing different manip waypoint types i.e joint pos, joint vel, task pos, task vel 
-     * and the different options for each of those waypoints. 
-     * 
-     * Implement a callback function to attach to a subscriber for those topics. Callback function will parse the command, convert 
-     * to internal data type and change the state machine STATE to move towards that goal waypoint. I think maybe there only needs to be a 
-     * MOVING state and it may do different things based on the TYPE of waypoint commanded in order to send joint pos commands 
-     * 
-     */
+    topicManager->createSubscriber<arm_idl::msg::Command>("arm/command", 
+                                                          std::bind(&CommandHandler::commandCallback, 
+                                                                    this, 
+                                                                    std::placeholders::_1)); 
 
     topicManager->spinNode(); 
 
@@ -124,5 +120,13 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
 
     mManip->setTaskGoal(wp); 
     setNewActiveState(StateMachine::STATE::MOVING); 
+}
+
+void CommandHandler::commandCallback(const arm_idl::msg::Command::SharedPtr aCmd)
+{
+    if("plan" == aCmd->command.data)
+    {
+        mArmTaskPlanner->plan(aCmd->type.data); 
+    }
 }
 
