@@ -10,7 +10,7 @@
 #include "IManipComms.h"
 #include "ConfigManager.h"
 #include "RateController.h"
-#include "TrajectoryPlanner.h"
+#include "WaypointExecutor.h"
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"
 #include "KinematicsHandler.h"
@@ -46,7 +46,7 @@ public:
 private:
     std::shared_ptr<IManipComms> mManipComms;
     ConfigManager::Config mConfig; 
-    std::unique_ptr<TrajectoryPlanner> mTrajectoryPlanner; 
+    std::unique_ptr<WaypointExecutor> mWaypointExecutor; 
     std::shared_ptr<KinematicsHandler> mKinematicsHandler; 
 
     std::mutex mGoalJntPosMutex; 

@@ -10,7 +10,7 @@
 #include <thread>
 
 
-Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig), mTrajectoryPlanner(std::make_unique<TrajectoryPlanner>(mConfig)), 
+Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
 mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
@@ -73,7 +73,7 @@ bool Manipulator::isEnabled()
 void Manipulator::setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp)
 {
     mGoalWaypoint = aWp; 
-    mTrajectoryPlanner->initializePlanner(aWp, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
+    mWaypointExecutor->initializeExecutor(aWp, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
 } 
 
 std::shared_ptr<JointPositionWaypoint> Manipulator::getGoalWaypoint()
@@ -113,7 +113,7 @@ bool Manipulator::isArrived()
 
 void Manipulator::startControl()
 {
-    mTrajectoryPlanner->initializePlanner(mGoalWaypoint, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
+    mWaypointExecutor->initializeExecutor(mGoalWaypoint, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
     mControlThread = std::thread(&Manipulator::controlLoop, this); 
     
     // anything else?? 
@@ -129,7 +129,7 @@ void Manipulator::controlLoop()
     {
         mArmControlRate->start(); 
 
-        KDL::JntArray wp = mTrajectoryPlanner->getNextWaypoint();
+        KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
         mManipComms->sendJointCommand(wp); 
 
         mArmControlRate->block();
@@ -159,11 +159,5 @@ void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
         auto wp = std::make_shared<JointPositionWaypoint>(resultPos, arrival); 
         setGoalWaypoint(wp);
     }
-
-}
-
-void Manipulator::logWaypointError()
-{
-
 
 }

@@ -44,7 +44,7 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/TrajectoryPlanner.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/WaypointExecutor.cpp
   )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

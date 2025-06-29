@@ -1,24 +1,24 @@
 
-#include "TrajectoryPlanner.h"
+#include "WaypointExecutor.h"
 #include "plog/Log.h"
 
-TrajectoryPlanner::TrajectoryPlanner(ConfigManager::Config& aConfig) : mPlanner(1/(float)aConfig.manipControlRate), mConfig(aConfig), mInput(), mOutput()
+WaypointExecutor::WaypointExecutor(ConfigManager::Config& aConfig) : mExecutor(1/(float)aConfig.manipControlRate), mConfig(aConfig), mInput(), mOutput()
 {
 
 }
 
-TrajectoryPlanner::~TrajectoryPlanner()
+WaypointExecutor::~WaypointExecutor()
 {
 
 }
 
-void TrajectoryPlanner::initializePlanner(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
+void WaypointExecutor::initializeExecutor(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
 {
     setInitialState(aCurrentJointPos, aCurrentJointVel); 
     setGoalState(aGoalWaypoint); 
 }
 
-void TrajectoryPlanner::setGoalState(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint)
+void WaypointExecutor::setGoalState(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint)
 {
     std::array<double, 6> goalPos; 
     for(int i = 0; i < aGoalWaypoint->jointPositionGoal().rows(); i++)
@@ -34,7 +34,7 @@ void TrajectoryPlanner::setGoalState(std::shared_ptr<JointPositionWaypoint> aGoa
     LOGD << "Setting Goal Joint Pos: " << mInput.target_position; 
 }
 
-void TrajectoryPlanner::setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel)
+void WaypointExecutor::setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel)
 {
     for(int i = 0; i < aPos.rows(); i++)
     {
@@ -54,10 +54,10 @@ void TrajectoryPlanner::setInitialState(const KDL::JntArray& aPos, const KDL::Jn
     std::copy_n(mConfig.jerkLimit.begin(), (int)mInput.degrees_of_freedom, mInput.max_jerk.begin()); 
 }
 
-KDL::JntArray TrajectoryPlanner::getNextWaypoint()
+KDL::JntArray WaypointExecutor::getNextWaypoint()
 {
     KDL::JntArray newJntPos(6);
-    auto result = mPlanner.update(mInput, mOutput);
+    auto result = mExecutor.update(mInput, mOutput);
 
     if (result == ruckig::Result::Working || result == ruckig::Result::Finished) {
         for (size_t i = 0; i < 6; ++i) {

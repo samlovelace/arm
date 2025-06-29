@@ -1,5 +1,5 @@
-#ifndef TRAJECTORYPLANNER_H
-#define TRAJECTORYPLANNER_H
+#ifndef WAYPOINTEXECUTOR_H
+#define WAYPOINTEXECUTOR_H
  
 #include <kdl/jntarray.hpp>
 #include <memory> 
@@ -7,17 +7,17 @@
 #include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
 
-class TrajectoryPlanner 
+class WaypointExecutor 
 { 
 public:
-    TrajectoryPlanner(ConfigManager::Config& aConfig);
-    ~TrajectoryPlanner();
+    WaypointExecutor(ConfigManager::Config& aConfig);
+    ~WaypointExecutor();
 
-    void initializePlanner(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
+    void initializeExecutor(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
     KDL::JntArray getNextWaypoint();
 
 private:
-    ruckig::Ruckig<6> mPlanner; 
+    ruckig::Ruckig<6> mExecutor; 
     ruckig::InputParameter<6> mInput; 
     ruckig::OutputParameter<6> mOutput; 
 
@@ -29,4 +29,4 @@ private:
     void setGoalState(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint);
    
 };
-#endif //TRAJECTORYPLANNER_H    
+#endif //TRAJECTORYExecutor_H    
