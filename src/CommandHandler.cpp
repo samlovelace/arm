@@ -3,6 +3,7 @@
 #include "RosTopicManager.hpp"
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
+#include "PointCloudHandler.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
     mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner), mJointWaypointRcvd(false)
@@ -23,7 +24,7 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                                 this, 
                                                                                 std::placeholders::_1)); 
 
-    topicManager->createSubscriber<arm_idl::msg::Command>("arm/command", 
+    topicManager->createSubscriber<arm_idl::msg::PlanCommand>("arm/command", 
                                                           std::bind(&CommandHandler::commandCallback, 
                                                                     this, 
                                                                     std::placeholders::_1)); 
@@ -122,11 +123,12 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
     setNewActiveState(StateMachine::STATE::MOVING); 
 }
 
-void CommandHandler::commandCallback(const arm_idl::msg::Command::SharedPtr aCmd)
+void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd)
 {
-    if("plan" == aCmd->command.data)
-    {
-        mArmTaskPlanner->plan(aCmd->type.data); 
-    }
+    LOGD << "Receieved plan request for task: " << aCmd->operation_type; 
+
+    std::string saveFilePath = aCmd->object_type; 
+    PointCloudHandler::toFile(aCmd->object_type, aCmd->pick_obj_point_cloud_gl); 
+    
 }
 

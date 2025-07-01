@@ -10,7 +10,7 @@
 #include "arm_idl/msg/joint_position_waypoint.hpp"
 #include "arm_idl/msg/enable.hpp"
 #include "arm_idl/msg/task_position_waypoint.hpp"
-#include "arm_idl/msg/command.hpp"
+#include "arm_idl/msg/plan_command.hpp"
 
 class CommandHandler 
 { 
@@ -25,7 +25,7 @@ private:
     void jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
     void taskPosWaypointCallback(const arm_idl::msg::TaskPositionWaypoint::SharedPtr aMsg); 
     void enableCallback(const arm_idl::msg::Enable::SharedPtr anEnabledCmd); 
-    void commandCallback(const arm_idl::msg::Command::SharedPtr aCmd); 
+    void commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd); 
 
     std::shared_ptr<StateMachine> mStateMachine;
     std::shared_ptr<Manipulator> mManip;  

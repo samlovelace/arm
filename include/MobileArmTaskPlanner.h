@@ -9,7 +9,8 @@ public:
     MobileArmTaskPlanner();
     ~MobileArmTaskPlanner() override; 
 
-    bool plan(const std::string& aTaskType) override; 
+    bool planPick(const Eigen::Vector3d& aCentroid_G, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud) override; 
+    bool planPlace(const Eigen::Vector3d& aPlacePos_G) override; 
 
 private:
    
