@@ -18,6 +18,14 @@ public:
 
     static bool fromFile(const std::string& aFilePath, sensor_msgs::msg::PointCloud2& aCloudOut); 
     static bool toFile(const std::string& aFilePath, sensor_msgs::msg::PointCloud2& aCloud); 
+    
+    template<typename PointT>
+    static bool toPCL(sensor_msgs::msg::PointCloud2& aRosCloud, pcl::PointCloud<PointT>& aPclCloudOut)
+    {
+        pcl::PCLPointCloud2 pcl_pc2;
+        pcl_conversions::toPCL(aRosCloud, pcl_pc2);
+        pcl::fromPCLPointCloud2(pcl_pc2, aPclCloudOut);
+    }
 
 private:
    

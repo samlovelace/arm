@@ -125,20 +125,29 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
 
 void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd)
 {
-    std::string task; 
-    if(arm_idl::msg::PlanCommand::PICK == aCmd->operation_type)
-    {
-        task = "pick"; 
-    }
-    else if(arm_idl::msg::PlanCommand::PLACE == aCmd->operation_type)
-    {
-        task = "place"; 
-    }
+    std::string task = aCmd->operation_type == arm_idl::msg::PlanCommand::PICK ? "pick" : "place"; 
 
     LOGD << "Receieved plan request for task: " << task; 
 
+    // TODO: improve location where these are saved
     std::string saveFilePath = "/home/sam/testing/test.ply"; 
     PointCloudHandler::toFile(saveFilePath, aCmd->pick_obj_point_cloud_gl); 
+
+    geometry_msgs::msg::Point pt = aCmd->pick_obj_centroid_gl; 
+    Eigen::Vector3d centroid_gl(pt.x, pt.y, pt.z);  
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    PointCloudHandler::toPCL<pcl::PointXYZ>(aCmd->pick_obj_point_cloud_gl, *cloud); 
+
+    // TODO: probably need to respond somehow 
+    if(cloud->empty())
+    {
+        LOGE << "Cannot plan on empty object cloud"; 
+        return; 
+    }
+
+    // start planning 
+    mArmTaskPlanner->planPick(centroid_gl, cloud);
     
 }
 
