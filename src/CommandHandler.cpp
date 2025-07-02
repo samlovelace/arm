@@ -125,10 +125,20 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
 
 void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd)
 {
-    LOGD << "Receieved plan request for task: " << aCmd->operation_type; 
+    std::string task; 
+    if(arm_idl::msg::PlanCommand::PICK == aCmd->operation_type)
+    {
+        task = "pick"; 
+    }
+    else if(arm_idl::msg::PlanCommand::PLACE == aCmd->operation_type)
+    {
+        task = "place"; 
+    }
 
-    std::string saveFilePath = aCmd->object_type; 
-    PointCloudHandler::toFile(aCmd->object_type, aCmd->pick_obj_point_cloud_gl); 
+    LOGD << "Receieved plan request for task: " << task; 
+
+    std::string saveFilePath = "/home/sam/testing/test.ply"; 
+    PointCloudHandler::toFile(saveFilePath, aCmd->pick_obj_point_cloud_gl); 
     
 }
 
