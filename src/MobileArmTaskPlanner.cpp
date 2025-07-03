@@ -59,40 +59,53 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     Eigen::Vector3f max_pca = cloud_pca.colwise().maxCoeff();
     Eigen::Vector3f extents = max_pca - min_pca;
 
-    // Find axis of smallest extent
-    int thin_axis = 0;
-    extents.minCoeff(&thin_axis);
-    Eigen::Vector3f grasp_axis_dir = eigenvectors.col(thin_axis);
+    int thin_axis = 0; 
+    extents.minCoeff(&thin_axis); 
+    Eigen::Vector3f a_min = eigenvectors.col(thin_axis); 
 
-    // Choose closing axis among the other two
-    std::vector<int> axes = {0, 1, 2};
-    axes.erase(axes.begin() + thin_axis);
+    // Step 1: closing_dir = min axis
+    Eigen::Vector3f gripper_y = a_min.normalized();
 
-    int closing_axis =
-        (extents(axes[0]) > extents(axes[1])) ? axes[0] : axes[1];
+    // Step 2: pick approach_dir perpendicular to closing_dir
+    Eigen::Vector3f temp(1, 0, 0);
+    if (std::abs(gripper_y.dot(temp)) > 0.99)
+        temp = Eigen::Vector3f(0, 1, 0);
 
-    Eigen::Vector3f closing_dir = eigenvectors.col(closing_axis);
+    Eigen::Vector3f gripper_z = gripper_y.cross(temp);
+    gripper_z.normalize();
 
-    // Compute approach direction
-    Eigen::Vector3f approach_dir = grasp_axis_dir.cross(closing_dir).normalized();
+    // Step 3: compute grasp axis
+    Eigen::Vector3f gripper_x = gripper_y.cross(gripper_z);
+    gripper_x.normalize();
 
-    LOGD << "Object extents along PCA axes: " << extents.transpose();
-
+    // Step 4: build rotation matrix
     Eigen::Matrix3f R;
-    R.col(0) = approach_dir;
-    R.col(1) = closing_dir;
-    R.col(2) = grasp_axis_dir;
+    R.col(1) = gripper_x; // grasp_axis_dir
+    R.col(0) = gripper_y; // closing_dir
+    R.col(2) = gripper_z; // approach_dir
 
-    float angle_deg = 45.0f;
-    float angle_rad = angle_deg * M_PI / 180.0f;
+    std::cout << "R = \n" << R.format(Eigen::IOFormat(3, 0, ", ", "\n", "[", "]")) << std::endl;
 
-    Eigen::Matrix3f rotZ;
-    rotZ = Eigen::AngleAxisf(angle_rad, Eigen::Vector3f::UnitY());
+    // Approach direction in PCA frame
+    Eigen::Vector3f approach_dir_in_pca = eigenvectors.transpose() * gripper_z;
+    approach_dir_in_pca.normalize();
 
-    // Rotate
-    R = rotZ * R;
+    // Compute extent along approach axis
+    float proj_min = min_pca.dot(approach_dir_in_pca);
+    float proj_max = max_pca.dot(approach_dir_in_pca);
 
-    Eigen::Vector3f grasp_position = centroid.head<3>();
+    float extent_along_approach = std::abs(proj_max - proj_min);
+    float half_extent_along_approach = extent_along_approach / 2.0f;
+
+    std::cout << "Extent along approach axis: " << extent_along_approach << " m\n";
+    std::cout << "Half extent along approach axis: " << half_extent_along_approach << " m\n";
+
+    // Choose offset
+    float clearance = 0.05f; // meters
+    float offset_along_approach = half_extent_along_approach + clearance;
+
+    Eigen::Vector3f p_local(0, 0, -offset_along_approach);
+    Eigen::Vector3f grasp_position = R * p_local + centroid.head<3>();
 
     Eigen::Matrix4f grasp_pose = Eigen::Matrix4f::Identity();
     grasp_pose.block<3,3>(0,0) = R;
@@ -124,22 +137,22 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
 
     pcl::PointXYZ origin(grasp_position(0), grasp_position(1), grasp_position(2));
 
-    pcl::PointXYZ x_end(
-        grasp_position(0) + axis_length * approach_dir(0),
-        grasp_position(1) + axis_length * approach_dir(1),
-        grasp_position(2) + axis_length * approach_dir(2));
-    pcl::PointXYZ y_end(
-        grasp_position(0) + axis_length * closing_dir(0),
-        grasp_position(1) + axis_length * closing_dir(1),
-        grasp_position(2) + axis_length * closing_dir(2));
-    pcl::PointXYZ z_end(
-        grasp_position(0) + axis_length * grasp_axis_dir(0),
-        grasp_position(1) + axis_length * grasp_axis_dir(1),
-        grasp_position(2) + axis_length * grasp_axis_dir(2));
+    // pcl::PointXYZ x_end(
+    //     grasp_position(0) + axis_length * approach_dir(0),
+    //     grasp_position(1) + axis_length * approach_dir(1),
+    //     grasp_position(2) + axis_length * approach_dir(2));
+    // pcl::PointXYZ y_end(
+    //     grasp_position(0) + axis_length * closing_dir(0),
+    //     grasp_position(1) + axis_length * closing_dir(1),
+    //     grasp_position(2) + axis_length * closing_dir(2));
+    // pcl::PointXYZ z_end(
+    //     grasp_position(0) + axis_length * grasp_axis_dir(0),
+    //     grasp_position(1) + axis_length * grasp_axis_dir(1),
+    //     grasp_position(2) + axis_length * grasp_axis_dir(2));
 
-    viewer->addLine(origin, x_end, 1.0, 0.0, 0.0, "grasp_x");
-    viewer->addLine(origin, y_end, 0.0, 1.0, 0.0, "grasp_y");
-    viewer->addLine(origin, z_end, 0.0, 0.0, 1.0, "grasp_z");
+    // viewer->addLine(origin, x_end, 1.0, 0.0, 0.0, "grasp_x");
+    // viewer->addLine(origin, y_end, 0.0, 1.0, 0.0, "grasp_y");
+    // viewer->addLine(origin, z_end, 0.0, 0.0, 1.0, "grasp_z");
 
     SimpleGripperVisualizer::draw_gripper(viewer, grasp_position, R); 
 
