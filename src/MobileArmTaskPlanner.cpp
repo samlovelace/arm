@@ -4,6 +4,7 @@
 #include <pcl/common/pca.h>
 #include <pcl/common/centroid.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include "SimpleGripperVisualizer.h"
 #include <thread>
 #include <chrono>
 
@@ -58,29 +59,41 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     Eigen::Vector3f max_pca = cloud_pca.colwise().maxCoeff();
     Eigen::Vector3f extents = max_pca - min_pca;
 
-    int grasp_axis = 0;
-    extents.minCoeff(&grasp_axis);
+    // Find axis of smallest extent
+    int thin_axis = 0;
+    extents.minCoeff(&thin_axis);
+    Eigen::Vector3f grasp_axis_dir = eigenvectors.col(thin_axis);
 
-    Eigen::Vector3f grasp_axis_dir = eigenvectors.col(grasp_axis);
-
+    // Choose closing axis among the other two
     std::vector<int> axes = {0, 1, 2};
-    axes.erase(axes.begin() + grasp_axis);
+    axes.erase(axes.begin() + thin_axis);
 
-    Eigen::Vector3f approach_dir = eigenvectors.col(axes[0]);
-    Eigen::Vector3f closing_dir  = eigenvectors.col(axes[1]);
+    int closing_axis =
+        (extents(axes[0]) > extents(axes[1])) ? axes[0] : axes[1];
 
-    if (!approach_dir.allFinite() || !closing_dir.allFinite() || !grasp_axis_dir.allFinite())
-    {
-        LOGE << "Computed grasp directions contain NaN or Inf!";
-        return false;
-    }
+    Eigen::Vector3f closing_dir = eigenvectors.col(closing_axis);
+
+    // Compute approach direction
+    Eigen::Vector3f approach_dir = grasp_axis_dir.cross(closing_dir).normalized();
+
+    LOGD << "Object extents along PCA axes: " << extents.transpose();
 
     Eigen::Matrix3f R;
     R.col(0) = approach_dir;
     R.col(1) = closing_dir;
     R.col(2) = grasp_axis_dir;
 
+    float angle_deg = 45.0f;
+    float angle_rad = angle_deg * M_PI / 180.0f;
+
+    Eigen::Matrix3f rotZ;
+    rotZ = Eigen::AngleAxisf(angle_rad, Eigen::Vector3f::UnitY());
+
+    // Rotate
+    R = rotZ * R;
+
     Eigen::Vector3f grasp_position = centroid.head<3>();
+
     Eigen::Matrix4f grasp_pose = Eigen::Matrix4f::Identity();
     grasp_pose.block<3,3>(0,0) = R;
     grasp_pose.block<3,1>(0,3) = grasp_position;
@@ -128,87 +141,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     viewer->addLine(origin, y_end, 0.0, 1.0, 0.0, "grasp_y");
     viewer->addLine(origin, z_end, 0.0, 0.0, 1.0, "grasp_z");
 
-    // -------------------------
-    // GRIPPER VISUALIZATION
-    // -------------------------
-
-    Eigen::Affine3f gripper_tf;
-    gripper_tf.linear() = R;
-    gripper_tf.translation() = grasp_position;
-
-    Eigen::Vector3f palm_translation = gripper_tf.translation();
-    Eigen::Quaternionf palm_rotation(gripper_tf.linear());
-
-    viewer->addCube(
-        palm_translation,
-        palm_rotation,
-        0.05,  // width along approach (X)
-        0.02,  // height along closing dir (Y)
-        0.04,  // depth along grasp axis (Z)
-        "gripper_palm"
-    );
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_COLOR,
-        0.9, 0.9, 0.1,
-        "gripper_palm");
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_OPACITY,
-        0.5,
-        "gripper_palm");
-
-    float gripper_opening = 0.15; // meters
-    float finger_offset = gripper_opening / 2.0;
-
-    Eigen::Vector3f finger_pos_left = grasp_position + closing_dir * finger_offset;
-    Eigen::Vector3f finger_pos_right = grasp_position - closing_dir * finger_offset;
-
-    Eigen::Affine3f finger_left_tf = Eigen::Affine3f::Identity();
-    finger_left_tf.linear() = R;
-    finger_left_tf.translation() = finger_pos_left;
-
-    Eigen::Vector3f finger_left_translation = finger_left_tf.translation();
-    Eigen::Quaternionf finger_left_rotation(finger_left_tf.linear());
-
-    viewer->addCube(
-        finger_left_translation,
-        finger_left_rotation,
-        0.01,
-        0.02,
-        0.04,
-        "gripper_finger_left"
-    );
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_COLOR,
-        1.0, 0.2, 0.2,
-        "gripper_finger_left");
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_OPACITY,
-        0.5,
-        "gripper_finger_left");
-
-    Eigen::Affine3f finger_right_tf = Eigen::Affine3f::Identity();
-    finger_right_tf.linear() = R;
-    finger_right_tf.translation() = finger_pos_right;
-
-    Eigen::Vector3f finger_right_translation = finger_right_tf.translation();
-    Eigen::Quaternionf finger_right_rotation(finger_right_tf.linear());
-
-    viewer->addCube(
-        finger_right_translation,
-        finger_right_rotation,
-        0.01,
-        0.02,
-        0.04,
-        "gripper_finger_right"
-    );
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_COLOR,
-        1.0, 0.2, 0.2,
-        "gripper_finger_right");
-    viewer->setShapeRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_OPACITY,
-        0.5,
-        "gripper_finger_right");
+    SimpleGripperVisualizer::draw_gripper(viewer, grasp_position, R); 
 
     // Spin viewer
     while (!viewer->wasStopped())
