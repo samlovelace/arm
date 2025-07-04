@@ -3,6 +3,7 @@
  
 #include "IArmTaskPlanner.hpp"
 #include <memory>  
+#include <yaml-cpp/yaml.h>
 
 class PlannerFactory 
 { 
@@ -11,7 +12,7 @@ public:
     ~PlannerFactory();
 
     static std::shared_ptr<IArmTaskPlanner> createArmTaskPlanner(const std::string& aPlannerType); 
-    static std::shared_ptr<IGraspPlanner> createGraspPlanner(const std::string& aPlannerType); 
+    static std::shared_ptr<IGraspPlanner> createGraspPlanner(const YAML::Node& aGraspPlanningConfig); 
 
 private:
    

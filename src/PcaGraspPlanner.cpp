@@ -7,18 +7,28 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include "SimpleGripperVisualizer.h"
 
-PcaGraspPlanner::PcaGraspPlanner()
+PcaGraspPlanner::PcaGraspPlanner(const YAML::Node& aConfig) : mVisualize(false)
 {
-
+    mVisualize = aConfig["visualize"].as<bool>(); 
 }
 
 PcaGraspPlanner::~PcaGraspPlanner()
 {
-
+    if (mVisualizeThread.joinable())
+    {
+        mStopVisualization = true;
+        mVisualizeThread.join();
+    }
 }
 
-bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Affine3d& aT_G_ee)
+bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Affine3f& aT_G_ee)
 {
+    // save object cloud
+    mCloud = aCloud; 
+
+    // Reset planned grasp pose
+    mT_G_ee = Eigen::Affine3f::Identity(); 
+
     // PCA
     pcl::PCA<pcl::PointXYZ> pca;
     pca.setInputCloud(aCloud);
@@ -98,21 +108,34 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
     Eigen::Vector3f p_local(0, 0, -offset_along_approach);
     Eigen::Vector3f grasp_position = R * p_local + centroid.head<3>();
 
-    Eigen::Matrix4f grasp_pose = Eigen::Matrix4f::Identity();
-    grasp_pose.block<3,3>(0,0) = R;
-    grasp_pose.block<3,1>(0,3) = grasp_position;
+    mT_G_ee.translate(grasp_position); 
+    mT_G_ee.rotate(R); 
+    aT_G_ee = mT_G_ee; 
 
-    LOGD << "Computed grasp pose at centroid: " 
-         << grasp_position.transpose();
+    if (mVisualize)
+    {
+        // Stop any previous visualization thread
+        if (mVisualizeThread.joinable())
+        {
+            mStopVisualization = true;
+            mVisualizeThread.join();
+        }
 
-    // -------------------------
-    // VISUALIZATION
-    // -------------------------
+        // Reset flag
+        mStopVisualization = false;
 
+        mVisualizeThread = std::thread(&PcaGraspPlanner::visualizeGraspPlan, this);
+    }
+
+    return true;
+}   
+
+void PcaGraspPlanner::visualizeGraspPlan()
+{
     pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("Grasp Pose Viewer"));
     viewer->setBackgroundColor(0, 0, 0);
 
-    viewer->addPointCloud<pcl::PointXYZ>(aCloud, "object_cloud");
+    viewer->addPointCloud<pcl::PointXYZ>(mCloud, "object_cloud");
     viewer->setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE,
         2,
@@ -126,33 +149,15 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
 
     float axis_length = 0.05f;
 
-    pcl::PointXYZ origin(grasp_position(0), grasp_position(1), grasp_position(2));
-
-    // pcl::PointXYZ x_end(
-    //     grasp_position(0) + axis_length * approach_dir(0),
-    //     grasp_position(1) + axis_length * approach_dir(1),
-    //     grasp_position(2) + axis_length * approach_dir(2));
-    // pcl::PointXYZ y_end(
-    //     grasp_position(0) + axis_length * closing_dir(0),
-    //     grasp_position(1) + axis_length * closing_dir(1),
-    //     grasp_position(2) + axis_length * closing_dir(2));
-    // pcl::PointXYZ z_end(
-    //     grasp_position(0) + axis_length * grasp_axis_dir(0),
-    //     grasp_position(1) + axis_length * grasp_axis_dir(1),
-    //     grasp_position(2) + axis_length * grasp_axis_dir(2));
-
-    // viewer->addLine(origin, x_end, 1.0, 0.0, 0.0, "grasp_x");
-    // viewer->addLine(origin, y_end, 0.0, 1.0, 0.0, "grasp_y");
-    // viewer->addLine(origin, z_end, 0.0, 0.0, 1.0, "grasp_z");
-
-    SimpleGripperVisualizer::draw_gripper(viewer, grasp_position, R); 
+    SimpleGripperVisualizer::draw_gripper(viewer, mT_G_ee.translation(), mT_G_ee.rotation()); 
 
     // Spin viewer
-    while (!viewer->wasStopped())
+    while (!viewer->wasStopped() && !mStopVisualization)
     {
-        viewer->spin(); 
+        std::lock_guard<std::mutex> lock(mVisMtx); 
+        viewer->spinOnce(10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));  
     }
 
-    return true;
-
+    viewer->close(); 
 }

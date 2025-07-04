@@ -9,7 +9,7 @@ class IGraspPlanner
 { 
 public:
     virtual ~IGraspPlanner() = default; 
-    virtual bool plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Affine3d& aT_G_ee) = 0; 
+    virtual bool plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Affine3f& aT_G_ee) = 0; 
 
 private:
    

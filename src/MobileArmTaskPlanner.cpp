@@ -24,7 +24,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
         return false;
     }
 
-    Eigen::Affine3d T_g_ee; 
+    Eigen::Affine3f T_g_ee; 
     mGraspPlanner->plan(aCloud, T_g_ee);  
 }
 

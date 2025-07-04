@@ -17,15 +17,17 @@ std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std:
     }
 }
 
-std::shared_ptr<IGraspPlanner> PlannerFactory::createGraspPlanner(const std::string& aGraspPlannerType)
+std::shared_ptr<IGraspPlanner> PlannerFactory::createGraspPlanner(const YAML::Node& aGraspPlanningConfig)
 {
-    if("pca" == aGraspPlannerType)
+    std::string type = aGraspPlanningConfig["type"].as<std::string>(); 
+
+    if("pca" == type)
     {
-        return std::make_shared<PcaGraspPlanner>(); 
+        return std::make_shared<PcaGraspPlanner>(aGraspPlanningConfig); 
     }
     else
     {
-        LOGE << "Unsupported grasp planner type: " << aGraspPlannerType; 
+        LOGE << "Unsupported grasp planner type: " << type; 
         return nullptr; 
     }
 }

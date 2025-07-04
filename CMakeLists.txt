@@ -14,9 +14,12 @@ find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(PCL REQUIRED)
+
 find_package(pcl_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
+
+set(PCL_DIR "/usr/local/pcl-1.15/lib/cmake/pcl")
+find_package(PCL REQUIRED)
 
 # Optional: disable Ruckig examples and tests
 set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
