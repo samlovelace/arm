@@ -5,6 +5,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include "IGraspPlanner.hpp"
+
 class IArmTaskPlanner 
 { 
 public:
@@ -12,7 +14,10 @@ public:
     virtual bool planPick(const Eigen::Vector3d& aCentroid_G, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud_G) = 0; 
     virtual bool planPlace(const Eigen::Vector3d& aPlacePos_G) = 0; 
 
-private:
+    void setGraspPlanner(std::shared_ptr<IGraspPlanner> aGraspPlanner) { mGraspPlanner = aGraspPlanner; }
+
+protected:
+    std::shared_ptr<IGraspPlanner> mGraspPlanner; 
    
 };
 #endif //IARMTASKPLANNER_HPP
