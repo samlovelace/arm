@@ -29,24 +29,15 @@ set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(RUCKIG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(dependencies/ruckig)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+set(COMMON_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/KinematicsHandler.cpp
+)
 
 set(SOURCES 
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/KinematicsHandler.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
@@ -59,39 +50,68 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/WaypointExecutor.cpp
-  )
+  ${COMMON_SOURCES}
+)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-if(BUILD_ARM_TOOLS)
-    message(STATUS "Building test tool executable")
-
-    add_executable(irm_generator tools/irm_generator.cpp)
-    #target_link_libraries(test_tool PRIVATE my_library)
-    #target_include_directories(test_tool PRIVATE include)
-else()
-    message(STATUS "Not building test tool executable")
-endif()
+set(COMMON_INCLUDE_DIRS
+  ${CMAKE_CURRENT_LIST_DIR}/include
+  /opt/ros/humble/include/kdl_parser
+  /opt/ros/humble/include/urdf
+)
 
 include_directories(${PROJECT_NAME} 
-  ${CMAKE_CURRENT_LIST_DIR}/include
+  ${COMMON_INCLUDE_DIRS}
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include
-  /opt/ros/humble/include/kdl_parser
   ${PCL_INCLUDE_DIRS}
+)
+
+set(COMMON_LIBS
+  kdl_parser
+  urdf
 )
 
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
-  kdl_parser
-  urdf
   std_msgs
   arm_idl
   pcl_msgs
   pcl_conversions
+  ${COMMON_LIBS}
 )
 
 target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES})
+
+if(BUILD_ARM_TOOLS)
+    message(STATUS "Building test tool executable")
+
+    find_package(ament_index_cpp REQUIRED)
+
+    set(TOOL_SOURCES
+      tools/irm_generator.cpp
+      ${COMMON_SOURCES}
+    )
+
+    set(TOOL_INCLUDE_DIRS
+      tools/include
+      /opt/ros/humble/include/ament_index_cpp
+      ${COMMON_INCLUDE_DIRS}
+    )
+
+    set(TOOL_LIBS
+      ${COMMON_LIBS}
+    )
+
+    add_executable(irm_generator ${TOOL_SOURCES})
+    ament_target_dependencies(irm_generator ${TOOL_LIBS})
+    target_link_libraries(irm_generator yaml-cpp)
+    target_include_directories(irm_generator PRIVATE ${TOOL_INCLUDE_DIRS})
+else()
+    message(STATUS "Not building test tool executable")
+endif()
+
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 
