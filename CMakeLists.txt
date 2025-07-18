@@ -5,6 +5,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
+
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -60,6 +63,16 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+if(BUILD_ARM_TOOLS)
+    message(STATUS "Building test tool executable")
+
+    add_executable(irm_generator tools/irm_generator.cpp)
+    #target_link_libraries(test_tool PRIVATE my_library)
+    #target_include_directories(test_tool PRIVATE include)
+else()
+    message(STATUS "Not building test tool executable")
+endif()
+
 include_directories(${PROJECT_NAME} 
   ${CMAKE_CURRENT_LIST_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
@@ -81,5 +94,9 @@ ament_target_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+
+if(BUILD_ARM_TOOLS)
+  install(TARGETS irm_generator DESTINATION lib/${PROJECT_NAME})
+endif()
 
 ament_package()
