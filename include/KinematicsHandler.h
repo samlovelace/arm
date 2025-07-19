@@ -20,6 +20,7 @@ public:
 
     bool init(const std::string& anUrdfPath); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
+    bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut); 
 
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
 private:
@@ -27,6 +28,10 @@ private:
     KDL::Tree mTree; 
     KDL::Chain mChain; 
     std::shared_ptr<urdf::Model> mModel; 
+
+    std::vector<std::string> mJointNames; 
+    
+    std::map<std::string, KDL::JntArray> mLimitsMap; 
 
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 

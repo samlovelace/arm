@@ -90,7 +90,8 @@ if(BUILD_ARM_TOOLS)
     find_package(ament_index_cpp REQUIRED)
 
     set(TOOL_SOURCES
-      tools/irm_generator.cpp
+      ${CMAKE_CURRENT_LIST_DIR}/tools/src/IrmGenerator.cpp
+      ${CMAKE_CURRENT_LIST_DIR}/tools/src/irm_generator.cpp
       ${COMMON_SOURCES}
     )
 

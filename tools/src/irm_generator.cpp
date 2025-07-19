@@ -1,7 +1,8 @@
 #include <iostream>
 #include "ConfigManager.h"
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include "KinematicsHandler.h"
+
+#include "IrmGenerator.h"
 
 int main()
 {
@@ -12,16 +13,8 @@ int main()
 
     auto config = configManager->getConfig(); 
 
-    std::string urdfFilePath = config.shareDir + "manipulators/" + config.manipType + "/manipulator.urdf";
-    std::cout << "urdfFilePath: " << urdfFilePath << std::endl; 
+    IrmGenerator irm(config); 
+    irm.generate(); 
 
-    KinematicsHandler kh; 
-    if(!kh.init(urdfFilePath))
-    {
-        std::cerr << "Failed to initialize kinematics handler\n"; 
-        return 0; 
-    } 
-
-    std::cout << "Initializd kinematics handler!\n"; 
     return 0; 
 }
