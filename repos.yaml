@@ -11,7 +11,3 @@ repositories:
     type: git
     url: https://github.com/samlovelace/arm_simulator.git
     version: ignition-fortress
-  arm_commander:
-    type: git
-    url: https://github.com/samlovelace/arm_commander.git
-    version: main
