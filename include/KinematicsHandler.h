@@ -22,6 +22,8 @@ public:
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
     bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut); 
 
+    double computeManipulability(const KDL::JntArray& aJntCfg);
+
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
 private:
 
@@ -36,6 +38,7 @@ private:
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 
     std::shared_ptr<KDL::ChainIkSolverPos_NR_JL> mIkSolver; 
+    std::shared_ptr<KDL::ChainJntToJacSolver> mJacobianSolver;  
 
 };
 #endif //KINEMATICSHANDLER_H

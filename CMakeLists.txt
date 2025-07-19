@@ -88,6 +88,7 @@ if(BUILD_ARM_TOOLS)
     message(STATUS "Building test tool executable")
 
     find_package(ament_index_cpp REQUIRED)
+    find_package(nlohmann_json REQUIRED)
 
     set(TOOL_SOURCES
       ${CMAKE_CURRENT_LIST_DIR}/tools/src/IrmGenerator.cpp
@@ -107,7 +108,7 @@ if(BUILD_ARM_TOOLS)
 
     add_executable(irm_generator ${TOOL_SOURCES})
     ament_target_dependencies(irm_generator ${TOOL_LIBS})
-    target_link_libraries(irm_generator yaml-cpp)
+    target_link_libraries(irm_generator yaml-cpp nlohmann_json::nlohmann_json)
     target_include_directories(irm_generator PRIVATE ${TOOL_INCLUDE_DIRS})
 else()
     message(STATUS "Not building test tool executable")

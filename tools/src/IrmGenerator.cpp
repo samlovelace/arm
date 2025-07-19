@@ -1,6 +1,8 @@
 
 #include "IrmGenerator.h"
 #include <iostream> 
+#include <fstream> 
+#include <nlohmann/json.hpp>
 
 IrmGenerator::IrmGenerator(ConfigManager::Config aConfig) : mConfig(aConfig)
 {
@@ -15,6 +17,8 @@ IrmGenerator::IrmGenerator(ConfigManager::Config aConfig) : mConfig(aConfig)
 
     std::cout << "Initialized kinematics handler!\n"; 
 
+    // init the json array 
+    mIrmEntries = nlohmann::json::array(); 
 }
 
 IrmGenerator::~IrmGenerator()
@@ -34,6 +38,7 @@ bool IrmGenerator::generate()
     std::cout << "Lower Joint Limits: " << jntMinLimits.data << std::endl;
     std::cout << "Upper Joint Limits: " << jntMaxLimits.data << std::endl;
 
+    // TODO: make configurable 
     float resolution = 10;
     KDL::JntArray jntCfg(numJoints); 
     std::vector<size_t> indices(numJoints, 0); 
@@ -41,6 +46,8 @@ bool IrmGenerator::generate()
     size_t total_samples = 1;
     for (int r = 0; r < numJoints; r++)
         total_samples *= (resolution + 1);
+
+    std::cout << "Generating IRM with " << total_samples << " samples" << std::endl; 
 
     for(int samples = 0; samples < total_samples; samples++)
     {
@@ -64,19 +71,63 @@ bool IrmGenerator::generate()
     
     }
 
+    if(!toFile())
+    {
+        std::cerr << "Failed to write IRM to file\n"; 
+        return false; 
+    }
+
 }
 
 void IrmGenerator::compute(const KDL::JntArray& aJntCfg)
 {
+    // compute the manipulability for this jnt config 
+    double manipulability = mKinematicsHandler->computeManipulability(aJntCfg); 
+    
+    // TODO: make this smarter/adaptive
+    double manipulabilityThreshold = 0.25;  
+    if(isnan(manipulability) || manipulability < manipulabilityThreshold)
+    {
+        //std::cout << "Low manipulability joint config. Skipping..." << std::endl; 
+        return;         
+    }
+
     KDL::Frame frame; 
     if(!mKinematicsHandler->solveFk(aJntCfg, frame))
     {
         std::cout << "Failed to compute forward kinematics for jntCfg: " << aJntCfg.data << ". Skipping..."; 
         return; 
     }
-    std::cout << "JointCfg: " << aJntCfg.data << std::endl; 
-    std::cout << "Frame Pos: " << frame.p.x() << ", " << frame.p.y() << ", " << frame.p.z() << std::endl; 
 
-    // do something with the frame? 
+    using json = nlohmann::json; 
+
+    KDL::Frame inverse = frame.Inverse(); 
+
+    json irmEntry; 
+    irmEntry["P_ee_base"] = inverse.p.data;
+    irmEntry["R_ee_base"] = inverse.M.data; 
+    irmEntry["joints"] = aJntCfg.data; 
+    irmEntry["manipulability"] = manipulability; 
+
+    mIrmEntries.push_back(irmEntry); 
+}
+
+bool IrmGenerator::toFile()
+{
+    using Json = nlohmann::json;
+    nlohmann::json finalOutput;
+    finalOutput["irm"] = mIrmEntries;
+    
+    std::ofstream outfile("IRM.json"); 
+
+    if(!outfile.is_open())
+    {
+        std::cerr << "Failed to open json file for write\n"; 
+        return false; 
+    }
+
+    outfile << finalOutput.dump(2); 
+    outfile.close();
+    return true;  
 }
 

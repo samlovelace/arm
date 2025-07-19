@@ -3,6 +3,7 @@
 #include "plog/Log.h"
 #include "Utils.h"
 #include <iostream> 
+#include <eigen3/Eigen/Dense>
 
 KinematicsHandler::KinematicsHandler() : mModel(std::make_shared<urdf::Model>())
 {
@@ -63,6 +64,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
     mFkSolver = std::make_shared<KDL::ChainFkSolverPos_recursive>(mChain);
     mVelSolver = std::make_shared<KDL::ChainIkSolverVel_pinv>(mChain);
     mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-4);
+    mJacobianSolver = std::make_shared<KDL::ChainJntToJacSolver>(mChain); 
 
     LOGD << "KinematicsHandler initialized successfully"; 
     return true; 
@@ -106,5 +108,20 @@ KDL::JntArray KinematicsHandler::getJointLimits(const std::string& aLimitType)
     }
 
     return limits; 
+}
+
+double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCfg)
+{
+    KDL::Jacobian jac(aJntCfg.rows()); 
+    
+    if(mJacobianSolver->JntToJac(aJntCfg, jac) < 0)
+    {
+        LOGW << "Failed to compute jacobian"; 
+        return 0.0; 
+    }
+
+    Eigen::MatrixXd J = jac.data; 
+    Eigen::MatrixXd JJt = J * J.transpose(); 
+    return std::sqrt(JJt.determinant()); 
 }
 

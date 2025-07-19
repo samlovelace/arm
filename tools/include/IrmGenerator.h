@@ -3,6 +3,7 @@
  
 #include "ConfigManager.h"
 #include "KinematicsHandler.h" 
+#include "nlohmann/json.hpp"
 
 /**
  * @brief top level class for handling the generation of a Inverse Reachability Map (IRM)
@@ -20,7 +21,11 @@ private:
     std::shared_ptr<KinematicsHandler> mKinematicsHandler; 
     ConfigManager::Config mConfig; 
 
+    nlohmann::json mIrmEntries; 
+
     void compute(const KDL::JntArray& aJntCfg); 
+
+    bool toFile(); 
    
 };
 #endif //IRMGENERATOR_H
