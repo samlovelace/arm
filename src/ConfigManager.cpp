@@ -21,10 +21,17 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 
     // TODO: error checking on the things im accessing, im lazy rn
     mConfig.shareDir = shareDirFull;
-    mConfig.manipType = mYamlConfig["Manipulator"]["type"].as<std::string>();
-    mConfig.manipCommsType = mYamlConfig["Manipulator"]["comms"].as<std::string>();  
-    mConfig.manipControlRate = mYamlConfig["Manipulator"]["rate"].as<int>(); 
-    mConfig.initialPosition = mYamlConfig["Manipulator"]["initial_positions"].as<std::vector<double>>();
-    mConfig.accelLimit = mYamlConfig["Manipulator"]["accel_limits"].as<std::vector<double>>();
-    mConfig.jerkLimit = mYamlConfig["Manipulator"]["jerk_limits"].as<std::vector<double>>(); 
+
+    std::string manipConfigPath = shareDirFull + "manipulators/" + mYamlConfig["Manipulator"]["name"].as<std::string>();
+    LOGD << "manipulator config path: " << manipConfigPath; 
+
+    YAML::Node manipConfig = YAML::LoadFile(manipConfigPath + "/manip.yaml");
+
+    mConfig.manipType = manipConfig["type"].as<std::string>();
+    mConfig.manipCommsType = manipConfig["comms"].as<std::string>();  
+    mConfig.manipControlRate = manipConfig["rate"].as<int>(); 
+    mConfig.urdfPath = manipConfigPath + "/" + manipConfig["urdf"].as<std::string>(); 
+    mConfig.initialPosition = manipConfig["initial_positions"].as<std::vector<double>>();
+    mConfig.accelLimit = manipConfig["accel_limits"].as<std::vector<double>>();
+    mConfig.jerkLimit = manipConfig["jerk_limits"].as<std::vector<double>>(); 
 }

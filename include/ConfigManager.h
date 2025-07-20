@@ -20,6 +20,7 @@ public:
         std::string shareDir; 
         std::string manipType;
         std::string manipCommsType;  
+        std::string urdfPath; 
         int manipControlRate; 
         std::vector<double> initialPosition; 
         std::vector<double> accelLimit; 
