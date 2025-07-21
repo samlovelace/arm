@@ -30,6 +30,7 @@ int main()
     auto graspPlanner = PlannerFactory::createGraspPlanner(configManager->getRawConfig()["GraspPlanning"].as<YAML::Node>()); 
     auto planner = PlannerFactory::createArmTaskPlanner(configManager->getRawConfig()["Planning"]["type"].as<std::string>());
     planner->setGraspPlanner(graspPlanner); 
+    planner->setManipulator(manip); 
 
     auto sm = std::make_shared<StateMachine>(manip); 
     CommandHandler* cm = new CommandHandler(sm, manip, planner);

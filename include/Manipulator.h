@@ -14,6 +14,7 @@
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"
 #include "KinematicsHandler.h"
+#include "IrmEntry.hpp"
 
 class Manipulator
 {
@@ -37,6 +38,7 @@ public:
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
 
+    std::vector<IrmEntry>& getInverseReachabilityMap() {return mInverseReachabilityMap; }
     
 
     void startControl(); 
@@ -60,10 +62,14 @@ private:
 
     std::map<POSE, KDL::JntArray> mArmPoseMap; 
 
+    std::vector<IrmEntry> mInverseReachabilityMap; 
+
     std::thread mControlThread; 
     void controlLoop(); 
 
     void logWaypointError(); 
+
+    void loadInverseReachabilityMap(const std::string& aFilePath); 
 
 };
 #endif //MANIPULATOR_H

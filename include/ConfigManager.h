@@ -21,6 +21,7 @@ public:
         std::string manipType;
         std::string manipCommsType;  
         std::string urdfPath; 
+        std::string inverseReachMap = ""; 
         int manipControlRate; 
         std::vector<double> initialPosition; 
         std::vector<double> accelLimit; 

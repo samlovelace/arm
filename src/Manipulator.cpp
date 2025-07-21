@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <limits.h>
 #include <thread>
+#include <fstream> 
+#include <nlohmann/json.hpp>
 
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
@@ -28,6 +30,9 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
     mGoalWaypoint->setArrivalTolerance(firstTol); 
 
     mKinematicsHandler->init(mConfig.urdfPath);
+
+    if(mConfig.inverseReachMap != "")
+        loadInverseReachabilityMap(mConfig.inverseReachMap); 
 }
 
 Manipulator::~Manipulator()
@@ -157,4 +162,64 @@ void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
         setGoalWaypoint(wp);
     }
 
+}
+
+void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)
+{   
+    std::ifstream file(mConfig.inverseReachMap); 
+    
+    if (!file.is_open()) 
+    {
+        LOGE << "Failed to open " << mConfig.inverseReachMap; 
+        return;
+    }
+
+    nlohmann::json jsonData;
+    try 
+    {
+        file >> jsonData;
+    } 
+    catch (const std::exception& e) 
+    {
+        LOGE << "Error parsing JSON: " << e.what();
+        return;
+    }
+
+    for(const auto& entry : jsonData["irm"])
+    {
+        // Parse position
+        double x = entry["P_ee_base"][0];
+        double y = entry["P_ee_base"][1];
+        double z = entry["P_ee_base"][2];
+
+        KDL::Vector pos(x, y, z);
+
+        // Parse rotation (row-major order)
+        const auto& R = entry["R_ee_base"];
+        KDL::Rotation rot(
+            R[0], R[1], R[2],  // Row 0
+            R[3], R[4], R[5],  // Row 1
+            R[6], R[7], R[8]   // Row 2
+        );
+
+        KDL::Frame frame(rot, pos); 
+        KDL::JntArray jntCfg;
+        
+        auto jnts = entry["joints"]; 
+        jntCfg.resize(jnts.size()); 
+
+        for(int i = 0; i < jnts.size(); i++)
+        {
+            jntCfg(i) = jnts[i]; 
+        }
+
+        IrmEntry irmEntry; 
+        irmEntry.T_ee_base = frame; 
+        irmEntry.manipulability = entry["manipulability"]; 
+        irmEntry.jntAngles = jntCfg; 
+
+        mInverseReachabilityMap.push_back(irmEntry); 
+    }
+
+    LOGD << "Parsed manipulator inverse reachability map!";
 }

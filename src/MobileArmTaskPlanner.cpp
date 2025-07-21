@@ -6,7 +6,6 @@
 
 MobileArmTaskPlanner::MobileArmTaskPlanner()
 {
-
 }
 
 MobileArmTaskPlanner::~MobileArmTaskPlanner()
@@ -17,6 +16,12 @@ MobileArmTaskPlanner::~MobileArmTaskPlanner()
 bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud)
 {
     LOGD << "MobileArmTaskPlanner planning for pick task"; 
+   
+    if(mManip->getInverseReachabilityMap().empty())
+    { 
+        LOGE << "Inverse reachability map not properly configured for manipulator";
+        return false;  
+    }
 
     if (!aCloud || aCloud->empty())
     {
@@ -26,9 +31,6 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
 
     Eigen::Affine3f T_g_ee; 
     mGraspPlanner->plan(aCloud, T_g_ee); 
-    
-    // TODO: maybe not the best way to store? 
-    std::vector<Eigen::Affine3f> mInverseReachabilityMap;
 
     // // Generate base pose candidates 
     // for(const auto& T_ee_base : mInverseReachabilityMap)

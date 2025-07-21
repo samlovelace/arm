@@ -26,11 +26,18 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     LOGD << "manipulator config path: " << manipConfigPath; 
 
     YAML::Node manipConfig = YAML::LoadFile(manipConfigPath + "/manip.yaml");
+    LOGD << "Manip Config: " << YAML::Dump(manipConfig); 
 
     mConfig.manipType = manipConfig["type"].as<std::string>();
     mConfig.manipCommsType = manipConfig["comms"].as<std::string>();  
     mConfig.manipControlRate = manipConfig["rate"].as<int>(); 
     mConfig.urdfPath = manipConfigPath + "/" + manipConfig["urdf"].as<std::string>(); 
+
+    if(manipConfig["irm"])
+    {
+        mConfig.inverseReachMap = manipConfigPath + "/" + manipConfig["irm"].as<std::string>(); 
+    }
+    
     mConfig.initialPosition = manipConfig["initial_positions"].as<std::vector<double>>();
     mConfig.accelLimit = manipConfig["accel_limits"].as<std::vector<double>>();
     mConfig.jerkLimit = manipConfig["jerk_limits"].as<std::vector<double>>(); 

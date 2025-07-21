@@ -7,7 +7,6 @@ endif()
 
 option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
 
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -17,6 +16,7 @@ find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 find_package(pcl_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
@@ -82,13 +82,12 @@ ament_target_dependencies(${PROJECT_NAME}
   ${COMMON_LIBS}
 )
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} yaml-cpp nlohmann_json::nlohmann_json ruckig ${PCL_LIBRARIES})
 
 if(BUILD_ARM_TOOLS)
     message(STATUS "Building test tool executable")
 
     find_package(ament_index_cpp REQUIRED)
-    find_package(nlohmann_json REQUIRED)
 
     set(TOOL_SOURCES
       ${CMAKE_CURRENT_LIST_DIR}/tools/src/IrmGenerator.cpp
