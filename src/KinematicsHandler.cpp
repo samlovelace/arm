@@ -77,9 +77,17 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
 
+    if(result != 0)
+    {
+        LOGW << "Failed to solve IK, error code: " << result; 
+        return false; 
+    }
+    
     KDL::Frame fkPose;
     int fkResult = mFkSolver->JntToCart(aResultOut, fkPose);
     KDL::Frame err = aGoalPose * fkPose.Inverse(); 
+
+    return true; 
 }
 
 bool KinematicsHandler::solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut)

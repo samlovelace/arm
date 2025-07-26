@@ -47,31 +47,22 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     int candidateNum = 0; 
     
     // TODO: parallelize this sucker
-    for(int i = 0; i < 10; i++)
+    for(const auto& entry : mInverseReachMap)
+    //for(int i = 0; i < 1; i++)
     {
         //LOGD << "Checking base candidate " << candidateNum++ << " of " << numCandidates; 
-        IrmEntry entry = mInverseReachMap.at(i); 
-        LOGD << "entry T_ee_base: "; 
-        utils::logFrame(entry.T_ee_base); 
+        //IrmEntry entry = mInverseReachMap.at(i); 
         float score = 0.0;
 
         // base candidate 
         KDL::Frame T_g_base; 
         T_g_base = T_g_ee * entry.T_ee_base; 
-        LOGD << "T_g_base: "; 
-        utils::logFrame(T_g_base); 
 
         KDL::Frame T_base_ee; 
-        //T_base_ee = T_g_base * T_g_ee.Inverse(); 
         T_base_ee = T_g_base.Inverse() * T_g_ee; 
-
-        LOGD << "T_base_ee:"; 
-        utils::logFrame(T_base_ee); 
 
         KDL::Frame newT_g_ee; 
         newT_g_ee = T_g_base * T_base_ee; 
-        LOGD << "newT_g_ee:"; 
-        utils::logFrame(newT_g_ee); 
 
         // TODO: should i use the jntAngles from the IRM or current joint pos? 
         KDL::JntArray currentPos = entry.jntAngles;  
@@ -97,6 +88,8 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
         LOGV << "Added base candidate with score: " << score; 
     }
 
+    LOGD << "Scored all candidates, sorting..."; 
+
     std::sort(mBaseCandidates.begin(), mBaseCandidates.end(), 
               [](const BaseCandidate& a, const BaseCandidate& b)
     {   
@@ -106,13 +99,19 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     // now sorted, take the first element
     BaseCandidate bestBaseCandidate = mBaseCandidates.front();  
     
+    LOGD << "Using candidate with highest score: " << bestBaseCandidate.score; 
+
     // // ultimately want to determine desired pose of robot
     // // using T_base_vehicle, fixed transform for rigidly mounted arm 
     KDL::Frame T_g_base = bestBaseCandidate.T_g_base; 
     KDL::Frame T_G_V = T_g_base * mT_vehicle_base.Inverse();
 
     // T_G_V represents the desired global pose of the robot to allow the manip to grasp at T_g_ee
+
+    LOGD << "Planned base pose in global: "; 
+    utils::logFrame(T_G_V); 
 }
+
 
 bool MobileArmTaskPlanner::planPlace(const Eigen::Vector3d& /*aPlacePos_G*/)
 {
