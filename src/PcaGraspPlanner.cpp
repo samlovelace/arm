@@ -36,7 +36,35 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
     Eigen::Matrix3f eigenvectors = pca.getEigenVectors();
     Eigen::Vector3f eigenvalues = pca.getEigenValues();
     Eigen::Vector4f centroid;
-    pcl::compute3DCentroid(*aCloud, centroid);
+
+    if(0 == pcl::compute3DCentroid(*aCloud, centroid))
+    {
+        LOGE << "Failed to compute object cloud centroid"; 
+        return false; 
+    }
+
+    LOGD << "Object Centroid from PCL: " << centroid.head<3>(); 
+
+    Eigen::Vector4f manual_centroid(0.0f, 0.0f, 0.0f, 0.0f);
+    int valid_points = 0;
+
+    for (const auto& pt : aCloud->points) 
+    {
+        if (!std::isnan(pt.x) && !std::isnan(pt.y) && !std::isnan(pt.z)) 
+        {
+            manual_centroid[0] += pt.x;
+            manual_centroid[1] += pt.y;
+            manual_centroid[2] += pt.z;
+            ++valid_points;
+        }
+    }
+
+    if (valid_points > 0) {
+        manual_centroid /= valid_points;
+        manual_centroid[3] = 1.0f; // Homogeneous coordinate
+    }
+    
+    LOGD << "Manually computed object centroid: " << manual_centroid.head<3>(); 
 
     if (!eigenvectors.allFinite())
     {

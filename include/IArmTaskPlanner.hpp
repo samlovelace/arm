@@ -12,6 +12,7 @@ class IArmTaskPlanner
 { 
 public:
     virtual ~IArmTaskPlanner() = default; 
+    virtual bool init() = 0; 
     virtual bool planPick(const Eigen::Vector3d& aCentroid_G, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud_G) = 0; 
     virtual bool planPlace(const Eigen::Vector3d& aPlacePos_G) = 0; 
 

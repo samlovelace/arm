@@ -4,6 +4,7 @@
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include "plog/Log.h" 
+#include <Eigen/Geometry>
 
 namespace utils
 {
@@ -36,6 +37,23 @@ namespace utils
         oss << "]";
         LOGD << oss.str();
     }
+
+    inline KDL::Frame affineToKDLFrame(const Eigen::Affine3f& affine) 
+    {
+        const Eigen::Matrix3f& rot = affine.rotation();
+        const Eigen::Vector3f& trans = affine.translation();
+
+        KDL::Rotation kdl_rot = KDL::Rotation(
+            rot(0,0), rot(0,1), rot(0,2),
+            rot(1,0), rot(1,1), rot(1,2),
+            rot(2,0), rot(2,1), rot(2,2)
+        );
+
+        KDL::Vector kdl_trans(trans.x(), trans.y(), trans.z());
+
+        return KDL::Frame(kdl_rot, kdl_trans);
+    }
+
 
 }
 

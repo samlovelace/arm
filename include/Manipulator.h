@@ -39,7 +39,8 @@ public:
     void setEnabledState(bool anEnabledFlag); 
 
     std::vector<IrmEntry>& getInverseReachabilityMap() {return mInverseReachabilityMap; }
-    
+    std::shared_ptr<KinematicsHandler> getKinematicsHandler() {return mKinematicsHandler; }
+    KDL::JntArray getCurrentJointPos() {return mManipComms->getJointPositions();}
 
     void startControl(); 
 

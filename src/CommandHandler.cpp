@@ -146,7 +146,7 @@ void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr 
         return; 
     }
 
-    // start planning 
+    mArmTaskPlanner->init();  
     mArmTaskPlanner->planPick(centroid_gl, cloud);
     
 }

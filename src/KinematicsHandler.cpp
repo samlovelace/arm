@@ -72,7 +72,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
-    utils::logFrame(aGoalPose); 
+    //utils::logFrame(aGoalPose); 
 
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
@@ -80,10 +80,6 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
     KDL::Frame fkPose;
     int fkResult = mFkSolver->JntToCart(aResultOut, fkPose);
     KDL::Frame err = aGoalPose * fkPose.Inverse(); 
-
-    LOGW << "Task Error: ";
-    utils::logFrame(err); 
-
 }
 
 bool KinematicsHandler::solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut)
