@@ -32,7 +32,7 @@ int main()
     planner->setGraspPlanner(graspPlanner); 
     planner->setManipulator(manip); 
 
-    auto sm = std::make_shared<StateMachine>(manip); 
+    auto sm = std::make_shared<StateMachine>(manip, planner); 
     CommandHandler* cm = new CommandHandler(sm, manip, planner);
     sm->run(); 
 

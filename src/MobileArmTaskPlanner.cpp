@@ -26,6 +26,10 @@ bool MobileArmTaskPlanner::init()
 
     // TODO: get this from somewhere 
     mT_vehicle_base = KDL::Frame::Identity(); 
+    mPlanFound = false; 
+    mPlans.clear(); // i may regret this in the future 
+
+    return true; 
 }
 
 bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud)
@@ -40,18 +44,13 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
 
     Eigen::Affine3f T_g_ee_temp; 
     mGraspPlanner->plan(aCloud, T_g_ee_temp);
-    KDL::Frame T_g_ee = utils::affineToKDLFrame(T_g_ee_temp);
-    utils::logFrame(T_g_ee);  
+    KDL::Frame T_g_ee = utils::affineToKDLFrame(T_g_ee_temp); 
 
     size_t numCandidates = mInverseReachMap.size(); 
     int candidateNum = 0; 
     
-    // TODO: parallelize this sucker
     for(const auto& entry : mInverseReachMap)
-    //for(int i = 0; i < 1; i++)
     {
-        //LOGD << "Checking base candidate " << candidateNum++ << " of " << numCandidates; 
-        //IrmEntry entry = mInverseReachMap.at(i); 
         float score = 0.0;
 
         // base candidate 
@@ -110,6 +109,15 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
 
     LOGD << "Planned base pose in global: "; 
     utils::logFrame(T_G_V); 
+    LOGD << "Joint Pos: " << bestBaseCandidate.jntAnglesFromIK.data; 
+
+    // Populate the plans vector 
+    Plan plan; 
+    plan.mPlanType = "pick"; 
+    plan.mT_G_V = T_G_V; 
+    mPlans.push_back(plan); 
+
+    mPlanFound = true; 
 }
 
 

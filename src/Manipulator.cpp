@@ -13,7 +13,7 @@
 
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
-mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>())
+mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false)
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
     mManipComms->init(); 

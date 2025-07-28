@@ -1,7 +1,6 @@
 
 #include "KinematicsHandler.h"
 #include "plog/Log.h"
-#include "Utils.h"
 #include <iostream> 
 #include <eigen3/Eigen/Dense>
 
@@ -72,8 +71,6 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
-    //utils::logFrame(aGoalPose); 
-
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
 

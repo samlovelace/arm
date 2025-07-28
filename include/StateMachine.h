@@ -3,13 +3,14 @@
  
 #include "RateController.h"
 #include "Manipulator.h"
+#include "IArmTaskPlanner.hpp"
 #include <memory>
 #include <mutex> 
  
 class StateMachine 
 { 
 public:
-    StateMachine(std::shared_ptr<Manipulator> aManip);
+    StateMachine(std::shared_ptr<Manipulator> aManip, std::shared_ptr<IArmTaskPlanner> aPlanner);
     ~StateMachine();
 
     enum class STATE
@@ -17,6 +18,7 @@ public:
         DISABLED,
         IDLE, 
         MOVING,
+        PLANNING, 
         NUM_TYPES
     }; 
 
@@ -31,10 +33,8 @@ private:
     std::mutex mActiveStateMutex;  
 
     std::shared_ptr<Manipulator> mManipulator; 
-
+    std::shared_ptr<IArmTaskPlanner> mPlanner; 
     std::unique_ptr<RateController> mRate; 
-
-
 
     std::string toString(StateMachine::STATE aState);
    

@@ -2,10 +2,14 @@
 #include "StateMachine.h"
 #include <chrono>
 #include "plog/Log.h"
+#include "Utils.h"
+#include "RosTopicManager.hpp"
+#include "arm_idl/msg/plan_command.hpp"
+#include "arm_idl/msg/plan_response.hpp"
 
-StateMachine::StateMachine(std::shared_ptr<Manipulator> aManip) : 
+StateMachine::StateMachine(std::shared_ptr<Manipulator> aManip, std::shared_ptr<IArmTaskPlanner> aPlanner) : 
             mRate(std::make_unique<RateController>(50)), mActiveState(STATE::DISABLED), 
-            mManipulator(aManip)
+            mManipulator(aManip), mPlanner(aPlanner)
 {
 
 }
@@ -38,7 +42,21 @@ void StateMachine::run()
                     LOGD << "Waypoint arrived"; 
                     setActiveState(StateMachine::STATE::IDLE); 
                 }
+                break; 
+            case StateMachine::STATE::PLANNING: 
+                
+                if(mPlanner->isPlanFound())
+                {
+                    LOGD << "Plan found!"; 
+                    
+                    // TODO: update ComandHandler to do this 
+                    // get the plan and publish 
+                    auto plans = mPlanner->getCurrentPlans(); 
+                    auto planResponse = utils::toIdl(plans); 
 
+                    RosTopicManager::getInstance()->publishMessage<arm_idl::msg::PlanResponse>("arm/response", planResponse);
+                    setActiveState(StateMachine::STATE::IDLE); 
+                }
                 break; 
             
             default:
@@ -78,6 +96,9 @@ std::string StateMachine::toString(StateMachine::STATE aState)
     case StateMachine::STATE::MOVING: 
         stringToReturn = "MOVING";
         break;
+    case StateMachine::STATE::PLANNING: 
+        stringToReturn = "PLANNING"; 
+        break; 
     default:
         stringToReturn = "UNKNOWN";
     }

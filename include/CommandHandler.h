@@ -11,6 +11,7 @@
 #include "arm_idl/msg/enable.hpp"
 #include "arm_idl/msg/task_position_waypoint.hpp"
 #include "arm_idl/msg/plan_command.hpp"
+#include "arm_idl/msg/plan_response.hpp"
 
 class CommandHandler 
 { 

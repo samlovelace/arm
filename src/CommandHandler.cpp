@@ -29,6 +29,10 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                     this, 
                                                                     std::placeholders::_1)); 
 
+
+    // TODO: is this the best place to put this? Idk where else to put it 
+    topicManager->createPublisher<arm_idl::msg::PlanResponse>("arm/response"); 
+
     topicManager->spinNode(); 
 
     while (!topicManager->isROSInitialized())
@@ -58,13 +62,14 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
     // determine how to transition the state machine 
     if(anEnabledCmd->enabled && !mManip->isEnabled())
     {
-        // send default stow jntPos so the arm doesnt move on first enable
+        LOGV << "Recieved enable command"; 
         mManip->setEnabledState(anEnabledCmd->enabled); 
         mManip->startControl(); 
         setNewActiveState(StateMachine::STATE::IDLE); 
     }
     else if (!anEnabledCmd->enabled && mManip->isEnabled())
     {
+        LOGV << "Recieved disable command"; 
         mManip->setEnabledState(anEnabledCmd->enabled);
         setNewActiveState(StateMachine::STATE::DISABLED); 
     }
@@ -126,8 +131,16 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
 void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd)
 {
     std::string task = aCmd->operation_type == arm_idl::msg::PlanCommand::PICK ? "pick" : "place"; 
-
     LOGD << "Receieved plan request for task: " << task; 
+
+    if(!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept planning command"; 
+        return; 
+    }
+
+    mArmTaskPlanner->init(); 
+    setNewActiveState(StateMachine::STATE::PLANNING); 
 
     // TODO: improve location where these are saved
     std::string saveFilePath = "/home/sam/testing/test.ply"; 
@@ -145,9 +158,8 @@ void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr 
         LOGE << "Cannot plan on empty object cloud"; 
         return; 
     }
-
-    mArmTaskPlanner->init();  
+ 
+    //TODO: dispatch to proper pick/place plan function
     mArmTaskPlanner->planPick(centroid_gl, cloud);
-    
 }
 
