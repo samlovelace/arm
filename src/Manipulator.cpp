@@ -116,6 +116,13 @@ bool Manipulator::isArrived()
 void Manipulator::startControl()
 {
     mWaypointExecutor->initializeExecutor(mGoalWaypoint, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
+    
+    // check if thread needs joined first, required for multiple enable/disable cmds
+    if(mControlThread.joinable())
+    {
+        mControlThread.join(); 
+    }
+
     mControlThread = std::thread(&Manipulator::controlLoop, this); 
     
     // anything else?? 
