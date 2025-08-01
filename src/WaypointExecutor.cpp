@@ -70,7 +70,7 @@ KDL::JntArray WaypointExecutor::getNextWaypoint()
     auto result = mExecutor->update(*mInput, *mOutput);
 
     if (result == ruckig::Result::Working || result == ruckig::Result::Finished) {
-        for (size_t i = 0; i < 6; ++i) {
+        for (size_t i = 0; i < mNumDof; ++i) {
             newJntPos(i) = mOutput->new_position[i];
         }
 
