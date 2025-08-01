@@ -17,19 +17,24 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
     mManipComms->init(); 
-    
-    KDL::JntArray firstWp(6);
-    KDL::JntArray firstTol(6); 
-    for(int i = 0; i < 6; i++)
+
+    if(!mKinematicsHandler->init(mConfig.urdfPath))
     {
-        firstWp(i) = aConfig.initialPosition[i]; 
+        throw std::runtime_error("Failed to initialize kinematics"); 
+    }
+
+    int numJoints = mKinematicsHandler->getNrJoints(); 
+    KDL::JntArray firstWp(numJoints);
+    KDL::JntArray firstTol(numJoints); 
+
+    for(int i = 0; i < numJoints; i++)
+    {
+        firstWp(i) = mConfig.initialPosition[i]; 
         firstTol(i) = 0.01;
     }
 
     mGoalWaypoint->setJointPositionGoal(firstWp); 
     mGoalWaypoint->setArrivalTolerance(firstTol); 
-
-    mKinematicsHandler->init(mConfig.urdfPath);
 
     if(mConfig.inverseReachMap != "")
         loadInverseReachabilityMap(mConfig.inverseReachMap); 

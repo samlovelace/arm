@@ -25,6 +25,7 @@ public:
     double computeManipulability(const KDL::JntArray& aJntCfg);
 
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
+    int getNrJoints() {return mChain.getNrOfJoints(); }
 private:
 
     KDL::Tree mTree; 

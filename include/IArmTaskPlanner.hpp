@@ -19,7 +19,8 @@ public:
     struct Plan
     {
         std::string mPlanType; 
-        KDL::Frame mT_G_V; 
+        KDL::Frame mT_G_V;
+        KDL::JntArray mGoalJointPos;  
     }; 
 
     bool isPlanFound() {return mPlanFound; }

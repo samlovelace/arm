@@ -4,9 +4,28 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "plog/Log.h"
 
-GazeboManipComms::GazeboManipComms() : mJointVelocities(6), mPrevJointPos(6), mPrevTime(std::chrono::steady_clock::now()), mFirstRcvd(false)
+GazeboManipComms::GazeboManipComms(const std::string& anArmVersion) : 
+        mJointVelocities(6), mPrevJointPos(6), 
+        mPrevTime(std::chrono::steady_clock::now()), mFirstRcvd(false)
 {
-    for(int i = 0; i < 6; i++)
+    mArmVersion = versionFromString(anArmVersion); 
+
+    int numJoints = 6; 
+
+    switch (mArmVersion)
+    {
+    case VERSION::UR5:
+        numJoints = 8; // TODO: update when gripper control implemented? 
+        break;
+    default:
+        break;
+    }
+
+    mPrevJointPos.resize(numJoints); 
+    mJointVelocities.resize(numJoints); 
+
+    // Init previous positions and velocities 
+    for(int i = 0; i < numJoints; i++)
     {
         mPrevJointPos(i) = 0.0; 
         mJointVelocities(i) = 0.0; 
@@ -73,7 +92,6 @@ void GazeboManipComms::sendJointCommand(const KDL::JntArray &aCmd)
 
 void GazeboManipComms::jointPositionCallback(std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
-    mFirstRcvd = true; 
     // get the ros2 topic data and convert to internal representation
     KDL::JntArray jntArray(msg->data.size());
     KDL::JntArray jntVel(msg->data.size()); 
@@ -89,4 +107,20 @@ void GazeboManipComms::jointPositionCallback(std_msgs::msg::Float64MultiArray::S
     setJointVelocities(jntVel); 
     mPrevJointPos = jntArray; 
     mPrevTime = now; 
+}
+
+GazeboManipComms::VERSION GazeboManipComms::versionFromString(const std::string& anArmVersion)
+{
+    VERSION version = VERSION::UR10; 
+
+    if("ur10" == anArmVersion)
+    {
+        version = VERSION::UR10; 
+    }
+    else if ("ur5" == anArmVersion)
+    {
+        version = VERSION::UR5; 
+    }
+
+    return version; 
 }

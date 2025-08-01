@@ -22,6 +22,7 @@ StateMachine::~StateMachine()
 void StateMachine::run()
 {
     LOGD << "State Machine starting in " << toString(mActiveState);
+    bool goalSet = false; 
 
     while(true)
     {
@@ -37,11 +38,22 @@ void StateMachine::run()
                 break;
             case StateMachine::STATE::MOVING: 
                 // arm is currently moving to new goal jnt pos
+                
+                if(!goalSet && !mPlanner->getCurrentPlans().empty())
+                {
+                    JointPositionWaypoint wp; 
+                    wp.setJointPositionGoal(mPlanner->getCurrentPlans()[0].mGoalJointPos); 
+
+                    mManipulator->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp)); 
+                    goalSet = true; 
+                }
+
                 if(mManipulator->isArrived())
                 {
                     LOGD << "Waypoint arrived"; 
                     setActiveState(StateMachine::STATE::IDLE); 
                 }
+
                 break; 
             case StateMachine::STATE::PLANNING: 
                 
@@ -55,10 +67,9 @@ void StateMachine::run()
                     auto planResponse = utils::toIdl(plans); 
 
                     RosTopicManager::getInstance()->publishMessage<arm_idl::msg::PlanResponse>("arm/response", planResponse);
-                    setActiveState(StateMachine::STATE::IDLE); 
+                    setActiveState(StateMachine::STATE::MOVING); 
                 }
-                break; 
-            
+                break;
             default:
                 break;
         }

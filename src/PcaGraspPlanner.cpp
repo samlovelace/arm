@@ -148,11 +148,29 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
             mStopVisualization = true;
             mVisualizeThread.join();
         }
-
-        // Reset flag
         mStopVisualization = false;
+        //mVisualizeThread = std::thread(&PcaGraspPlanner::visualizeGraspPlan, this);
 
-        mVisualizeThread = std::thread(&PcaGraspPlanner::visualizeGraspPlan, this);
+        // TODO: extract visualizer out of here, should be agnostic to the specific GraspPlanner
+        mVisualizeThread = std::thread([this]() {
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_copy(new pcl::PointCloud<pcl::PointXYZ>(*mCloud));
+            Eigen::Affine3f pose_copy = mT_G_ee;
+
+            pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("Grasp Pose Viewer"));
+            viewer->setBackgroundColor(0, 0, 0);
+            viewer->addPointCloud<pcl::PointXYZ>(cloud_copy, "object_cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "object_cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "object_cloud");
+            viewer->addCoordinateSystem(0.05);
+            SimpleGripperVisualizer::draw_gripper(viewer, pose_copy.translation(), pose_copy.rotation());
+
+            while (!viewer->wasStopped() && !mStopVisualization) {
+                viewer->spinOnce(10);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            viewer->close();
+        });
     }
 
     return true;

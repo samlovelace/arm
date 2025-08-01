@@ -84,7 +84,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
         candidate.jntAnglesFromIK = resultPos; 
 
         mBaseCandidates.push_back(candidate); 
-        LOGV << "Added base candidate with score: " << score; 
+        //LOGV << "Added base candidate with score: " << score; 
     }
 
     LOGD << "Scored all candidates, sorting..."; 
@@ -115,6 +115,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl:
     Plan plan; 
     plan.mPlanType = "pick"; 
     plan.mT_G_V = T_G_V; 
+    plan.mGoalJointPos = bestBaseCandidate.jntAnglesFromIK; 
     mPlans.push_back(plan); 
 
     mPlanFound = true; 

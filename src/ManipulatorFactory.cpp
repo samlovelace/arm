@@ -5,9 +5,9 @@
 
 std::shared_ptr<IManipComms> ManipulatorFactory::create(const std::string& aManipType, const std::string& aCommsType)
 {
-    if("UR" == aManipType && "simulated" == aCommsType)
+    if(("ur10" == aManipType || "ur5" == aManipType) && "simulated" == aCommsType)
     {
-        return std::make_shared<GazeboManipComms>(); 
+        return std::make_shared<GazeboManipComms>(aManipType);  
     }
     else
     {

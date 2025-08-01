@@ -39,7 +39,7 @@ bool IrmGenerator::generate()
     std::cout << "Upper Joint Limits: " << jntMaxLimits.data << std::endl;
 
     // TODO: make configurable 
-    float resolution = 10;
+    float resolution = 25;
     KDL::JntArray jntCfg(numJoints); 
     std::vector<size_t> indices(numJoints, 0); 
 
