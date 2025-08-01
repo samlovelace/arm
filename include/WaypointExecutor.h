@@ -17,13 +17,15 @@ public:
     KDL::JntArray getNextWaypoint();
 
 private:
-    ruckig::Ruckig<6> mExecutor; 
-    ruckig::InputParameter<6> mInput; 
-    ruckig::OutputParameter<6> mOutput; 
+    std::unique_ptr<ruckig::Ruckig<0>> mExecutor; // 0 indicates dynamic
+    std::unique_ptr<ruckig::InputParameter<0>> mInput;
+    std::unique_ptr<ruckig::OutputParameter<0>> mOutput;
 
     ConfigManager::Config mConfig; 
 
     bool mInitialSet;
+
+    int mNumDof; 
     
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
     void setGoalState(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint);
