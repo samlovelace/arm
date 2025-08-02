@@ -3,6 +3,7 @@
 
 #include <memory> 
 #include <kdl/jntarray.hpp>
+#include <kdl/frames.hpp>
 #include <mutex> 
 #include <map> 
 #include <thread> 
@@ -41,6 +42,7 @@ public:
     std::vector<IrmEntry>& getInverseReachabilityMap() {return mInverseReachabilityMap; }
     std::shared_ptr<KinematicsHandler> getKinematicsHandler() {return mKinematicsHandler; }
     KDL::JntArray getCurrentJointPos() {return mManipComms->getJointPositions();}
+    KDL::Frame getBaseInVehicleFrame() {return mConfig.T_V_B;}
 
     void startControl(); 
 

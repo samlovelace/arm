@@ -37,7 +37,14 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
     mGoalWaypoint->setArrivalTolerance(firstTol); 
 
     if(mConfig.inverseReachMap != "")
-        loadInverseReachabilityMap(mConfig.inverseReachMap); 
+    {
+        loadInverseReachabilityMap(mConfig.inverseReachMap);
+        
+        if(mInverseReachabilityMap.empty())
+        {
+            throw std::runtime_error("Inverse Reachability Map is empty"); 
+        }
+    } 
 }
 
 Manipulator::~Manipulator()

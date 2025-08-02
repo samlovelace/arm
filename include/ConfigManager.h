@@ -4,6 +4,7 @@
 #include <string> 
 #include <vector>
 #include <yaml-cpp/yaml.h>
+#include <kdl/frames.hpp>
 
 class ConfigManager
 {
@@ -26,6 +27,7 @@ public:
         std::vector<double> initialPosition; 
         std::vector<double> accelLimit; 
         std::vector<double> jerkLimit; 
+        KDL::Frame T_V_B; 
     };
 
     void loadConfig(const std::string& aConfigFilepath); 

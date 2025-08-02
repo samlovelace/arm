@@ -24,8 +24,7 @@ bool MobileArmTaskPlanner::init()
         return false; 
     }
 
-    // TODO: get this from somewhere 
-    mT_vehicle_base = KDL::Frame::Identity(); 
+    mT_vehicle_base = mManip->getBaseInVehicleFrame(); 
     mPlanFound = false; 
     mPlans.clear(); // i may regret this in the future 
 

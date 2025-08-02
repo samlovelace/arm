@@ -41,4 +41,13 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     mConfig.initialPosition = manipConfig["initial_positions"].as<std::vector<double>>();
     mConfig.accelLimit = manipConfig["accel_limits"].as<std::vector<double>>();
     mConfig.jerkLimit = manipConfig["jerk_limits"].as<std::vector<double>>(); 
+
+    auto xyz = manipConfig["mount"]["position"].as<std::vector<double>>(); 
+    auto q = manipConfig["mount"]["quaternion"].as<std::vector<double>>(); 
+
+    KDL::Vector p(xyz[0], xyz[1], xyz[2]); 
+    KDL::Rotation r(KDL::Rotation::Quaternion(q[0],q[1],q[2],q[3]));
+    
+    KDL::Frame T_V_B(r, p); 
+    mConfig.T_V_B = T_V_B; 
 }

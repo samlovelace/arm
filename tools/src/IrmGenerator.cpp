@@ -39,7 +39,7 @@ bool IrmGenerator::generate()
     std::cout << "Upper Joint Limits: " << jntMaxLimits.data << std::endl;
 
     // TODO: make configurable 
-    float resolution = 25;
+    float resolution = 12;
     KDL::JntArray jntCfg(numJoints); 
     std::vector<size_t> indices(numJoints, 0); 
 
@@ -85,7 +85,7 @@ void IrmGenerator::compute(const KDL::JntArray& aJntCfg)
     double manipulability = mKinematicsHandler->computeManipulability(aJntCfg); 
     
     // TODO: make this smarter/adaptive
-    double manipulabilityThreshold = 0.25;  
+    double manipulabilityThreshold = 0.0;  
     if(isnan(manipulability) || manipulability < manipulabilityThreshold)
     {
         //std::cout << "Low manipulability joint config. Skipping..." << std::endl; 
