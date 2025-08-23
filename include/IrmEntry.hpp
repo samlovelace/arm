@@ -12,4 +12,11 @@ struct IrmEntry
 
 };
 
+struct IrmEntryBinary {
+    double position[3];
+    double orientation[9];
+    double manipulability;
+};
+
+
 #endif 

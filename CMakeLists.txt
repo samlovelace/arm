@@ -16,7 +16,6 @@ find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(nlohmann_json REQUIRED)
 
 find_package(pcl_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
@@ -28,6 +27,16 @@ find_package(PCL REQUIRED)
 set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(RUCKIG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(dependencies/ruckig)
+
+include(FetchContent)
+
+FetchContent_Declare(
+  simdjson
+  GIT_REPOSITORY https://github.com/simdjson/simdjson.git
+  GIT_TAG        master  # or a specific release tag
+)
+
+FetchContent_MakeAvailable(simdjson)
 
 set(COMMON_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
@@ -82,12 +91,13 @@ ament_target_dependencies(${PROJECT_NAME}
   ${COMMON_LIBS}
 )
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp nlohmann_json::nlohmann_json ruckig ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} yaml-cpp simdjson ruckig ${PCL_LIBRARIES})
 
 if(BUILD_ARM_TOOLS)
     message(STATUS "Building test tool executable")
 
     find_package(ament_index_cpp REQUIRED)
+    find_package(nlohmann_json REQUIRED)
 
     set(TOOL_SOURCES
       ${CMAKE_CURRENT_LIST_DIR}/tools/src/IrmGenerator.cpp

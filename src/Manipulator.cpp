@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <thread>
 #include <fstream> 
-#include <nlohmann/json.hpp>
+#include <simdjson.h>
 
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
@@ -184,61 +184,52 @@ void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
 }
 
 void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)
-{   
-    std::ifstream file(mConfig.inverseReachMap); 
-    
-    if (!file.is_open()) 
+{
+    std::ifstream infile(aFilePath, std::ios::binary);
+    if (!infile.is_open())
     {
-        LOGE << "Failed to open " << mConfig.inverseReachMap; 
+        LOGE << "Failed to open IRM binary file: " << aFilePath;
         return;
     }
 
-    nlohmann::json jsonData;
-    try 
+    // Determine file size and number of entries
+    infile.seekg(0, std::ios::end);
+    size_t fileSize = infile.tellg();
+    infile.seekg(0, std::ios::beg);
+
+    size_t numEntries = fileSize / sizeof(IrmEntryBinary);
+    if (numEntries == 0)
     {
-        file >> jsonData;
-    } 
-    catch (const std::exception& e) 
-    {
-        LOGE << "Error parsing JSON: " << e.what();
+        LOGE << "IRM binary file is empty or invalid: " << aFilePath;
         return;
     }
 
-    for(const auto& entry : jsonData["irm"])
+    std::vector<IrmEntryBinary> rawEntries(numEntries);
+    infile.read(reinterpret_cast<char*>(rawEntries.data()), fileSize);
+    infile.close();
+
+    mInverseReachabilityMap.clear();
+    mInverseReachabilityMap.reserve(numEntries);
+
+    for (const auto& raw : rawEntries)
     {
-        // Parse position
-        double x = entry["P_ee_base"][0];
-        double y = entry["P_ee_base"][1];
-        double z = entry["P_ee_base"][2];
-
-        KDL::Vector pos(x, y, z);
-
-        // Parse rotation (row-major order)
-        const auto& R = entry["R_ee_base"];
+        // Build KDL::Frame from binary entry
         KDL::Rotation rot(
-            R[0], R[1], R[2],  // Row 0
-            R[3], R[4], R[5],  // Row 1
-            R[6], R[7], R[8]   // Row 2
+            raw.orientation[0], raw.orientation[1], raw.orientation[2],
+            raw.orientation[3], raw.orientation[4], raw.orientation[5],
+            raw.orientation[6], raw.orientation[7], raw.orientation[8]
         );
 
-        KDL::Frame frame(rot, pos); 
-        KDL::JntArray jntCfg;
-        
-        auto jnts = entry["joints"]; 
-        jntCfg.resize(jnts.size()); 
+        KDL::Vector pos(raw.position[0], raw.position[1], raw.position[2]);
+        KDL::Frame frame(rot, pos);
 
-        for(int i = 0; i < jnts.size(); i++)
-        {
-            jntCfg(i) = jnts[i]; 
-        }
+        IrmEntry irmEntry;
+        irmEntry.T_ee_base = frame;
+        irmEntry.manipulability = raw.manipulability;
 
-        IrmEntry irmEntry; 
-        irmEntry.T_ee_base = frame; 
-        irmEntry.manipulability = entry["manipulability"]; 
-        irmEntry.jntAngles = jntCfg; 
-
-        mInverseReachabilityMap.push_back(irmEntry); 
+        mInverseReachabilityMap.push_back(std::move(irmEntry));
     }
 
-    LOGD << "Parsed manipulator inverse reachability map!";
+    LOGD << "Loaded " << mInverseReachabilityMap.size() << " IRM entries from binary file!";
 }
+

@@ -16,109 +16,130 @@ MobileArmTaskPlanner::~MobileArmTaskPlanner()
 
 bool MobileArmTaskPlanner::init()
 {
-    mInverseReachMap = mManip->getInverseReachabilityMap(); 
+    //mInverseReachMap = mManip->getInverseReachabilityMap(); 
 
-    if(mInverseReachMap.empty())
-    {
-        LOGE << "Inverse reachability map not properly configured"; 
-        return false; 
-    }
+    // if(mInverseReachMap.empty())
+    // {
+    //     LOGE << "Inverse reachability map not properly configured"; 
+    //     return false; 
+    // }
 
     mT_vehicle_base = mManip->getBaseInVehicleFrame(); 
     mPlanFound = false; 
+    mPlanningFailed = false; 
     mPlans.clear(); // i may regret this in the future 
 
     return true; 
 }
 
-bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/, pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud)
+bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
+                                    pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud)
 {
-    LOGD << "MobileArmTaskPlanner planning for pick task"; 
-   
+    LOGD << "MobileArmTaskPlanner planning for pick task";
+
     if (!aCloud || aCloud->empty())
     {
         LOGE << "Input cloud is empty!";
         return false;
     }
 
-    Eigen::Affine3f T_g_ee_temp; 
-    mGraspPlanner->plan(aCloud, T_g_ee_temp);
-    KDL::Frame T_g_ee = utils::affineToKDLFrame(T_g_ee_temp); 
+    // Desired grasp pose in global frame
+    Eigen::Affine3f T_g_ee_aff;
+    if (!mGraspPlanner->plan(aCloud, T_g_ee_aff)) {
+        LOGE << "Grasp planner failed to produce T_g_ee";
+        return false;
+    }
+    KDL::Frame T_g_ee = utils::affineToKDLFrame(T_g_ee_aff);
 
-    size_t numCandidates = mInverseReachMap.size(); 
-    int candidateNum = 0; 
-    
-    for(const auto& entry : mInverseReachMap)
-    {
-        float score = 0.0;
-
-        // base candidate 
-        KDL::Frame T_g_base; 
-        T_g_base = T_g_ee * entry.T_ee_base; 
-
-        KDL::Frame T_base_ee; 
-        T_base_ee = T_g_base.Inverse() * T_g_ee; 
-
-        KDL::Frame newT_g_ee; 
-        newT_g_ee = T_g_base * T_base_ee; 
-
-        // TODO: should i use the jntAngles from the IRM or current joint pos? 
-        KDL::JntArray currentPos = entry.jntAngles;  
-        KDL::JntArray resultPos; 
-        resultPos.resize(currentPos.rows()); 
-
-        if(!mManip->getKinematicsHandler()->solveIK(currentPos, T_base_ee, resultPos))
-        {
-            // bad Inverse Kinematics
-            LOGV << "Could not solve Inverse Kinematics. Skipping..."; 
-            continue; 
-        }
-
-        // TODO: add more scoring metrics 
-        score += entry.manipulability; 
-
-        BaseCandidate candidate; 
-        candidate.T_g_base = T_g_base; 
-        candidate.score = score; 
-        candidate.jntAnglesFromIK = resultPos; 
-
-        mBaseCandidates.push_back(candidate); 
-        //LOGV << "Added base candidate with score: " << score; 
+    const std::vector<IrmEntry>& inverseReachMap = mManip->getInverseReachabilityMap();
+    if (inverseReachMap.empty()) {
+        LOGE << "IRM is empty";
+        return false;
     }
 
-    LOGD << "Scored all candidates, sorting..."; 
+    // Build a valid IK seed (size must match DOF)
+    auto kh = mManip->getKinematicsHandler();
+    const int dof = kh->getNrJoints();  // or chain.getNrOfJoints()
+    KDL::JntArray q_min = kh->getJointLimits("lower");
+    KDL::JntArray q_max = kh->getJointLimits("upper");
 
-    std::sort(mBaseCandidates.begin(), mBaseCandidates.end(), 
-              [](const BaseCandidate& a, const BaseCandidate& b)
-    {   
-        return a.score > b.score; 
-    }); 
+    auto makeMidSeed = [&](KDL::JntArray& q){
+        q.resize(dof);
+        for (int i = 0; i < dof; ++i)
+            q(i) = 0.5 * (q_min(i) + q_max(i));
+    };
 
-    // now sorted, take the first element
-    BaseCandidate bestBaseCandidate = mBaseCandidates.front();  
-    
-    LOGD << "Using candidate with highest score: " << bestBaseCandidate.score; 
+    mBaseCandidates.clear();
+    mBaseCandidates.reserve(std::min<size_t>(inverseReachMap.size(), 50000)); // avoid huge growth
 
-    // // ultimately want to determine desired pose of robot
-    // // using T_base_vehicle, fixed transform for rigidly mounted arm 
-    KDL::Frame T_g_base = bestBaseCandidate.T_g_base; 
-    KDL::Frame T_G_V = T_g_base * mT_vehicle_base.Inverse();
+    int candidateNum = 0;
+    for (const auto& entry : inverseReachMap)
+    {
+        // IK target in manip base frame: base->ee
+        // IRM stores ee->base, so invert it
+        KDL::Frame T_base_ee = entry.T_ee_base.Inverse();
 
-    // T_G_V represents the desired global pose of the robot to allow the manip to grasp at T_g_ee
+        // (Optional) if your IK tip is "tool" but IRM used "ee", apply fixed offset:
+        // KDL::Frame T_ee_tool = mT_ee_tool;             // ee->tool (constant)
+        // T_base_ee = T_base_ee * T_ee_tool;              // now target is base->tool
 
-    LOGD << "Planned base pose in global: "; 
-    utils::logFrame(T_G_V); 
-    LOGD << "Joint Pos: " << bestBaseCandidate.jntAnglesFromIK.data; 
+        // Compose base pose candidate in global frame for scoring/output
+        KDL::Frame T_g_base = T_g_ee * entry.T_ee_base;
 
-    // Populate the plans vector 
-    Plan plan; 
-    plan.mPlanType = "pick"; 
-    plan.mT_G_V = T_G_V; 
-    plan.mGoalJointPos = bestBaseCandidate.jntAnglesFromIK; 
-    mPlans.push_back(plan); 
+        // Make a valid seed (mid limits). If you keep previous success, use that instead.
+        KDL::JntArray seed;
+        makeMidSeed(seed);
 
-    mPlanFound = true; 
+        KDL::JntArray resultPos; resultPos.resize(dof);
+        const bool ik_ok = kh->solveIK(seed, T_base_ee, resultPos);
+        if (!ik_ok) {
+            // Could also try a second seed (e.g., q_min or q_max) before skipping
+            // makeMinSeed / makeMaxSeed if you like.
+            continue;
+        }
+
+        float score = static_cast<float>(entry.manipulability); // add more terms if you want
+        BaseCandidate candidate;
+        candidate.T_g_base = T_g_base;
+        candidate.score = score;
+        candidate.jntAnglesFromIK = resultPos;
+        mBaseCandidates.push_back(std::move(candidate));
+
+        ++candidateNum;
+    }
+
+    if (mBaseCandidates.empty())
+    {
+        LOGW << "No feasible base candidates found (IK failed for all). "
+                "Common causes: empty/invalid IK seed size, tip-link mismatch, or wrong limits.";
+        mPlanningFailed = true;
+        return false;
+    }
+
+    std::sort(mBaseCandidates.begin(), mBaseCandidates.end(),
+              [](const BaseCandidate& a, const BaseCandidate& b){ return a.score > b.score; });
+
+    const BaseCandidate& best = mBaseCandidates.front();
+
+    // Convert base candidate to desired global vehicle pose:
+    // T_G_V = T_G_base * (T_V_base)^-1
+    KDL::Frame T_G_V = best.T_g_base * mT_vehicle_base.Inverse();
+
+    LOGD << "Best score: " << best.score;
+    LOGD << "Desired vehicle pose (global):";
+    utils::logFrame(T_G_V);
+    LOGD << "Goal joints: " << best.jntAnglesFromIK.data;
+
+    Plan plan;
+    plan.mPlanType = "pick";
+    plan.mT_G_V = T_G_V;
+    plan.mGoalJointPos = best.jntAnglesFromIK;
+    mPlans.push_back(std::move(plan));
+
+    mPlanFound = true;
+    return true;
 }
+
 
 
 bool MobileArmTaskPlanner::planPlace(const Eigen::Vector3d& /*aPlacePos_G*/)

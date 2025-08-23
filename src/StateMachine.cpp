@@ -69,6 +69,12 @@ void StateMachine::run()
                     RosTopicManager::getInstance()->publishMessage<arm_idl::msg::PlanResponse>("arm/response", planResponse);
                     setActiveState(StateMachine::STATE::MOVING); 
                 }
+                else if (mPlanner->didPlanningFail())
+                {
+                    // TODO: send response back to autonomy 
+                    LOGD << "Failed to find plans :("; 
+                    setActiveState(StateMachine::STATE::IDLE); 
+                }
                 break;
             default:
                 break;

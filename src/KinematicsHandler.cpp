@@ -62,7 +62,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
     mFkSolver = std::make_shared<KDL::ChainFkSolverPos_recursive>(mChain);
     mVelSolver = std::make_shared<KDL::ChainIkSolverVel_pinv>(mChain);
-    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-4);
+    mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-1);
     mJacobianSolver = std::make_shared<KDL::ChainJntToJacSolver>(mChain); 
 
     LOGD << "KinematicsHandler initialized successfully"; 
@@ -73,16 +73,29 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
 {
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
+    
+    // KDL::Frame fkPose;
+    // int fkResult = mFkSolver->JntToCart(aResultOut, fkPose);
+    // KDL::Frame err = aGoalPose * fkPose.Inverse(); 
+
+    // // Position
+    // double x = err.p.x();
+    // double y = err.p.y();
+    // double z = err.p.z();
+
+    // // Orientation (Quaternion)
+    // double qx, qy, qz, qw;
+    // err.M.GetQuaternion(qx, qy, qz, qw);
+
+    // LOGD << "Error Frame Position: x=" << x << ", y=" << y << ", z=" << z;
+    // //LOGD << "Frame Orientation (quaternion): qw=" << qw
+    // //    << ", qx=" << qx << ", qy=" << qy << ", qz=" << qz;
 
     if(result != 0)
     {
-        LOGW << "Failed to solve IK, error code: " << result; 
+        //LOGW << "Failed to solve IK, error code: " << result; 
         return false; 
     }
-    
-    KDL::Frame fkPose;
-    int fkResult = mFkSolver->JntToCart(aResultOut, fkPose);
-    KDL::Frame err = aGoalPose * fkPose.Inverse(); 
 
     return true; 
 }

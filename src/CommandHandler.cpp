@@ -139,7 +139,12 @@ void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr 
         return; 
     }
 
-    mArmTaskPlanner->init(); 
+    if(!mArmTaskPlanner->init())
+    {
+        LOGE << "Failed to initiliaze task planner"; 
+        return; 
+    }
+     
     setNewActiveState(StateMachine::STATE::PLANNING); 
 
     // TODO: improve location where these are saved

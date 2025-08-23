@@ -28,6 +28,16 @@ namespace utils
             << ", qx=" << qx << ", qy=" << qy << ", qz=" << qz;
     }
 
+    inline void logPos(const KDL::Frame& frame, const std::string& header)
+    {
+        // Position
+        double x = frame.p.x();
+        double y = frame.p.y();
+        double z = frame.p.z();
+
+        LOGD << header << ": x=" << x << ", y=" << y << ", z=" << z;
+    }
+
     inline void printJntArray(const KDL::JntArray& joints, const std::string& label = "JntArray")
     {
         std::ostringstream oss;

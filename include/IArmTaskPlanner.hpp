@@ -26,6 +26,8 @@ public:
     bool isPlanFound() {return mPlanFound; }
     std::vector<Plan> getCurrentPlans() {return mPlans; }
 
+    bool didPlanningFail() {return mPlanningFailed; }
+
     void setGraspPlanner(std::shared_ptr<IGraspPlanner> aGraspPlanner) { mGraspPlanner = aGraspPlanner; }
     void setManipulator(std::shared_ptr<Manipulator> aManip) {mManip = aManip; }
 
@@ -34,6 +36,7 @@ protected:
     std::shared_ptr<Manipulator> mManip; 
 
     bool mPlanFound; 
+    bool mPlanningFailed; 
     std::vector<Plan> mPlans; 
 };
 #endif //IARMTASKPLANNER_HPP
