@@ -7,11 +7,11 @@
 #include "Manipulator.h"
 #include "IArmTaskPlanner.hpp"
 
-#include "arm_idl/msg/joint_position_waypoint.hpp"
-#include "arm_idl/msg/enable.hpp"
-#include "arm_idl/msg/task_position_waypoint.hpp"
-#include "arm_idl/msg/plan_command.hpp"
-#include "arm_idl/msg/plan_response.hpp"
+#include "robot_idl/msg/joint_position_waypoint.hpp"
+#include "robot_idl/msg/enable.hpp"
+#include "robot_idl/msg/task_position_waypoint.hpp"
+#include "robot_idl/msg/plan_command.hpp"
+#include "robot_idl/msg/plan_response.hpp"
 
 class CommandHandler 
 { 
@@ -23,10 +23,10 @@ private:
 
     void setNewActiveState(StateMachine::STATE aState); 
 
-    void jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
-    void taskPosWaypointCallback(const arm_idl::msg::TaskPositionWaypoint::SharedPtr aMsg); 
-    void enableCallback(const arm_idl::msg::Enable::SharedPtr anEnabledCmd); 
-    void commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd); 
+    void jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
+    void taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg); 
+    void enableCallback(const robot_idl::msg::Enable::SharedPtr anEnabledCmd); 
+    void commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd); 
 
     std::shared_ptr<StateMachine> mStateMachine;
     std::shared_ptr<Manipulator> mManip;  

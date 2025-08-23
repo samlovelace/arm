@@ -9,29 +9,29 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
     mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner), mJointWaypointRcvd(false)
 {
     auto topicManager = RosTopicManager::getInstance(); 
-    topicManager->createSubscriber<arm_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
+    topicManager->createSubscriber<robot_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
                                                                         std::bind(&CommandHandler::jointPosWaypointCallback, 
                                                                                   this, 
                                                                                   std::placeholders::_1)); 
 
-    topicManager->createSubscriber<arm_idl::msg::Enable>("arm/enable", 
+    topicManager->createSubscriber<robot_idl::msg::Enable>("arm/enable", 
                                                          std::bind(&CommandHandler::enableCallback, 
                                                                    this, 
                                                                    std::placeholders::_1)); 
 
-    topicManager->createSubscriber<arm_idl::msg::TaskPositionWaypoint>("arm/task_position_waypoint", 
+    topicManager->createSubscriber<robot_idl::msg::TaskPositionWaypoint>("arm/task_position_waypoint", 
                                                                        std::bind(&CommandHandler::taskPosWaypointCallback, 
                                                                                 this, 
                                                                                 std::placeholders::_1)); 
 
-    topicManager->createSubscriber<arm_idl::msg::PlanCommand>("arm/command", 
+    topicManager->createSubscriber<robot_idl::msg::PlanCommand>("arm/command", 
                                                           std::bind(&CommandHandler::commandCallback, 
                                                                     this, 
                                                                     std::placeholders::_1)); 
 
 
     // TODO: is this the best place to put this? Idk where else to put it 
-    topicManager->createPublisher<arm_idl::msg::PlanResponse>("arm/response"); 
+    topicManager->createPublisher<robot_idl::msg::PlanResponse>("arm/response"); 
 
     topicManager->spinNode(); 
 
@@ -57,7 +57,7 @@ void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
     }
 }
 
-void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnabledCmd)
+void CommandHandler::enableCallback(const robot_idl::msg::Enable::SharedPtr anEnabledCmd)
 { 
     // determine how to transition the state machine 
     if(anEnabledCmd->enabled && !mManip->isEnabled())
@@ -75,7 +75,7 @@ void CommandHandler::enableCallback(const arm_idl::msg::Enable::SharedPtr anEnab
     }
 }
 
-void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
+void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
     if(!mManip->isEnabled())
     {
@@ -108,7 +108,7 @@ void CommandHandler::jointPosWaypointCallback(const arm_idl::msg::JointPositionW
     mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
 }
 
-void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
+void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
 {
     if(!mManip->isEnabled())
     {
@@ -128,9 +128,9 @@ void CommandHandler::taskPosWaypointCallback(const arm_idl::msg::TaskPositionWay
     setNewActiveState(StateMachine::STATE::MOVING); 
 }
 
-void CommandHandler::commandCallback(const arm_idl::msg::PlanCommand::SharedPtr aCmd)
+void CommandHandler::commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd)
 {
-    std::string task = aCmd->operation_type == arm_idl::msg::PlanCommand::PICK ? "pick" : "place"; 
+    std::string task = aCmd->operation_type == robot_idl::msg::PlanCommand::PICK ? "pick" : "place"; 
     LOGD << "Receieved plan request for task: " << task; 
 
     if(!mManip->isEnabled())

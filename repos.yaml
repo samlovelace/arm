@@ -3,9 +3,9 @@ repositories:
     type: git
     url: https://github.com/samlovelace/arm_configs.git
     version: main
-  arm_idl:
+  robot_idl:
     type: git
-    url: https://github.com/samlovelace/arm_idl.git
+    url: https://github.com/samlovelace/robot_idl.git
     version: main
   arm_simulator:
     type: git

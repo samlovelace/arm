@@ -10,7 +10,7 @@ option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(arm_idl REQUIRED)
+find_package(robot_idl REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -85,7 +85,7 @@ set(COMMON_LIBS
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   std_msgs
-  arm_idl
+  robot_idl
   pcl_msgs
   pcl_conversions
   ${COMMON_LIBS}
