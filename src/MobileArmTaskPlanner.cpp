@@ -59,7 +59,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
 
     // Build a valid IK seed (size must match DOF)
     auto kh = mManip->getKinematicsHandler();
-    const int dof = kh->getNrJoints();  // or chain.getNrOfJoints()
+    const int dof = kh->getNrJoints(); 
     KDL::JntArray q_min = kh->getJointLimits("lower");
     KDL::JntArray q_max = kh->getJointLimits("upper");
 
@@ -70,7 +70,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
     };
 
     mBaseCandidates.clear();
-    mBaseCandidates.reserve(std::min<size_t>(inverseReachMap.size(), 50000)); // avoid huge growth
+    mBaseCandidates.reserve(std::min<size_t>(inverseReachMap.size(), 50000));
 
     int candidateNum = 0;
     for (const auto& entry : inverseReachMap)
@@ -79,14 +79,8 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
         // IRM stores ee->base, so invert it
         KDL::Frame T_base_ee = entry.T_ee_base.Inverse();
 
-        // (Optional) if your IK tip is "tool" but IRM used "ee", apply fixed offset:
-        // KDL::Frame T_ee_tool = mT_ee_tool;             // ee->tool (constant)
-        // T_base_ee = T_base_ee * T_ee_tool;              // now target is base->tool
-
         // Compose base pose candidate in global frame for scoring/output
         KDL::Frame T_g_base = T_g_ee * entry.T_ee_base;
-
-        // Make a valid seed (mid limits). If you keep previous success, use that instead.
         KDL::JntArray seed;
         makeMidSeed(seed);
 
@@ -94,7 +88,6 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
         const bool ik_ok = kh->solveIK(seed, T_base_ee, resultPos);
         if (!ik_ok) {
             // Could also try a second seed (e.g., q_min or q_max) before skipping
-            // makeMinSeed / makeMaxSeed if you like.
             continue;
         }
 
@@ -110,8 +103,7 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
 
     if (mBaseCandidates.empty())
     {
-        LOGW << "No feasible base candidates found (IK failed for all). "
-                "Common causes: empty/invalid IK seed size, tip-link mismatch, or wrong limits.";
+        LOGW << "No feasible base candidates found"; 
         mPlanningFailed = true;
         return false;
     }
@@ -139,8 +131,6 @@ bool MobileArmTaskPlanner::planPick(const Eigen::Vector3d& /*aCentroid_G*/,
     mPlanFound = true;
     return true;
 }
-
-
 
 bool MobileArmTaskPlanner::planPlace(const Eigen::Vector3d& /*aPlacePos_G*/)
 {
