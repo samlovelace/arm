@@ -41,9 +41,14 @@ void StateMachine::run()
                 
                 if(!goalSet && !mPlanner->getCurrentPlans().empty())
                 {
-                    JointPositionWaypoint wp; 
-                    wp.setJointPositionGoal(mPlanner->getCurrentPlans()[0].mGoalJointPos); 
+                    KDL::JntArray goal = mPlanner->getCurrentPlans()[0].mGoalJointPos; 
+                    KDL::JntArray tol(goal.rows()); 
+                    for(int i = 0; i < goal.rows(); i++)
+                    {
+                        tol(i) = 1; 
+                    }
 
+                    JointPositionWaypoint wp(goal, tol);
                     mManipulator->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp)); 
                     goalSet = true; 
                 }

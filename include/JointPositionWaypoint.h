@@ -1,27 +1,30 @@
 #ifndef JOINTPOSITIONWAYPOINT_H
 #define JOINTPOSITIONWAYPOINT_H
- 
-#include <kdl/jntarray.hpp> 
 
-class JointPositionWaypoint 
-{ 
+#include "IWaypoint.hpp"
+
+class JointPositionWaypoint final : public IWaypoint 
+{
+
 public:
-    JointPositionWaypoint();
-    ~JointPositionWaypoint();
+    JointPositionWaypoint(const KDL::JntArray& goal, const KDL::JntArray& tol);
 
-    JointPositionWaypoint(const KDL::JntArray& aJointGoal, const KDL::JntArray& anArrival); 
+    Kind kind() const noexcept override;
 
-    inline void setJointPositionGoal(const KDL::JntArray& aGoal) {mGoal = aGoal; }
-    inline void setArrivalTolerance(const KDL::JntArray& aTolerance) {mArrivalTolerance = aTolerance; }
+    bool toJointGoal(const KDL::JntArray& q_seed,
+                    KinematicsHandler& kin,
+                    KDL::JntArray& q_goal_out) const override;
 
-    inline KDL::JntArray jointPositionGoal() {return mGoal; }
-    inline KDL::JntArray arrivalTolerance() {return mArrivalTolerance; }
+    bool arrived(const ControlInputs& s) const override;
 
-    std::string toString(); 
+    const KDL::JntArray& goal() const noexcept;
+    const KDL::JntArray& tol()  const noexcept;
+
+    std::string describe() const override;
 
 private:
-    KDL::JntArray mGoal; 
-    KDL::JntArray mArrivalTolerance; 
-   
+    KDL::JntArray mGoal; // radians
+    KDL::JntArray mTol;  // per-joint radians
 };
-#endif //JOINTPOSITIONWAYPOINT_H
+
+#endif 

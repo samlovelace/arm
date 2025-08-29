@@ -12,8 +12,9 @@
 #include "ConfigManager.h"
 #include "RateController.h"
 #include "WaypointExecutor.h"
-#include "JointPositionWaypoint.h"
+#include "IWaypoint.hpp"
 #include "TaskPositionWaypoint.h"
+#include "JointPositionWaypoint.h"
 #include "KinematicsHandler.h"
 #include "IrmEntry.hpp"
 
@@ -31,10 +32,10 @@ public:
     }; 
 
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
-    void setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp); 
-    void setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp); 
+    void setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp);
+    void setGoalWaypoint(std::shared_ptr<IWaypoint> aWp); 
 
-    std::shared_ptr<JointPositionWaypoint> getGoalWaypoint(); 
+    std::shared_ptr<IWaypoint> getGoalWaypoint(); 
     bool isArrived(); 
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
@@ -61,7 +62,8 @@ private:
     std::mutex mEnabledMutex; 
     bool mEnabled; 
 
-    std::shared_ptr<JointPositionWaypoint> mGoalWaypoint; 
+    std::shared_ptr<IWaypoint> mInitialGoalWp; 
+    std::shared_ptr<IWaypoint> mGoalWaypoint; 
 
     std::map<POSE, KDL::JntArray> mArmPoseMap; 
 

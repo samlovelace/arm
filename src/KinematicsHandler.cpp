@@ -71,6 +71,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
+    LOGW << "Chain size: " << mChain.getNrOfJoints() << " anInitPos size: " << anInitPos.rows(); 
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
     
@@ -93,7 +94,7 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
 
     if(result != 0)
     {
-        //LOGW << "Failed to solve IK, error code: " << result; 
+        LOGW << "Failed to solve IK, error code: " << result; 
         return false; 
     }
 
@@ -102,8 +103,21 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
 
 bool KinematicsHandler::solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut)
 {
-    int fkResult = mFkSolver->JntToCart(anInitPos, aFrameOut); 
+    int fkResult = mFkSolver->JntToCart(anInitPos, aFrameOut);
     
+    // // Position
+    // double x = aFrameOut.p.x();
+    // double y = aFrameOut.p.y();
+    // double z = aFrameOut.p.z();
+
+    // // Orientation (Quaternion)
+    // double qx, qy, qz, qw;
+    // aFrameOut.M.GetQuaternion(qx, qy, qz, qw);
+
+    // LOGD << "Frame Position: x=" << x << ", y=" << y << ", z=" << z;
+    // LOGD << "Frame Orientation (quaternion): qw=" << qw
+    //     << ", qx=" << qx << ", qy=" << qy << ", qz=" << qz; 
+
     if(0 > fkResult)
     {
         return false; 

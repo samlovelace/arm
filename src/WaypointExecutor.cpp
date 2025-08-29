@@ -16,22 +16,27 @@ WaypointExecutor::~WaypointExecutor()
 
 }
 
-void WaypointExecutor::initializeExecutor(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
+void WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
 {
     setInitialState(aCurrentJointPos, aCurrentJointVel); 
-    setGoalState(aGoalWaypoint); 
+    setGoalState(aGoalJointPos); 
 }
 
-void WaypointExecutor::setGoalState(std::shared_ptr<JointPositionWaypoint> aGoalWaypoint)
+void WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
 {
-    const size_t numJnts = aGoalWaypoint->jointPositionGoal().rows(); 
+    if(mNumDof != aGoalWaypoint.rows())
+    {
+        LOGW << "Goal state not equal to DOF size"; 
+        return; 
+    }
+    
     std::vector<double> goalPos(mNumDof); 
     std::vector<double> goalVel(mNumDof); 
     std::vector<double> goalAccel(mNumDof); 
 
-    for(int i = 0; i < aGoalWaypoint->jointPositionGoal().rows(); i++)
+    for(int i = 0; i < mNumDof; i++)
     {
-        goalPos[i] = aGoalWaypoint->jointPositionGoal()(i); 
+        goalPos[i] = aGoalWaypoint(i); 
         goalVel[i] = 0.0; 
         goalAccel[i] = 0.0;  
     }

@@ -101,6 +101,19 @@ namespace utils
         return response; 
     }
 
+    inline std::array<float, 6> toArray6(const std::vector<double>& v) 
+    {
+        if (v.size() < 6) {
+            throw std::runtime_error("Vector has fewer than 6 elements");
+        }
+
+        std::array<float, 6> arr;
+        for (size_t i = 0; i < 6; ++i) {
+            arr[i] = static_cast<float>(v[i]);
+        }
+        return arr;
+    }
+
 
 }
 

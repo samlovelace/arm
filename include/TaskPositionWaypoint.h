@@ -1,27 +1,32 @@
 #ifndef TASKPOSITIONWAYPOINT_H
 #define TASKPOSITIONWAYPOINT_H
- 
-#include <string> 
-#include <vector> 
-#include "kdl/frames.hpp"
- 
-class TaskPositionWaypoint 
-{ 
-public:
-    TaskPositionWaypoint(const KDL::Frame& aGoalPose, const std::vector<double>& anArrivalTolerance, const std::string& aCommandFrame);
-    ~TaskPositionWaypoint();
 
-    KDL::Frame getGoalPose() {return mGoalPose;}
-    std::string getCommandFrame() {return mCommandFrame; }
-    std::vector<double> getArrivalTolerances() {return mArrivalTolerances; }
+#include "IWaypoint.hpp"
+#include <array>
+
+class TaskPositionWaypoint final : public IWaypoint {
+public:
+  // tol = [ tx, ty, tz, r_roll, r_pitch, r_yaw ]  (meters, radians)
+  using Tol6 = std::array<float, 6>;
+
+  TaskPositionWaypoint(const KDL::Frame& T_goal, const Tol6& tol);
+
+  Kind kind() const noexcept override;
+
+  bool toJointGoal(const KDL::JntArray& q_seed,
+                   KinematicsHandler& kin,
+                   KDL::JntArray& q_goal_out) const override;
+
+  bool arrived(const ControlInputs& s) const override;
+
+  const KDL::Frame& goal() const noexcept;
+  const Tol6&       tol()  const noexcept;
+
+  std::string describe() const override;
 
 private:
-    // TODO: make this an enum 
-    std::string mCommandFrame; 
-    KDL::Frame mGoalPose;
-    
-    // TODO: could probs use a std::array here for fixed size 
-    std::vector<double> mArrivalTolerances; 
-
+  KDL::Frame mGoal;
+  Tol6       mTol;   // per-axis linear (m) and angular (rad) tolerances
 };
+
 #endif //TASKPOSITIONWAYPOINT_H

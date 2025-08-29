@@ -9,11 +9,10 @@
 #include <limits.h>
 #include <thread>
 #include <fstream> 
-#include <simdjson.h>
 
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
-mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false)
+                mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false)
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
     mManipComms->init(); 
@@ -33,8 +32,7 @@ mGoalWaypoint(std::make_shared<JointPositionWaypoint>()), mKinematicsHandler(std
         firstTol(i) = 0.01;
     }
 
-    mGoalWaypoint->setJointPositionGoal(firstWp); 
-    mGoalWaypoint->setArrivalTolerance(firstTol); 
+    mInitialGoalWp = std::make_shared<JointPositionWaypoint>(firstWp, firstTol); 
 
     if(mConfig.inverseReachMap != "")
     {
@@ -66,7 +64,7 @@ bool Manipulator::sendToPose(Manipulator::POSE aPose)
     return false; 
 }
 
-void Manipulator::setJointPositionGoal(const KDL::JntArray &aNewJntPos)
+void Manipulator::setJointPositionGoal(const KDL::JntArray& aNewJntPos)
 {
     std::lock_guard<std::mutex> lock(mGoalJntPosMutex); 
     mGoalJntPos = aNewJntPos; 
@@ -84,60 +82,71 @@ bool Manipulator::isEnabled()
     return mEnabled; 
 }
 
-void Manipulator::setGoalWaypoint(std::shared_ptr<JointPositionWaypoint> aWp)
+void Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
 {
     mGoalWaypoint = aWp; 
-    mWaypointExecutor->initializeExecutor(aWp, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
+
+    const KDL::JntArray q_cur = mManipComms->getJointPositions();
+
+    // HACK
+    KDL::JntArray jntsNoGripper(6); 
+    for(int i = 0; i < 6; i++)
+    {
+        jntsNoGripper(i) = q_cur(i); 
+    }
+
+    KDL::JntArray q_goal(6);
+
+    if (!mGoalWaypoint->toJointGoal(jntsNoGripper, *mKinematicsHandler, q_goal)) 
+    {
+        LOGW << "Could not produce joint-space goal from waypoint";
+        return;
+    }
+
+    mWaypointExecutor->initializeExecutor(q_goal, q_cur, mManipComms->getJointVelocities()); 
 } 
 
-std::shared_ptr<JointPositionWaypoint> Manipulator::getGoalWaypoint()
+std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()
 {
     return mGoalWaypoint;     
 }
 
 bool Manipulator::isArrived()
 {
-    // get the goal waypoint manip is currently tracking
-    KDL::JntArray goal = getGoalWaypoint()->jointPositionGoal();
-    KDL::JntArray tol = getGoalWaypoint()->arrivalTolerance();  
-    
-    // get the current joint position 
-    KDL::JntArray curr = mManipComms->getJointPositions(); 
+    IWaypoint::ControlInputs s;
+    s.q    = mManipComms->getJointPositions();
+    s.qdot = mManipComms->getJointVelocities(); 
 
-    for(int i = 0; i < curr.rows(); i++)
+    // Only compute FK if the waypoint might use it
+    if (mGoalWaypoint->kind() == IWaypoint::Kind::Task) 
     {
-        // TODO:: this probs wont work that well, need to be arrived for some time or check that vel is really small too
-        if(abs(curr(i) - goal(i)) > tol(i))
+        // HACK
+        KDL::JntArray jntsNoGripper(6); 
+        for(int i = 0; i < 6; i++)
         {
-            return false; 
+            jntsNoGripper(i) = s.q(i); 
+        }
+        
+        if (!mKinematicsHandler->solveFk(jntsNoGripper, s.T)) 
+        {
+            LOGW << "FK failed; not arrived";
+            return false;
         }
     }
 
-    // arrived so we can log final state
-    std::stringstream ss;  
-    ss << "Error: " << "\n"; 
-    for(int i = 0; i < curr.rows(); i++)
-    {
-        ss << "J" << i << " (deg): " << (180.0/M_PI) * (curr(i) - goal(i)) << "\n"; 
-    }
-
-    LOGD << ss.str(); 
-    return true;  
+    return mGoalWaypoint->arrived(s);
 }
 
 void Manipulator::startControl()
 {
-    mWaypointExecutor->initializeExecutor(mGoalWaypoint, mManipComms->getJointPositions(), mManipComms->getJointVelocities()); 
-    
-    // check if thread needs joined first, required for multiple enable/disable cmds
-    if(mControlThread.joinable())
-    {
-        mControlThread.join(); 
-    }
+    setGoalWaypoint(mInitialGoalWp); 
 
-    mControlThread = std::thread(&Manipulator::controlLoop, this); 
+    if (mControlThread.joinable()) 
+    {
+        mControlThread.join();
+    }
     
-    // anything else?? 
+    mControlThread = std::thread(&Manipulator::controlLoop, this);
 }
 
 void Manipulator::controlLoop()
@@ -159,28 +168,7 @@ void Manipulator::controlLoop()
 
 void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
 {
-    KDL::JntArray curPos = mManipComms->getJointPositions(); 
-    KDL::JntArray resultPos(6); 
-
-    mKinematicsHandler->solveIK(curPos, aWp->getGoalPose(), resultPos);
-
-    utils::printJntArray(resultPos, "IK Results"); 
-
-    if(0 != resultPos.rows())
-    {
-        // TODO: this arrival is nonsensical but i want to test the task pos 
-        std::vector<double> tol = aWp->getArrivalTolerances(); 
-        KDL::JntArray arrival(aWp->getArrivalTolerances().size()); 
-
-        for(int i = 0; i < aWp->getArrivalTolerances().size(); i++)
-        {
-            arrival(i) = tol[i]; 
-        } 
-
-        auto wp = std::make_shared<JointPositionWaypoint>(resultPos, arrival); 
-        setGoalWaypoint(wp);
-    }
-
+    setGoalWaypoint(aWp); 
 }
 
 void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)

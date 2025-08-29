@@ -4,6 +4,10 @@
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
 #include "PointCloudHandler.h"
+#include "Utils.h"
+
+#include "JointPositionWaypoint.h"
+#include "TaskPositionWaypoint.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
     mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner), mJointWaypointRcvd(false)
@@ -95,11 +99,8 @@ void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositio
         cmdTol(i) = aMsg->tolerances[i];
     }
 
-    JointPositionWaypoint wp; 
-    wp.setJointPositionGoal(jntPos); 
-    wp.setArrivalTolerance(cmdTol); 
+    JointPositionWaypoint wp(jntPos, cmdTol);
 
-    // TODO: better general purpose interface, eventually want mManip to operate on a IWaypoint* 
     // TODO: compare new goal waypoint to current goal waypoint so we arent spamming the setGoalWaypoint()
     // TODO: maybe some sort of check against current goal, whether new command is same/different, i want to send a goal waypoint
     //       and generate a smooth trajectory between current and goal, dont need constant waypoints from outsider? IDK 
@@ -122,9 +123,10 @@ void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionW
     KDL::Vector position(aMsg->pose.position.x, aMsg->pose.position.y, aMsg->pose.position.z);
     KDL::Frame goalPose(rot, position);
 
-    auto wp = std::make_shared<TaskPositionWaypoint>(goalPose, aMsg->tolerance, aMsg->command_frame.data);
+    //auto wp = TaskPositionWaypoint>(goalPose, utils::toArray6(aMsg->tolerance), aMsg->command_frame.data);
+    auto wp = TaskPositionWaypoint(goalPose, utils::toArray6(aMsg->tolerance)); 
 
-    mManip->setTaskGoal(wp); 
+    mManip->setTaskGoal(std::make_shared<TaskPositionWaypoint>(wp)); 
     setNewActiveState(StateMachine::STATE::MOVING); 
 }
 
