@@ -9,6 +9,26 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    env:
+      IDL_REPO_URL: https://github.com/samlovelace/robot_idl.git
+      CONFIGS_REPO_URL: https://github.com/samlovelace/arm_configs.git
+
+      ROS_META_PKG: ros-humble-ros-base
+      WS: robot_ws
+
     steps:
-      - name: testing
-        run: echo "Testing automatic workflow"
+      - name: Checkout A.R.M repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.WS }}/src
+
+      - name: clone A.R.M repo IDL dep
+        run: |
+          set -eux
+          mkdir -p "${WS}/src"
+          git clone --depth 1 "${IDL_REPO_URL}" "${WS}/src"
+
+      - name: clone A.R.M repo configs dep
+        run: |
+          set -eux
+          git clone --depth 1 "${CONFIGS_REPO_URL}" "${WS}/src"
