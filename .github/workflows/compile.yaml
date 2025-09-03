@@ -1,0 +1,14 @@
+name: auto compile
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: testing
+        run: echo "Testing automatic workflow"
