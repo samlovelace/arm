@@ -1,9 +1,10 @@
 # Agnostic Robot Manipulation (ARM)
 
+![Ubuntu 22.04](https://github.com/samlovelace/arm/actions/workflows/ci-ubuntu.yml/badge.svg?branch=main)
+
 ## Overview
 
 The **Agnostic Robot Manipulation (ARM)** module is a general-purpose planning and control system for robotic manipulators.
-
 
 ## Dependencies
 
