@@ -1,4 +1,4 @@
-name: auto-compile
+name: ci-ubuntu-22
 
 on:
   push:
