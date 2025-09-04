@@ -1,4 +1,4 @@
-name: ci-ubuntu-22
+name: ubuntu-22.04
 
 on:
   push:
