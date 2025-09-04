@@ -11,7 +11,9 @@ jobs:
 
     env:
       IDL_REPO_URL: https://github.com/samlovelace/robot_idl.git
+      IDL_REPO_DIR: robot_idl
       CONFIGS_REPO_URL: https://github.com/samlovelace/arm_configs.git
+      CONFIGS_REPO_DIR: arm_configs
 
       ROS_META_PKG: ros-humble-ros-base
       WS: robot_ws
@@ -26,9 +28,9 @@ jobs:
         run: |
           set -eux
           mkdir -p "${WS}/src"
-          git clone --depth 1 "${IDL_REPO_URL}" "${WS}/src"
+          git clone --depth 1 "${IDL_REPO_URL}" "${WS}/src/"${IDL_REPO_DIR}"
 
       - name: clone A.R.M repo configs dep
         run: |
           set -eux
-          git clone --depth 1 "${CONFIGS_REPO_URL}" "${WS}/src"
+          git clone --depth 1 "${CONFIGS_REPO_URL}" "${WS}/src/"${CONFIGS_REPO_DIR}"
