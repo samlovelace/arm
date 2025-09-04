@@ -6,6 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
+option(BUILD_TESTS "build GTests" OFF)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -23,20 +24,10 @@ find_package(pcl_conversions REQUIRED)
 set(PCL_DIR "/usr/local/pcl-1.15/lib/cmake/pcl")
 find_package(PCL REQUIRED)
 
-# Optional: disable Ruckig examples and tests
+# disable Ruckig examples and tests
 set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(RUCKIG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(dependencies/ruckig)
-
-include(FetchContent)
-
-FetchContent_Declare(
-  simdjson
-  GIT_REPOSITORY https://github.com/simdjson/simdjson.git
-  GIT_TAG        master  # or a specific release tag
-)
-
-FetchContent_MakeAvailable(simdjson)
 
 set(COMMON_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
@@ -91,7 +82,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ${COMMON_LIBS}
 )
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp simdjson ruckig ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES})
 
 if(BUILD_ARM_TOOLS)
     message(STATUS "Building test tool executable")
@@ -121,6 +112,14 @@ if(BUILD_ARM_TOOLS)
     target_include_directories(irm_generator PRIVATE ${TOOL_INCLUDE_DIRS})
 else()
     message(STATUS "Not building test tool executable")
+endif()
+
+if(BUILD_TESTS)
+  find_package(GTest REQUIRED)
+
+  add_executable(test_arm test/RunAll.cpp test/first.cpp)
+  target_link_libraries(test_arm gtest)
+
 endif()
 
 
