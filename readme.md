@@ -1,6 +1,6 @@
 # Agnostic Robot Manipulation (ARM)
 
-![Ubuntu 22.04](https://github.com/samlovelace/arm/actions/workflows/ci-ubuntu.yml/badge.svg?branch=main)
+![Ubuntu 22.04](https://github.com/samlovelace/arm/actions/workflows/ci-ubuntu.yaml/badge.svg?branch=main)
 
 ## Overview
 
