@@ -6,7 +6,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
-option(BUILD_TESTS "build GTests" OFF)
+option(BUILD_TESTS_ARM "build GTests" OFF)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -25,8 +25,8 @@ set(PCL_DIR "/usr/local/pcl-1.15/lib/cmake/pcl")
 find_package(PCL REQUIRED)
 
 # disable Ruckig examples and tests
-set(RUCKIG_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(RUCKIG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(dependencies/ruckig)
 
 set(COMMON_SOURCES
