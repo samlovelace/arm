@@ -108,7 +108,7 @@ mkdir -p "$LIB_DIR"
 mkdir -p "$WS"/src
 
 # Assumes robot_idl was cloned first and runs this install script
-#git clone https://github.com/samlovelace/robot_idl.git "$WS/src/robot_idl"
+git clone https://github.com/samlovelace/robot_idl.git "$WS/src/robot_idl"
 git clone https://github.com/samlovelace/arm_configs.git "$WS/src/arm_configs"
 
 #pcl 
