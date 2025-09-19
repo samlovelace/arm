@@ -1,9 +1,12 @@
 #!/bin/bash
 
+WS=$1
+
+source "$WS/src/robot_idl/scripts/common.sh" "$@"
+
 LIB_DIR="/opt"
 OPENCV_VERSION=4.7.0
 LIB_INSTALL_DIR="/usr/local"
-WS="/home/robot_ws"
 
 # Subtract 2 from total cores
 CORES=$(( $(nproc) - 4 ))
@@ -39,8 +42,6 @@ done
 mkdir -p "$LIB_DIR"
 mkdir -p "$WS"/src
 
-# Assumes robot_idl was cloned first and runs this install script
-git clone https://github.com/samlovelace/robot_idl.git "$WS/src/robot_idl"
 git clone https://github.com/samlovelace/arm_configs.git "$WS/src/arm_configs"
 
 #pcl 
@@ -61,8 +62,4 @@ make -j"$CORES" && make install && ldconfig
 cd "$WS"
 source /opt/ros/humble/setup.bash
 colcon build --packages-select robot_idl arm_configs arm 
-
-
-
-
 
