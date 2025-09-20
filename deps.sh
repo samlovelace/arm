@@ -20,12 +20,9 @@ DEPENDENCIES=(
     cmake
     git
     curl
+	libeigen3-dev
+	libyaml-cpp-dev
 )
-
-clone_configs()
-{
-	git clone https://github.com/samlovelace/arm_configs.git "$WS/src/arm_configs"
-}
 
 install_pcl()
 {
@@ -46,6 +43,6 @@ install_pcl()
 }
 
 function run_custom_build_steps(){
-  clone_configs
+
   install_pcl
 }
