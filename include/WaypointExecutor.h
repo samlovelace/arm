@@ -13,7 +13,8 @@ public:
     WaypointExecutor(ConfigManager::Config& aConfig);
     ~WaypointExecutor();
 
-    void initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
+    void init(int aNumDof);
+    bool initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
     KDL::JntArray getNextWaypoint();
 
 private:
@@ -28,7 +29,7 @@ private:
     int mNumDof; 
     
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
-    void setGoalState(KDL::JntArray aGoalJointPos);
+    bool setGoalState(KDL::JntArray aGoalJointPos);
    
 };
 #endif //TRAJECTORYExecutor_H    

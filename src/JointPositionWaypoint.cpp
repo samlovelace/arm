@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cmath>
 #include "plog/Log.h"
+#include <iomanip>
 
 JointPositionWaypoint::JointPositionWaypoint(const KDL::JntArray& goal, const KDL::JntArray& tol) : mGoal(goal), mTol(tol)
 {
@@ -49,7 +50,8 @@ bool JointPositionWaypoint::arrived(const ControlInputs& s) const
 
     // arrived so log final state 
     // arrived so we can log final state
-    std::stringstream ss;  
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(3);  
     ss << "Error: " << "\n"; 
     for(int i = 0; i < s.q.rows(); i++)
     {

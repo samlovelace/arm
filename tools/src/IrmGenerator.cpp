@@ -78,6 +78,24 @@ bool IrmGenerator::compute(const KDL::JntArray& aJntCfg)
     if (!mKinematicsHandler->solveFk(aJntCfg, frame))
         return false;
 
+    // Position
+    double x = frame.p.x();
+    double y = frame.p.y();
+    double z = frame.p.z();
+
+    // Orientation (Quaternion)
+    double qx, qy, qz, qw;
+    frame.M.GetQuaternion(qx, qy, qz, qw);
+
+    std::cout << "Jnt: ";
+    for(int i = 0; i < aJntCfg.rows(); i++)
+    {
+        std::cout << aJntCfg(i) << " "; 
+    }
+    std::cout << "\n"; 
+    std::cout << "xyz: [" << x << ", " << y << ", " << z << "]\n";
+    std::cout << "w xyz: [" << qw << ", " << qx << ", " << qy << ", " << qz << "]\n";
+
     KDL::Frame inverse = frame.Inverse();
 
     IrmEntryBinary entry;

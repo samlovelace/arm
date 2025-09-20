@@ -4,11 +4,7 @@
 
 WaypointExecutor::WaypointExecutor(ConfigManager::Config& aConfig) : mConfig(aConfig)
 {
-    mNumDof = mConfig.initialPosition.size();
 
-    mExecutor = std::make_unique<ruckig::Ruckig<0>>(mNumDof, 1/(float)aConfig.manipControlRate); // pass timestep
-    mInput = std::make_unique<ruckig::InputParameter<0>>(mNumDof);
-    mOutput = std::make_unique<ruckig::OutputParameter<0>>(mNumDof);
 }
 
 WaypointExecutor::~WaypointExecutor()
@@ -16,18 +12,27 @@ WaypointExecutor::~WaypointExecutor()
 
 }
 
-void WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
+void WaypointExecutor::init(int aNumDof)
 {
-    setInitialState(aCurrentJointPos, aCurrentJointVel); 
-    setGoalState(aGoalJointPos); 
+    mNumDof = aNumDof;
+
+    mExecutor = std::make_unique<ruckig::Ruckig<0>>(mNumDof, 1/(float)mConfig.manipControlRate); // pass timestep
+    mInput = std::make_unique<ruckig::InputParameter<0>>(mNumDof);
+    mOutput = std::make_unique<ruckig::OutputParameter<0>>(mNumDof);
 }
 
-void WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
+bool WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
+{
+    setInitialState(aCurrentJointPos, aCurrentJointVel); 
+    return setGoalState(aGoalJointPos); 
+}
+
+bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
 {
     if(mNumDof != aGoalWaypoint.rows())
     {
         LOGW << "Goal state not equal to DOF size"; 
-        return; 
+        return false; 
     }
     
     std::vector<double> goalPos(mNumDof); 
@@ -47,6 +52,7 @@ void WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
     mInput->target_acceleration = goalAccel; 
 
     LOGD << "Setting Goal Joint Pos: " << mInput->target_position; 
+    return true; 
 }
 
 void WaypointExecutor::setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel)
@@ -74,13 +80,16 @@ KDL::JntArray WaypointExecutor::getNextWaypoint()
     KDL::JntArray newJntPos(mNumDof);
     auto result = mExecutor->update(*mInput, *mOutput);
 
-    if (result == ruckig::Result::Working || result == ruckig::Result::Finished) {
-        for (size_t i = 0; i < mNumDof; ++i) {
+    if (result == ruckig::Result::Working || result == ruckig::Result::Finished) 
+    {
+        for (size_t i = 0; i < mNumDof; ++i) 
+        {
             newJntPos(i) = mOutput->new_position[i];
         }
 
         mOutput->pass_to_input(*mInput);
-    } else 
+    } 
+    else 
     {
         // Handle error
     }

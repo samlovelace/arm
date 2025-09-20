@@ -31,8 +31,7 @@ public:
         NUM_TYPES
     }; 
 
-    void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
-    void setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp);
+    void setJointPositionGoal(const KDL::JntArray &aNewJntPos);
     bool setGoalWaypoint(std::shared_ptr<IWaypoint> aWp); 
 
     std::shared_ptr<IWaypoint> getGoalWaypoint(); 

@@ -23,6 +23,8 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWayp
     }
 
     int numJoints = mKinematicsHandler->getNrJoints(); 
+    mWaypointExecutor->init(numJoints); 
+
     KDL::JntArray firstWp(numJoints);
     KDL::JntArray firstTol(numJoints); 
 
@@ -31,7 +33,7 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWayp
         firstWp(i) = mConfig.initialPosition[i]; 
         firstTol(i) = 0.01;
     }
-
+    
     mInitialGoalWp = std::make_shared<JointPositionWaypoint>(firstWp, firstTol); 
 
     if(mConfig.inverseReachMap != "")
@@ -90,16 +92,14 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
     const KDL::JntArray currentJointPos = mManipComms->getJointPositions();
 
     // get only the arm joints, no gripper 
-    KDL::JntArray q_cur;
-    int numArmJoints = mKinematicsHandler->getNrJoints();  
-    q_cur.resize(numArmJoints); 
+    int numArmJoints = mKinematicsHandler->getNrJoints();   
+    KDL::JntArray q_cur(numArmJoints);
+    KDL::JntArray q_goal(numArmJoints);
 
     for(int i = 0; i < numArmJoints; i++)
     {
         q_cur(i) = currentJointPos(i);  
     }
-
-    KDL::JntArray q_goal(6);
 
     if (!mGoalWaypoint->toJointGoal(q_cur, *mKinematicsHandler, q_goal)) 
     {
@@ -107,8 +107,7 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
         return false;
     }
 
-    mWaypointExecutor->initializeExecutor(q_goal, q_cur, mManipComms->getJointVelocities()); 
-    return true; 
+    return mWaypointExecutor->initializeExecutor(q_goal, q_cur, mManipComms->getJointVelocities());  
 } 
 
 std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()
@@ -170,16 +169,11 @@ void Manipulator::controlLoop()
     {
         mArmControlRate->start(); 
 
-        KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
+        KDL::JntArray wp = mWaypointExecutor->getNextWaypoint(); 
         mManipComms->sendJointCommand(wp); 
 
         mArmControlRate->block();
     }
-}
-
-void Manipulator::setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp)
-{
-    setGoalWaypoint(aWp); 
 }
 
 void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)

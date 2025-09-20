@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cmath>
 #include "plog/Log.h"
+#include <iomanip>
 
 TaskPositionWaypoint::TaskPositionWaypoint(const KDL::Frame& T_goal, const Tol6& tol) : mGoal(T_goal), mTol(tol)
 {
@@ -55,7 +56,8 @@ bool TaskPositionWaypoint::arrived(const ControlInputs& s) const
 
     // if here, arrived, so log task pos error
     // arrived so we can log final state
-    std::stringstream ss;  
+    std::stringstream ss; 
+    ss << std::fixed << std::setprecision(3); 
     ss << "Task Error: " << "\n";
     std::vector<std::string> axes = {"x: ", "y: ", "z: "}; 
 
