@@ -33,7 +33,7 @@ public:
 
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos); 
     void setTaskGoal(std::shared_ptr<TaskPositionWaypoint> aWp);
-    void setGoalWaypoint(std::shared_ptr<IWaypoint> aWp); 
+    bool setGoalWaypoint(std::shared_ptr<IWaypoint> aWp); 
 
     std::shared_ptr<IWaypoint> getGoalWaypoint(); 
     bool isArrived(); 
