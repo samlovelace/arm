@@ -22,6 +22,7 @@ DEPENDENCIES=(
     curl
 	libeigen3-dev
 	libyaml-cpp-dev
+	nlohmann-json3-dev
 )
 
 install_pcl()
