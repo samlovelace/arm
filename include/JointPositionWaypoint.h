@@ -9,7 +9,7 @@ class JointPositionWaypoint final : public IWaypoint
 public:
     JointPositionWaypoint(const KDL::JntArray& goal, const KDL::JntArray& tol);
 
-    Kind kind() const noexcept override;
+    Type type() const noexcept override;
 
     bool toJointGoal(const KDL::JntArray& q_seed,
                     KinematicsHandler& kin,

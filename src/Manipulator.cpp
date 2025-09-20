@@ -117,8 +117,8 @@ bool Manipulator::isArrived()
     s.q    = mManipComms->getJointPositions();
     s.qdot = mManipComms->getJointVelocities(); 
 
-    // Only compute FK if the waypoint might use it
-    if (mGoalWaypoint->kind() == IWaypoint::Kind::Task) 
+    // Only compute FK for task waypoints 
+    if (mGoalWaypoint->type() == IWaypoint::Type::TaskPosition) 
     {
         // HACK
         KDL::JntArray jntsNoGripper(6); 

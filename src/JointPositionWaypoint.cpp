@@ -19,9 +19,9 @@ JointPositionWaypoint::JointPositionWaypoint(const KDL::JntArray& goal, const KD
     }
 }
 
-IWaypoint::Kind JointPositionWaypoint::kind() const noexcept 
+IWaypoint::Type JointPositionWaypoint::type() const noexcept 
 {
-    return Kind::Joint;
+    return Type::Joint;
 }
 
 bool JointPositionWaypoint::toJointGoal(const KDL::JntArray& /*q_seed*/,

@@ -13,9 +13,9 @@ TaskPositionWaypoint::TaskPositionWaypoint(const KDL::Frame& T_goal, const Tol6&
     }
 }
 
-IWaypoint::Kind TaskPositionWaypoint::kind() const noexcept 
+IWaypoint::Type TaskPositionWaypoint::type() const noexcept 
 {
-  return Kind::Task;
+  return Type::TaskPosition;
 }
 
 bool TaskPositionWaypoint::toJointGoal(const KDL::JntArray& q_seed,

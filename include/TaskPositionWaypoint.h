@@ -11,7 +11,7 @@ public:
 
   TaskPositionWaypoint(const KDL::Frame& T_goal, const Tol6& tol);
 
-  Kind kind() const noexcept override;
+  Type type() const noexcept override;
 
   bool toJointGoal(const KDL::JntArray& q_seed,
                    KinematicsHandler& kin,

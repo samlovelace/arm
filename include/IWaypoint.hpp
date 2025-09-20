@@ -9,7 +9,7 @@ class KinematicsHandler; // forward-declare your existing class
 
 class IWaypoint {
 public:
-  enum class Kind { Joint, Task };
+  enum class Type { Joint, TaskPosition };
   virtual ~IWaypoint() = default;
 
   struct ControlInputs {
@@ -18,7 +18,7 @@ public:
     KDL::Frame    T;     // current end-effector pose (fill when needed)
   };
 
-  virtual Kind kind() const noexcept = 0;
+  virtual Type type() const noexcept = 0;
 
   // Convert this waypoint into a joint-space goal.
   // For Joint: copy the goal. For Task: call kin.solveIK with q_seed.
@@ -29,7 +29,7 @@ public:
   // Check arrival using this waypoint's tolerances.
   virtual bool arrived(const ControlInputs& s) const = 0;
 
-  // For logs/UI
+  // For logs
   virtual std::string describe() const = 0;
 };
 
