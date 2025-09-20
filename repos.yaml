@@ -1,9 +1,0 @@
-repositories:
-  arm_configs:
-    type: git
-    url: https://github.com/samlovelace/arm_configs.git
-    version: main
-  robot_idl:
-    type: git
-    url: https://github.com/samlovelace/robot_idl.git
-    version: main

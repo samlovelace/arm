@@ -8,53 +8,25 @@ The **Agnostic Robot Manipulation (ARM)** module is a general-purpose planning a
 
 ## Dependencies
 
-- Ubuntu 22.04 (developed on)
-- ROS2 Humble
-- Gazebo Ignition-Fortress (arm_simulator)
-- yaml-cpp
-- eigen
+The list of dependencies are in deps.sh. This file will be used by robot_idl to install the required dependencies.
 
 ## Install
 
-To install and set up the ARM module, first create a workspace
+This module depends on custom ROS2 msgs defined in the robot_idl repo. Clone robot_idl into a workspace and run the setup script for the vehicle as shown below.
 
-```sh
-mkdir -p arm_ws/src
-cd arm_ws/src
-```
-
-Then clone this repo
-
-```sh
-git clone https://github.com/samlovelace/arm.git
-cd arm
-```
-
-To clone other repos needed for compiling this module as well as simulator different manipulators and sending commands
-
-```sh
-chmod +x clone.sh
-./clone.sh
-```
-
-## Build
-
-Navigate to the root of the workspace
-
-```sh
-cd arm_ws
-```
-
-and build
-
-```sh
-colcon build
+```bash
+$ mkdir -p ~/robot_ws/src
+$ git clone https://github.com/samlovelace/robot_idl.git
+$ cd robot_idl/scripts
+$ chmod +x setup.sh
+$ sudo ./setup manipulation
 ```
 
 ## Run
 
-To run the ARM module
+To run the arm module, from the root of the workspace
 
-```sh
+```bash
+source install/setup.bash
 ros2 run arm arm
 ```
