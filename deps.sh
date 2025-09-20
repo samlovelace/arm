@@ -26,6 +26,11 @@ DEPENDENCIES=(
 
 install_pcl()
 {
+	if [ -d "$LIB_DIR/pcl/.git" ]; then
+    	echo "PCL already cloned at $LIB_DIR. Skipping clone and assuming proper build..."
+		return
+	fi
+
 	#pcl 
 	cd "$LIB_DIR"
 	git clone https://github.com/PointCloudLibrary/pcl.git
