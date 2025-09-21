@@ -11,7 +11,7 @@ jobs:
 
     env:
       ROS_META_PKG: ros-humble-ros-base
-      WS: /robot_ws
+      WS: robot_ws
 
     steps:
       - name: setup workspace
