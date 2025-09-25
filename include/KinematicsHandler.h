@@ -20,6 +20,7 @@ public:
 
     bool init(const std::string& anUrdfPath); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
+    bool solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
     bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut); 
 
     double computeManipulability(const KDL::JntArray& aJntCfg);

@@ -49,6 +49,7 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/SimpleGripperVisualizer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/TaskVelocityWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/WaypointExecutor.cpp
   ${COMMON_SOURCES}
 )

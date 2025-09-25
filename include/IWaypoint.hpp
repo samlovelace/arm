@@ -9,7 +9,12 @@ class KinematicsHandler; // forward-declare your existing class
 
 class IWaypoint {
 public:
-  enum class Type { Joint, TaskPosition };
+	enum class Type 
+	{
+		JointPosition, 
+		TaskPosition, 
+		TaskVelocity 
+	};
   virtual ~IWaypoint() = default;
 
   struct ControlInputs {

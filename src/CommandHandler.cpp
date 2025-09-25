@@ -8,25 +8,31 @@
 
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"
+#include "TaskVelocityWaypoint.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
-    mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner), mJointWaypointRcvd(false)
+    mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner)
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<robot_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
-                                                                        std::bind(&CommandHandler::jointPosWaypointCallback, 
-                                                                                  this, 
-                                                                                  std::placeholders::_1)); 
+                                                                          std::bind(&CommandHandler::jointPosWaypointCallback, 
+                                                                                    this, 
+                                                                                    std::placeholders::_1)); 
 
     topicManager->createSubscriber<robot_idl::msg::Enable>("arm/enable", 
-                                                         std::bind(&CommandHandler::enableCallback, 
-                                                                   this, 
-                                                                   std::placeholders::_1)); 
+                                                           std::bind(&CommandHandler::enableCallback, 
+                                                                     this, 
+                                                                     std::placeholders::_1)); 
 
     topicManager->createSubscriber<robot_idl::msg::TaskPositionWaypoint>("arm/task_position_waypoint", 
-                                                                       std::bind(&CommandHandler::taskPosWaypointCallback, 
-                                                                                this, 
-                                                                                std::placeholders::_1)); 
+                                                                         std::bind(&CommandHandler::taskPosWaypointCallback, 
+                                                                                   this, 
+                                                                                   std::placeholders::_1)); 
+
+    topicManager->createSubscriber<robot_idl::msg::TaskVelocityWaypoint>("arm/task_velocity_waypoint", 
+                                                                         std::bind(&CommandHandler::taskVelWaypointCallback, 
+                                                                                  this, 
+                                                                                  std::placeholders::_1)); 
 
     topicManager->createSubscriber<robot_idl::msg::PlanCommand>("arm/command", 
                                                           std::bind(&CommandHandler::commandCallback, 
@@ -128,7 +134,6 @@ void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionW
     KDL::Vector position(aMsg->pose.position.x, aMsg->pose.position.y, aMsg->pose.position.z);
     KDL::Frame goalPose(rot, position);
 
-    //auto wp = TaskPositionWaypoint>(goalPose, utils::toArray6(aMsg->tolerance), aMsg->command_frame.data);
     auto wp = TaskPositionWaypoint(goalPose, utils::toArray6(aMsg->tolerance)); 
 
     if(!mManip->setGoalWaypoint(std::make_shared<TaskPositionWaypoint>(wp)))
@@ -137,6 +142,33 @@ void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionW
         return; 
     } 
     
+    setNewActiveState(StateMachine::STATE::MOVING); 
+}
+
+void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg)
+{
+    if(!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
+        return; 
+    }
+
+    KDL::Vector linear(aMsg->goal.linear.x, aMsg->goal.linear.y, aMsg->goal.linear.z);
+    KDL::Vector angular(aMsg->goal.linear.x, aMsg->goal.angular.y, aMsg->goal.angular.z);
+    KDL::Twist goal(linear, angular); 
+
+    KDL::Vector linTol(aMsg->tolerance.linear.x, aMsg->tolerance.linear.y, aMsg->tolerance.linear.z);
+    KDL::Vector linAng(aMsg->tolerance.linear.x, aMsg->tolerance.angular.y, aMsg->tolerance.angular.z);
+    KDL::Twist tol(linTol, linAng); 
+
+    auto wp = TaskVelocityWaypoint(goal, tol); 
+
+    if(!mManip->setGoalWaypoint(std::make_shared<TaskVelocityWaypoint>(wp)))
+    {
+        LOGW << "Failed to set task velocity goal"; 
+        return; 
+    }
+
     setNewActiveState(StateMachine::STATE::MOVING); 
 }
 

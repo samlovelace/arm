@@ -101,6 +101,19 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
     return true; 
 }
 
+bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut)
+{
+   int result = mVelSolver->CartToJnt(anInitPos, aGoalVel, aResultOut); 
+
+   if(result != 0)
+   {    
+        LOGW << "Failed to solve IK for goal vel. Error code: " << result; 
+        return false; 
+   }
+   
+   return true; 
+}
+
 bool KinematicsHandler::solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut)
 {
     int fkResult = mFkSolver->JntToCart(anInitPos, aFrameOut);

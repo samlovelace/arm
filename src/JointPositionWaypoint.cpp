@@ -22,7 +22,7 @@ JointPositionWaypoint::JointPositionWaypoint(const KDL::JntArray& goal, const KD
 
 IWaypoint::Type JointPositionWaypoint::type() const noexcept 
 {
-    return Type::Joint;
+    return Type::JointPosition;
 }
 
 bool JointPositionWaypoint::toJointGoal(const KDL::JntArray& /*q_seed*/,
