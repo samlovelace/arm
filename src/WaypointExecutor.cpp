@@ -21,13 +21,13 @@ void WaypointExecutor::init(int aNumDof)
     mOutput = std::make_unique<ruckig::OutputParameter<0>>(mNumDof);
 }
 
-bool WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel)
+bool WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType)
 {
     setInitialState(aCurrentJointPos, aCurrentJointVel); 
-    return setGoalState(aGoalJointPos); 
+    return setGoalState(aGoalJointPos, aControlType); 
 }
 
-bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
+bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint, ruckig::ControlInterface aControlType)
 {
     if(mNumDof != aGoalWaypoint.rows())
     {
@@ -39,19 +39,46 @@ bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint)
     std::vector<double> goalVel(mNumDof); 
     std::vector<double> goalAccel(mNumDof); 
 
-    for(int i = 0; i < mNumDof; i++)
+    mInput->control_interface = aControlType;
+
+    switch (aControlType)
     {
-        goalPos[i] = aGoalWaypoint(i); 
-        goalVel[i] = 0.0; 
-        goalAccel[i] = 0.0;  
+        case ruckig::ControlInterface::Position:
+            { 
+                for(int i = 0; i < mNumDof; i++)
+                {
+                    goalPos[i] = aGoalWaypoint(i); 
+                    goalVel[i] = 0.0; 
+                    goalAccel[i] = 0.0;  
+                }
+
+                // target
+                mInput->target_position = goalPos; 
+                mInput->target_velocity = goalVel; 
+                mInput->target_acceleration = goalAccel; 
+
+                LOGD << "Setting Goal Joint Pos: " << mInput->target_position;
+            }
+        break;
+    case ruckig::ControlInterface::Velocity: 
+        {
+            for(int i = 0; i < mNumDof; i++)
+            { 
+                goalVel[i] = aGoalWaypoint(i); 
+                goalAccel[i] = 0.0;  
+            }
+
+            // target
+            mInput->target_velocity = goalVel; 
+            mInput->target_acceleration = goalAccel; 
+
+            LOGD << "Setting Goal Joint Vel: " << mInput->target_velocity;
+        }
+        break; 
+    default:
+        break;
     }
 
-    // target
-    mInput->target_position = goalPos; 
-    mInput->target_velocity = goalVel; 
-    mInput->target_acceleration = goalAccel; 
-
-    LOGD << "Setting Goal Joint Pos: " << mInput->target_position; 
     return true; 
 }
 

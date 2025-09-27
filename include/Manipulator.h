@@ -61,6 +61,8 @@ private:
     std::mutex mEnabledMutex; 
     bool mEnabled; 
 
+    std::atomic<bool> mVelocityMode; 
+
     std::shared_ptr<IWaypoint> mInitialGoalWp; 
     std::shared_ptr<IWaypoint> mGoalWaypoint; 
 

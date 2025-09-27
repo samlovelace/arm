@@ -35,6 +35,9 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
         return false; 
     } 
 
+    q_goal_out = q_dot_goal; 
+    return true; 
+
     // TODO: add Velocity saturation 
     // aKinematicsHandler.getJointLimits("velocity"); 
 
@@ -44,25 +47,24 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
     //     }
     // }
 
-    KDL::JntArray qmin = aKinematicsHandler.getJointLimits("lower"); 
-    KDL::JntArray qmax = aKinematicsHandler.getJointLimits("upper"); 
+    // KDL::JntArray qmin = aKinematicsHandler.getJointLimits("lower"); 
+    // KDL::JntArray qmax = aKinematicsHandler.getJointLimits("upper"); 
 
     // Integrate
-    q_goal_out.resize(numJoints);
+    // q_goal_out.resize(numJoints);
 
-    for (unsigned int i = 0; i < numJoints; ++i) 
-    {
-        double qi = q_seed(i) + dt * q_dot_goal(i);
+    // for (unsigned int i = 0; i < numJoints; ++i) 
+    // {
+    //     //double qi = q_seed(i) + dt * q_dot_goal(i);
         
-        if (i < qmin.rows() && i < qmax.rows()) 
-        {
-            qi = std::max(qmin(i), std::min(qmax(i), qi));
-        }
+    //     if (i < qmin.rows() && i < qmax.rows()) 
+    //     {
+    //         qi = std::max(qmin(i), std::min(qmax(i), qi));
+    //     }
 
-        q_goal_out(i) = qi;
-    }
+    //     q_goal_out(i) = qi;
+    // }
 
-    return true;
 }
 
 bool TaskVelocityWaypoint::arrived(const ControlInputs& s) const

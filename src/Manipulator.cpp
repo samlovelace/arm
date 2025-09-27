@@ -87,6 +87,7 @@ bool Manipulator::isEnabled()
 bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
 {
     mGoalWaypoint = aWp; 
+    auto wpType = aWp->type(); 
 
     // full joint space (including gripper if supported by interface)
     const KDL::JntArray currentJointPos = mManipComms->getJointPositions();
@@ -107,7 +108,24 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
         return false;
     }
 
-    return mWaypointExecutor->initializeExecutor(q_goal, q_cur, mManipComms->getJointVelocities());  
+    ruckig::ControlInterface controlType = ruckig::ControlInterface::Position; 
+
+    switch (wpType)
+    {
+        case IWaypoint::Type::JointPosition:
+        case IWaypoint::Type::TaskPosition: 
+            controlType = ruckig::ControlInterface::Position; 
+            break; 
+
+        case IWaypoint::Type::TaskVelocity: 
+            controlType = ruckig::ControlInterface::Velocity; 
+            break; 
+        default:
+            break;
+    }
+
+    // q_goal is joint pos or joint vel based on waypoint type
+    return mWaypointExecutor->initializeExecutor(q_goal, q_cur, mManipComms->getJointVelocities(), controlType);
 } 
 
 std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()

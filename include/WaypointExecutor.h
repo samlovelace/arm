@@ -14,7 +14,7 @@ public:
     ~WaypointExecutor();
 
     void init(int aNumDof);
-    bool initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel);
+    bool initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType);
     KDL::JntArray getNextWaypoint();
 
 private:
@@ -29,7 +29,7 @@ private:
     int mNumDof; 
     
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
-    bool setGoalState(KDL::JntArray aGoalJointPos);
+    bool setGoalState(KDL::JntArray aGoalJointPos, ruckig::ControlInterface aControlType);
    
 };
 #endif //TRAJECTORYExecutor_H    
