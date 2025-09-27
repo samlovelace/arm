@@ -118,7 +118,10 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
             break; 
 
         case IWaypoint::Type::TaskVelocity: 
-            controlType = ruckig::ControlInterface::Velocity; 
+        case IWaypoint::Type::JointVelocity:
+            controlType = ruckig::ControlInterface::Velocity;
+            LOGD << "Setting ControlInterface to Velocity"; 
+
             break; 
         default:
             break;

@@ -9,6 +9,7 @@
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"
 #include "TaskVelocityWaypoint.h"
+#include "JointVelocityWaypoint.h"
 
 CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
     mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner)
@@ -32,7 +33,11 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
     topicManager->createSubscriber<robot_idl::msg::TaskVelocityWaypoint>("arm/task_velocity_waypoint", 
                                                                          std::bind(&CommandHandler::taskVelWaypointCallback, 
                                                                                   this, 
-                                                                                  std::placeholders::_1)); 
+                                                                                  std::placeholders::_1));
+    topicManager->createSubscriber<robot_idl::msg::JointVelocityWaypoint>("arm/joint_velocity_waypoint", 
+                                                                         std::bind(&CommandHandler::jointVelWaypointCallback, 
+                                                                                    this, 
+                                                                                    std::placeholders::_1));
 
     topicManager->createSubscriber<robot_idl::msg::PlanCommand>("arm/command", 
                                                           std::bind(&CommandHandler::commandCallback, 
@@ -105,11 +110,7 @@ void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositio
         cmdTol(i) = aMsg->tolerances[i];
     }
 
-    JointPositionWaypoint wp(jntPos, cmdTol);
-
-    // TODO: compare new goal waypoint to current goal waypoint so we arent spamming the setGoalWaypoint()
-    // TODO: maybe some sort of check against current goal, whether new command is same/different, i want to send a goal waypoint
-    //       and generate a smooth trajectory between current and goal, dont need constant waypoints from outsider? IDK 
+    JointPositionWaypoint wp(jntPos, cmdTol); 
     
     if(!mManip->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp))) 
     {
@@ -170,6 +171,39 @@ void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityW
     }
 
     setNewActiveState(StateMachine::STATE::MOVING); 
+}
+
+void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg)
+{
+    if(!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
+        return; 
+    }
+
+    KDL::JntArray jntVel(aMsg->velocities.size()); 
+    for(int i = 0; i < aMsg->velocities.size(); i++)
+    {
+        jntVel(i) = aMsg->velocities[i];
+    }
+
+    KDL::JntArray cmdTol(aMsg->tolerances.size()); 
+    for(int i = 0; i < aMsg->velocities.size(); i++)
+    {
+        cmdTol(i) = aMsg->tolerances[i];
+    }
+
+    JointVelocityWaypoint wp(jntVel, cmdTol);
+
+    if(!mManip->setGoalWaypoint(std::make_shared<JointVelocityWaypoint>(wp))) 
+    {
+        LOGW << "Failed to set joint position goal"; 
+        return; 
+    }
+    
+    LOGD << "Set joint velocity waypoint goal"; 
+    mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
+
 }
 
 void CommandHandler::commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd)

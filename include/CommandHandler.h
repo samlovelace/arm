@@ -8,9 +8,10 @@
 #include "IArmTaskPlanner.hpp"
 
 #include "robot_idl/msg/joint_position_waypoint.hpp"
-#include "robot_idl/msg/enable.hpp"
 #include "robot_idl/msg/task_position_waypoint.hpp"
 #include "robot_idl/msg/task_velocity_waypoint.hpp"
+#include  "robot_idl/msg/joint_velocity_waypoint.hpp"
+#include "robot_idl/msg/enable.hpp"
 #include "robot_idl/msg/plan_command.hpp"
 #include "robot_idl/msg/plan_response.hpp"
 
@@ -27,6 +28,7 @@ private:
     void jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
     void taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg); 
     void taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg); 
+    void jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg); 
     void enableCallback(const robot_idl::msg::Enable::SharedPtr anEnabledCmd); 
     void commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd); 
 

@@ -11,10 +11,12 @@ class IWaypoint {
 public:
 	enum class Type 
 	{
-		JointPosition, 
+		JointPosition,
+    JointVelocity, 
 		TaskPosition, 
 		TaskVelocity 
 	};
+
   virtual ~IWaypoint() = default;
 
   struct ControlInputs {
