@@ -138,33 +138,35 @@ std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()
 
 bool Manipulator::isArrived()
 {
-    IWaypoint::ControlInputs s;
-    s.q    = mManipComms->getJointPositions();
-    s.qdot = mManipComms->getJointVelocities(); 
+    // get only the arm joints, no gripper 
+    KDL::JntArray q_cur;
+    int numArmJoints = mKinematicsHandler->getNrJoints();  
+    q_cur.resize(numArmJoints);
+    
+    KDL::JntArray currentJointPos = mManipComms->getJointPositions(); 
+    KDL::JntArray currentJointVel = mManipComms->getJointVelocities(); 
 
-    // Only compute FK for task waypoints 
+    // current state 
+    IWaypoint::ControlInputs s;
+    s.q.resize(numArmJoints); 
+    s.qdot.resize(numArmJoints); 
+
+    for(int i = 0; i < numArmJoints; i++)
+    {
+        s.q(i) = currentJointPos(i); 
+        s.qdot(i) = currentJointVel(i);  
+    }
+
+    // Only need to compute FK for task position waypoint 
     if (mGoalWaypoint->type() == IWaypoint::Type::TaskPosition) 
     {
-        // full joint space (including gripper if supported by interface)
-        const KDL::JntArray currentJointPos = mManipComms->getJointPositions();
-
-        // get only the arm joints, no gripper 
-        KDL::JntArray q_cur;
-        int numArmJoints = mKinematicsHandler->getNrJoints();  
-        q_cur.resize(numArmJoints); 
-
-        for(int i = 0; i < numArmJoints; i++)
-        {
-            q_cur(i) = currentJointPos(i);  
-        }
-        
-        if (!mKinematicsHandler->solveFk(q_cur, s.T)) 
+        if (!mKinematicsHandler->solveFk(s.q, s.T)) 
         {
             LOGW << "FK failed; not arrived";
             return false;
         }
     }
-
+ 
     return mGoalWaypoint->arrived(s);
 }
 
