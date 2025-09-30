@@ -22,7 +22,7 @@ jobs:
       - name: Checkout A.R.M repo
         uses: actions/checkout@v4
         with:
-          path: src/arm
+          path: ${{ env.WS }}/src/arm
           submodules: "recursive"
 
       - name: clone dep repos
@@ -32,6 +32,12 @@ jobs:
           pwd
           git clone https://github.com/samlovelace/robot_idl.git
           ls
+
+      - name: test
+        working-directory: ${{ env.WS }}
+        run: |
+          set -eux
+          ls src
 
       - name: run setup scripts
         working-directory: ${{ env.WS }}/src/robot_idl/scripts
@@ -46,6 +52,7 @@ jobs:
         run: |
           set -eo pipefail
           set +u
+          ls src
           source /opt/ros/humble/setup.sh
           colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
           colcon test-result --verbose || true

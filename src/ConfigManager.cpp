@@ -41,6 +41,7 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     mConfig.initialPosition = manipConfig["initial_positions"].as<std::vector<double>>();
     mConfig.accelLimit = manipConfig["accel_limits"].as<std::vector<double>>();
     mConfig.jerkLimit = manipConfig["jerk_limits"].as<std::vector<double>>(); 
+    mConfig.velLimitFraction = manipConfig["vel_limit_fraction"].as<double>(); 
 
     auto xyz = manipConfig["mount"]["position"].as<std::vector<double>>(); 
     auto q = manipConfig["mount"]["quaternion"].as<std::vector<double>>(); 

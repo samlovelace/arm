@@ -39,6 +39,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
     KDL::JntArray lower(mChain.getNrOfJoints()); 
     KDL::JntArray upper(mChain.getNrOfJoints()); 
+    KDL::JntArray velocity(mChain.getNrOfJoints()); 
     int idx = 0; 
 
     // TODO: add parsing and saving of effort and velocity limits 
@@ -52,10 +53,12 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
         lower(idx) = urdfJoint->limits->lower; 
         upper(idx) = urdfJoint->limits->upper;  
+        velocity(idx) = urdfJoint->limits->velocity; 
     }
 
     mLimitsMap.insert({"lower", lower}); 
-    mLimitsMap.insert({"upper", upper}); 
+    mLimitsMap.insert({"upper", upper});
+    mLimitsMap.insert({"velocity", velocity});  
 
     KDL::JntArray q_min = getJointLimits("lower"); 
     KDL::JntArray q_max = getJointLimits("upper"); 

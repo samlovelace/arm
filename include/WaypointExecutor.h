@@ -6,6 +6,7 @@
 #include "ConfigManager.h"
 #include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
+#include "KinematicsHandler.h"
 
 class WaypointExecutor 
 { 
@@ -13,7 +14,7 @@ public:
     WaypointExecutor(ConfigManager::Config& aConfig);
     ~WaypointExecutor();
 
-    void init(int aNumDof);
+    void init(int aNumDof, KinematicsHandler& aKinematicsHandler);
     bool initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType);
     KDL::JntArray getNextWaypoint();
 
@@ -22,7 +23,8 @@ private:
     std::unique_ptr<ruckig::InputParameter<0>> mInput;
     std::unique_ptr<ruckig::OutputParameter<0>> mOutput;
 
-    ConfigManager::Config mConfig; 
+    ConfigManager::Config mConfig;
+    std::vector<double> mVelocityLimits;  
 
     bool mInitialSet;
 

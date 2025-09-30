@@ -27,6 +27,7 @@ public:
         std::vector<double> initialPosition; 
         std::vector<double> accelLimit; 
         std::vector<double> jerkLimit; 
+        double velLimitFraction; 
         KDL::Frame T_V_B; 
     };
 

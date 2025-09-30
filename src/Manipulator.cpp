@@ -23,7 +23,7 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWayp
     }
 
     int numJoints = mKinematicsHandler->getNrJoints(); 
-    mWaypointExecutor->init(numJoints); 
+    mWaypointExecutor->init(numJoints, *mKinematicsHandler.get()); 
 
     KDL::JntArray firstWp(numJoints);
     KDL::JntArray firstTol(numJoints); 

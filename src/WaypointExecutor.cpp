@@ -12,9 +12,17 @@ WaypointExecutor::~WaypointExecutor()
 
 }
 
-void WaypointExecutor::init(int aNumDof)
+void WaypointExecutor::init(int aNumDof, KinematicsHandler& aKinematicsHandler)
 {
     mNumDof = aNumDof;
+    KDL::JntArray velLimits = aKinematicsHandler.getJointLimits("velocity");
+    
+    mVelocityLimits.resize(mNumDof); 
+
+    for(int i = 0; i < mNumDof; i++)
+    {
+        mVelocityLimits[i] = mConfig.velLimitFraction * velLimits(i); 
+    }
 
     mExecutor = std::make_unique<ruckig::Ruckig<0>>(mNumDof, 1/(float)mConfig.manipControlRate); // pass timestep
     mInput = std::make_unique<ruckig::InputParameter<0>>(mNumDof);
@@ -93,11 +101,8 @@ void WaypointExecutor::setInitialState(const KDL::JntArray& aPos, const KDL::Jnt
         mInput->current_acceleration[i] = 0.0; 
     }
 
-    mInput->degrees_of_freedom = mConfig.initialPosition.size(); 
-
-    // TODO: get from kinematics handler somehow
-    mInput->max_velocity = {1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5}; 
-
+    mInput->degrees_of_freedom = mNumDof;  
+    std::copy_n(mVelocityLimits.begin(), (int)mInput->degrees_of_freedom, mInput->max_velocity.begin()); 
     std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin()); 
     std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin()); 
 }
