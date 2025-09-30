@@ -6,6 +6,7 @@
 #include "StateMachine.h" 
 #include "Manipulator.h"
 #include "IArmTaskPlanner.hpp"
+#include "plog/Log.h"
 
 #include "robot_idl/msg/joint_position_waypoint.hpp"
 #include "robot_idl/msg/task_position_waypoint.hpp"
@@ -37,6 +38,25 @@ private:
     std::shared_ptr<IArmTaskPlanner> mArmTaskPlanner; 
 
     bool mJointWaypointRcvd; 
+
+    template<typename MsgType, typename WaypointType>
+    void handleWaypoint(const typename MsgType::SharedPtr& msg,
+                        std::function<WaypointType(const typename MsgType::SharedPtr&)> converter)
+    {
+        if (!mManip->isEnabled()) {
+            LOGW << "Manipulator not enabled. Cannot accept waypoint";
+            return;
+        }
+
+        auto wp = converter(msg);
+        if (!mManip->setGoalWaypoint(std::make_shared<WaypointType>(wp))) {
+            LOGW << "Failed to set goal";
+            return;
+        }
+
+        setNewActiveState(StateMachine::STATE::MOVING);
+    }
+
    
 };
 #endif //COMMANDHANDLER_H

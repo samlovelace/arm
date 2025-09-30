@@ -7,6 +7,9 @@
 #include <Eigen/Geometry>
 #include "IArmTaskPlanner.hpp"
 
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+
 #include "robot_idl/msg/plan_command.hpp"
 #include "robot_idl/msg/plan_response.hpp"
 
@@ -114,6 +117,36 @@ namespace utils
         return arr;
     }
 
+    inline KDL::JntArray toJntArray(const std::vector<double>& v)
+    {
+        KDL::JntArray jntArr(v.size()); 
+        for(int i = 0; i < v.size(); i++)
+        {
+            jntArr(i) = v[i];
+        }
+
+        return jntArr; 
+    }
+
+    inline KDL::Frame toFrame(const geometry_msgs::msg::Pose& aPose)
+    {
+        geometry_msgs::msg::Quaternion q = aPose.orientation;
+        KDL::Rotation rot = KDL::Rotation::Quaternion(q.x, q.y, q.z, q.w);
+
+        KDL::Vector position(aPose.position.x, aPose.position.y, aPose.position.z);
+        KDL::Frame pose(rot, position);
+
+        return pose; 
+    }
+
+    inline KDL::Twist toTwist(const geometry_msgs::msg::Twist& aTwist)
+    {
+        KDL::Vector linear(aTwist.linear.x, aTwist.linear.y, aTwist.linear.z);
+        KDL::Vector angular(aTwist.linear.x, aTwist.angular.y, aTwist.angular.z);
+        KDL::Twist goal(linear, angular); 
+
+        return goal; 
+    }
 
 }
 

@@ -92,118 +92,36 @@ void CommandHandler::enableCallback(const robot_idl::msg::Enable::SharedPtr anEn
 
 void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
-    if(!mManip->isEnabled())
+    handleWaypoint<robot_idl::msg::JointPositionWaypoint, JointPositionWaypoint>(aMsg, [](const auto& m) 
     {
-        LOGW << "Manipulator not enabled. Cannot accept joint position waypoint"; 
-        return; 
-    }
-    
-    KDL::JntArray jntPos(aMsg->positions.size()); 
-    for(int i = 0; i < aMsg->positions.size(); i++)
-    {
-        jntPos(i) = aMsg->positions[i];
-    }
-
-    KDL::JntArray cmdTol(aMsg->tolerances.size()); 
-    for(int i = 0; i < aMsg->positions.size(); i++)
-    {
-        cmdTol(i) = aMsg->tolerances[i];
-    }
-
-    JointPositionWaypoint wp(jntPos, cmdTol); 
-    
-    if(!mManip->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp))) 
-    {
-        LOGW << "Failed to set joint position goal"; 
-        return; 
-    }
-    
-    mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
-}
-
-void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
-{
-    if(!mManip->isEnabled())
-    {
-        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
-        return; 
-    }
-
-    geometry_msgs::msg::Quaternion q = aMsg->pose.orientation;
-    KDL::Rotation rot = KDL::Rotation::Quaternion(q.x, q.y, q.z, q.w);
-
-    KDL::Vector position(aMsg->pose.position.x, aMsg->pose.position.y, aMsg->pose.position.z);
-    KDL::Frame goalPose(rot, position);
-
-    auto wp = TaskPositionWaypoint(goalPose, utils::toArray6(aMsg->tolerance)); 
-
-    if(!mManip->setGoalWaypoint(std::make_shared<TaskPositionWaypoint>(wp)))
-    {
-        LOGW << "Failed to set task waypoint goal"; 
-        return; 
-    } 
-    
-    setNewActiveState(StateMachine::STATE::MOVING); 
-}
-
-void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg)
-{
-    if(!mManip->isEnabled())
-    {
-        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
-        return; 
-    }
-
-    KDL::Vector linear(aMsg->goal.linear.x, aMsg->goal.linear.y, aMsg->goal.linear.z);
-    KDL::Vector angular(aMsg->goal.linear.x, aMsg->goal.angular.y, aMsg->goal.angular.z);
-    KDL::Twist goal(linear, angular); 
-
-    KDL::Vector linTol(aMsg->tolerance.linear.x, aMsg->tolerance.linear.y, aMsg->tolerance.linear.z);
-    KDL::Vector linAng(aMsg->tolerance.linear.x, aMsg->tolerance.angular.y, aMsg->tolerance.angular.z);
-    KDL::Twist tol(linTol, linAng); 
-
-    auto wp = TaskVelocityWaypoint(goal, tol); 
-
-    if(!mManip->setGoalWaypoint(std::make_shared<TaskVelocityWaypoint>(wp)))
-    {
-        LOGW << "Failed to set task velocity goal"; 
-        return; 
-    }
-
-    setNewActiveState(StateMachine::STATE::MOVING); 
+        return JointPositionWaypoint(utils::toJntArray(m->positions), utils::toJntArray(m->tolerances));
+    });
 }
 
 void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg)
 {
-    if(!mManip->isEnabled())
+    handleWaypoint<robot_idl::msg::JointVelocityWaypoint, JointVelocityWaypoint>(aMsg, [](const auto& m) 
     {
-        LOGW << "Manipulator not enabled. Cannot accept task position waypoint"; 
-        return; 
-    }
+        return JointVelocityWaypoint(utils::toJntArray(m->velocities), utils::toJntArray(m->tolerances));
+    });
 
-    KDL::JntArray jntVel(aMsg->velocities.size()); 
-    for(int i = 0; i < aMsg->velocities.size(); i++)
+}
+
+void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
+{
+    handleWaypoint<robot_idl::msg::TaskPositionWaypoint, TaskPositionWaypoint>(aMsg, [](const auto& wp)
     {
-        jntVel(i) = aMsg->velocities[i];
-    }
+        return TaskPositionWaypoint(utils::toFrame(wp->pose), utils::toArray6(wp->tolerance));
+    });
 
-    KDL::JntArray cmdTol(aMsg->tolerances.size()); 
-    for(int i = 0; i < aMsg->velocities.size(); i++)
+}
+
+void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg)
+{
+    handleWaypoint<robot_idl::msg::TaskVelocityWaypoint, TaskVelocityWaypoint>(aMsg, [](const auto& wp)
     {
-        cmdTol(i) = aMsg->tolerances[i];
-    }
-
-    JointVelocityWaypoint wp(jntVel, cmdTol);
-
-    if(!mManip->setGoalWaypoint(std::make_shared<JointVelocityWaypoint>(wp))) 
-    {
-        LOGW << "Failed to set joint position goal"; 
-        return; 
-    }
-    
-    LOGD << "Set joint velocity waypoint goal"; 
-    mStateMachine->setActiveState(StateMachine::STATE::MOVING); 
-
+        return TaskVelocityWaypoint(utils::toTwist(wp->goal), utils::toTwist(wp->tolerance));
+    });
 }
 
 void CommandHandler::commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd)
