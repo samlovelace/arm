@@ -36,6 +36,7 @@ public:
 
     std::shared_ptr<IWaypoint> getGoalWaypoint(); 
     bool isArrived(); 
+    void printArrivedState(); 
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
 
@@ -71,11 +72,21 @@ private:
     std::vector<IrmEntry> mInverseReachabilityMap; 
 
     std::thread mControlThread; 
-    void controlLoop(); 
+    std::thread mArrivalThread; 
+    
+    void controlLoop();
+    void arrivalLoop(); 
+
+    bool checkArrival(); 
 
     void logWaypointError(); 
 
     void loadInverseReachabilityMap(const std::string& aFilePath); 
+
+    void setArrivalState(bool aFlag);
+
+    std::mutex mArrivalMutex; 
+    bool mIsArrived;  
 
 };
 #endif //MANIPULATOR_H

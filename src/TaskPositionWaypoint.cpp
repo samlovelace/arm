@@ -54,19 +54,19 @@ bool TaskPositionWaypoint::arrived(const ControlInputs& s) const
     if (std::fabs(rvec[1]) > mTol[4]) return false;
     if (std::fabs(rvec[2]) > mTol[5]) return false;
 
-    // if here, arrived, so log task pos error
-    // arrived so we can log final state
-    std::stringstream ss; 
-    ss << std::fixed << std::setprecision(3); 
-    ss << "Task Error: " << "\n";
-    std::vector<std::string> axes = {"x: ", "y: ", "z: "}; 
+    // // if here, arrived, so log task pos error
+    // // arrived so we can log final state
+    // std::stringstream ss; 
+    // ss << std::fixed << std::setprecision(3); 
+    // ss << "Task Error: " << "\n";
+    // std::vector<std::string> axes = {"x: ", "y: ", "z: "}; 
 
-    for(int i = 0; i < 3; i++)
-    {
-        ss << axes[i] << " (m): " << err.p.data[i] << "\n"; 
-    }
+    // for(int i = 0; i < 3; i++)
+    // {
+    //     ss << axes[i] << " (m): " << err.p.data[i] << "\n"; 
+    // }
 
-    LOGD << ss.str();
+    // LOGD << ss.str();
 
     return true;
 }

@@ -23,6 +23,8 @@ void StateMachine::run()
 {
     LOGD << "State Machine starting in " << toString(mActiveState);
     bool goalSet = false; 
+    std::chrono::time_point<std::chrono::steady_clock> arrivalTime; 
+    std::chrono::duration<double> arrivalThreshold = std::chrono::seconds(3); 
 
     while(true)
     {
@@ -37,14 +39,14 @@ void StateMachine::run()
                 // arm is active and trying to maintain last goal jnt pos
                 break;
             case StateMachine::STATE::MOVING: 
+            {
                 // arm is currently moving to new goal jnt pos
-                
                 if(!goalSet && !mPlanner->getCurrentPlans().empty())
                 {
                     KDL::JntArray goal = mPlanner->getCurrentPlans()[0].mGoalJointPos; 
                     KDL::JntArray tol(goal.rows()); 
                     for(int i = 0; i < goal.rows(); i++)
-                    {
+                    {    
                         tol(i) = 1; 
                     }
 
@@ -55,11 +57,11 @@ void StateMachine::run()
 
                 if(mManipulator->isArrived())
                 {
-                    LOGD << "Waypoint arrived"; 
                     setActiveState(StateMachine::STATE::IDLE); 
                 }
 
-                break; 
+                break;
+            }
             case StateMachine::STATE::PLANNING: 
                 
                 if(mPlanner->isPlanFound())

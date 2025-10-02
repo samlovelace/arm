@@ -10,9 +10,12 @@
 #include <thread>
 #include <fstream> 
 
+#include "JointPositionWaypoint.h"
+#include "TaskPositionWaypoint.h"
+
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
-                mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false)
+                mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false), mIsArrived(false)
 {
     mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
     mManipComms->init(); 
@@ -114,7 +117,8 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
     {
         case IWaypoint::Type::JointPosition:
         case IWaypoint::Type::TaskPosition: 
-            controlType = ruckig::ControlInterface::Position; 
+            controlType = ruckig::ControlInterface::Position;
+            LOGD << "Setting ControlInterface to Position"; 
             break; 
 
         case IWaypoint::Type::TaskVelocity: 
@@ -136,7 +140,7 @@ std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()
     return mGoalWaypoint;     
 }
 
-bool Manipulator::isArrived()
+bool Manipulator::checkArrival()
 {
     // get only the arm joints, no gripper 
     KDL::JntArray q_cur;
@@ -170,6 +174,85 @@ bool Manipulator::isArrived()
     return mGoalWaypoint->arrived(s);
 }
 
+bool Manipulator::isArrived()
+{
+    std::lock_guard<std::mutex> lock(mArrivalMutex); 
+    return mIsArrived; 
+}
+
+void Manipulator::setArrivalState(bool aFlag)
+{
+    std::lock_guard<std::mutex> lock(mArrivalMutex); 
+    mIsArrived = aFlag; 
+}
+
+void Manipulator::printArrivedState()
+{
+    KDL::JntArray state = mManipComms->getJointPositions();
+
+    switch (mGoalWaypoint->type())
+    {
+    case IWaypoint::Type::JointPosition:
+    {
+        std::shared_ptr<JointPositionWaypoint> jointPosWp = std::dynamic_pointer_cast<JointPositionWaypoint>(mGoalWaypoint);
+        KDL::JntArray goal = jointPosWp->goal(); 
+
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(3);  
+        ss << "Error: " << "\n"; 
+        for(int i = 0; i < mKinematicsHandler->getNrJoints(); i++)
+        {
+            ss << "J" << i << " (deg): " << (180.0/M_PI) * (state(i) - goal(i)) << "\n"; 
+        }
+
+        LOGD << ss.str();
+        break;
+    }
+    case IWaypoint::Type::TaskPosition: 
+    {
+        std::shared_ptr<TaskPositionWaypoint> taskPosWp = std::dynamic_pointer_cast<TaskPositionWaypoint>(mGoalWaypoint);
+        KDL::Frame goal = taskPosWp->goal();
+
+        KDL::Frame state; 
+        KDL::JntArray currentJointPos = mManipComms->getJointPositions(); 
+        KDL::JntArray currentJointVel = mManipComms->getJointVelocities(); 
+
+        int numArmJoints = mKinematicsHandler->getNrJoints(); 
+
+        // current state 
+        IWaypoint::ControlInputs s;
+        s.q.resize(numArmJoints);  
+
+        for(int i = 0; i < numArmJoints; i++)
+        {
+            s.q(i) = currentJointPos(i);   
+        }
+        
+        if (!mKinematicsHandler->solveFk(s.q, s.T)) 
+        {
+            LOGW << "FK failed; not arrived";
+        }
+
+        // Linear error: err = goal * current^{-1}
+        const KDL::Frame err = goal * s.T.Inverse();
+        
+        std::stringstream ss; 
+        ss << std::fixed << std::setprecision(3); 
+        ss << "Task Error: " << "\n";
+        std::vector<std::string> axes = {"x: ", "y: ", "z: "}; 
+
+        for(int i = 0; i < 3; i++)
+        {
+            ss << axes[i] << " (m): " << err.p.data[i] << "\n"; 
+        }
+
+        LOGD << ss.str();
+    }
+    default:
+        break;
+    }
+}
+
 void Manipulator::startControl()
 {
     setGoalWaypoint(mInitialGoalWp); 
@@ -178,8 +261,14 @@ void Manipulator::startControl()
     {
         mControlThread.join();
     }
+
+    if(mArrivalThread.joinable())
+    {
+        mArrivalThread.join(); 
+    }
     
     mControlThread = std::thread(&Manipulator::controlLoop, this);
+    mArrivalThread = std::thread(&Manipulator::arrivalLoop, this); 
 }
 
 void Manipulator::controlLoop()
@@ -198,6 +287,51 @@ void Manipulator::controlLoop()
         mArmControlRate->block();
     }
 }
+
+void Manipulator::arrivalLoop()
+{
+    RateController arrivalCheckRate(mConfig.manipControlRate);
+    std::chrono::time_point<std::chrono::steady_clock> arrivalTime; 
+    std::chrono::duration<double> arrivalThreshold = std::chrono::seconds(3); 
+    bool arrivalAcknowledged = false;
+
+    while(isEnabled())
+    { 
+        arrivalCheckRate.start(); 
+
+        if(checkArrival())
+        {
+            if(arrivalTime.time_since_epoch().count() == 0)
+            {
+                arrivalTime = std::chrono::steady_clock::now();
+            }
+            else
+            {
+                auto now = std::chrono::steady_clock::now();
+                if(now - arrivalTime >= arrivalThreshold && !arrivalAcknowledged)
+                {
+                    LOGD << "Waypoint arrived!";
+                    setArrivalState(true); 
+                    printArrivedState();
+                    arrivalAcknowledged = true;
+                }
+            }
+        }
+        else
+        {
+            // Manipulator moved away from goal
+            if (arrivalAcknowledged)
+            {
+                LOGW << "Manipulator deviated from goal!";
+                setArrivalState(false);
+                arrivalAcknowledged = false;
+            }
+
+            arrivalTime = std::chrono::time_point<std::chrono::steady_clock>();
+        }
+    }
+}
+
 
 void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)
 {

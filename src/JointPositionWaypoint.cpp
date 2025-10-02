@@ -47,18 +47,7 @@ bool JointPositionWaypoint::arrived(const ControlInputs& s) const
             return false;
         }
     }
-
-    // arrived so log final state 
-    // arrived so we can log final state
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3);  
-    ss << "Error: " << "\n"; 
-    for(int i = 0; i < s.q.rows(); i++)
-    {
-        ss << "J" << i << " (deg): " << (180.0/M_PI) * (s.q(i) - mGoal(i)) << "\n"; 
-    }
-
-    LOGD << ss.str();
+    
     return true;
 }
 

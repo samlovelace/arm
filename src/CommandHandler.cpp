@@ -104,7 +104,6 @@ void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocit
     {
         return JointVelocityWaypoint(utils::toJntArray(m->velocities), utils::toJntArray(m->tolerances));
     });
-
 }
 
 void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
@@ -113,7 +112,6 @@ void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionW
     {
         return TaskPositionWaypoint(utils::toFrame(wp->pose), utils::toArray6(wp->tolerance));
     });
-
 }
 
 void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg)
