@@ -24,6 +24,8 @@ find_package(pcl_conversions REQUIRED)
 set(PCL_DIR "/usr/local/pcl-1.15/lib/cmake/pcl")
 find_package(PCL REQUIRED)
 
+set(DYNAMIXEL_LIB /usr/local/lib/libdxl_x64_cpp.so)
+
 # disable Ruckig examples and tests
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -36,6 +38,7 @@ set(COMMON_SOURCES
 
 set(SOURCES 
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointVelocityWaypoint.cpp
@@ -68,6 +71,7 @@ include_directories(${PROJECT_NAME}
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
   ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include
   ${PCL_INCLUDE_DIRS}
+  /usr/local/include
 )
 
 set(COMMON_LIBS
@@ -84,7 +88,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ${COMMON_LIBS}
 )
 
-target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES} ${DYNAMIXEL_LIB})
 
 if(BUILD_ARM_TOOLS)
     message(STATUS "Building test tool executable")
@@ -116,7 +120,7 @@ else()
     message(STATUS "Not building test tool executable")
 endif()
 
-if(BUILD_TESTS)
+if(BUILD_TESTS_ARM)
   find_package(GTest REQUIRED)
 
   add_executable(test_arm test/RunAll.cpp test/first.cpp)
