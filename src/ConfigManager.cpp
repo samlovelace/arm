@@ -26,6 +26,7 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     LOGD << "manipulator config path: " << manipConfigPath; 
 
     YAML::Node manipConfig = YAML::LoadFile(manipConfigPath + "/manip.yaml");
+    mManipConfig = manipConfig; // save as member var
     LOGD << "Manip Config: " << YAML::Dump(manipConfig); 
 
     mConfig.manipType = manipConfig["type"].as<std::string>();

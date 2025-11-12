@@ -121,10 +121,29 @@ else()
 endif()
 
 if(BUILD_TESTS_ARM)
+  
   find_package(GTest REQUIRED)
+  find_package(kdl_parser REQUIRED)
 
-  add_executable(test_arm test/RunAll.cpp test/first.cpp)
-  target_link_libraries(test_arm gtest)
+  set(CORE_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
+  )
+
+  set(TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/test/DynamixelManipComms_Test.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/RunAll.cpp
+  )
+
+  add_executable(test_arm ${TEST_SOURCES} ${CORE_SOURCES})
+  target_link_libraries(test_arm 
+    gtest 
+    ${DYNAMIXEL_LIB}
+    kdl_parser::kdl_parser)
+
+  target_include_directories(test_arm PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    /usr/local/include # installed location of dynamixel_sdk
+  )
 
 endif()
 

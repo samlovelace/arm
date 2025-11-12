@@ -4,19 +4,24 @@
 #include "GazeboManipComms.h"
 #include "DynamixelManipComms.h"
 
-std::shared_ptr<IManipComms> ManipulatorFactory::create(const std::string& aManipType, const std::string& aCommsType)
+std::shared_ptr<IManipComms> ManipulatorFactory::create(const YAML::Node& aConfig)
 {
-    if(("ur10" == aManipType || "ur5" == aManipType) && "simulated" == aCommsType)
+    std::string manipType = aConfig["type"].as<std::string>();
+    std::string commsType = aConfig["comms"].as<std::string>();
+
+    if(("ur10" == manipType || "ur5" == manipType) && "simulated" == commsType)
     {
-        return std::make_shared<GazeboManipComms>(aManipType);  
+        LOGW << "Using GazeboManipComms"; 
+        return std::make_shared<GazeboManipComms>(manipType);  
     }
-    else if ("dynamixel" == aManipType && "dynamixel" == aCommsType)
+    else if ("dynamixel" == manipType && "dynamixel" == commsType)
     {
-        return std::make_shared<DynamixelManipComms>(); 
+        LOGW << "Using DynamixelManipComms"; 
+        return std::make_shared<DynamixelManipComms>(aConfig["comms_configs"].as<YAML::Node>()); 
     }
     else
     {
-        LOGE << "Manip type: " << aManipType << " not yet supported"; 
+        LOGE << "Manip type: " << manipType << " not yet supported"; 
     }
 
 }

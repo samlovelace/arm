@@ -16,8 +16,8 @@
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
                 mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false), mIsArrived(false)
-{
-    mManipComms = ManipulatorFactory::create(aConfig.manipType, aConfig.manipCommsType); 
+{   
+    mManipComms = ManipulatorFactory::create(ConfigManager::getInstance()->getManipConfig()); 
     mManipComms->init(); 
 
     if(!mKinematicsHandler->init(mConfig.urdfPath))

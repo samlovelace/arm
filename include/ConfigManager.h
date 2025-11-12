@@ -34,6 +34,7 @@ public:
     void loadConfig(const std::string& aConfigFilepath); 
     Config getConfig() {return mConfig; }
     YAML::Node& getRawConfig() {return mYamlConfig; }
+    YAML::Node& getManipConfig() {return mManipConfig; }
 
 private:
     ConfigManager(/* args */) {}
@@ -43,6 +44,7 @@ private:
 
     Config mConfig; 
     YAML::Node mYamlConfig; 
+    YAML::Node mManipConfig; 
 
 };
 #endif 

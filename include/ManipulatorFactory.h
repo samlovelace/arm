@@ -3,14 +3,14 @@
 
 #include "IManipComms.h"
 #include <memory> 
-
+#include <yaml-cpp/yaml.h>
 class ManipulatorFactory
 {
 public:
     ManipulatorFactory(/* args */);
     ~ManipulatorFactory();
 
-    static std::shared_ptr<IManipComms> create(const std::string& aManipType, const std::string& aCommsType); 
+    static std::shared_ptr<IManipComms> create(const YAML::Node& aConfig); 
 private:
     /* data */
 
