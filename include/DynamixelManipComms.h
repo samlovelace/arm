@@ -1,6 +1,8 @@
 #ifndef DYNAMIXELMANIPCOMMS_H
 #define DYNAMIXELMANIPCOMMS_H
- 
+
+#include <thread> 
+#include <mutex> 
 #include <memory> 
 #include "IManipComms.h"
 #include <yaml-cpp/yaml.h>
@@ -10,6 +12,7 @@
 #define ADDR_MX_TORQUE_ENABLE           24                  // Control table address is different in Dynamixel model
 #define ADDR_MX_GOAL_POSITION           30
 #define ADDR_MX_PRESENT_POSITION        36
+#define ADDR_MX_PRESENT_SPEED           38
 #define ADDR_MX_MAX_TORQUE              14
 
 // Data Byte Length
@@ -60,16 +63,41 @@ public:
 private: 
 
     void writeMaxTorque(const MotorConfig& aMotor);
+    void commsLoop(); 
+    void setLatestJointCommand(const KDL::JntArray& aCmd); 
+    KDL::JntArray getLatestJointCommand(); 
+
+    void setLatestJointPositions(const KDL::JntArray& aJntPos); 
+    void setLatestJointVelocities(const KDL::JntArray& aJntVel);
+
+
+    void toggleEnableState(const MotorConfig& aMotor, bool aState);
+    void writeJointCommandToSerialPort(const KDL::JntArray& aJntCmd);
+    void readStateFromSerialPort(KDL::JntArray& aJointPositions, KDL::JntArray& aJointVelocities);
 
 private:
 
     dynamixel::PortHandler* mPortHandler; 
     dynamixel::PacketHandler* mPacketHandler; 
+    std::unique_ptr<dynamixel::GroupSyncWrite> mJointPosWriter; 
+    std::unique_ptr<dynamixel::GroupBulkRead> mJointStateReader; 
 
     std::string mDeviceName; 
     int mProtocolVersion; 
     int mBaudRate; 
     std::vector<MotorConfig> mMotors; 
    
+    std::thread mCommsThread; 
+    std::atomic<bool> mRunning;
+    
+    // command stuff 
+    std::mutex mCmdMutex;
+    KDL::JntArray mJointCommand;
+
+    // state stuff 
+    std::mutex mStateMutex; 
+    KDL::JntArray mJointPositions; 
+    KDL::JntArray mJointVelocities; 
+
 };
 #endif //DYNAMIXELMANIPCOMMS_H

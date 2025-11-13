@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "DynamixelManipComms.h"
 #include <kdl/jntarray.hpp>
+#include "RateController.h"
 
 class DynamixelManipComms_Test : public ::testing::Test
 {
@@ -10,7 +11,16 @@ public:
 
     void SetUp() override
     {
-        instance = std::make_shared<DynamixelManipComms>(); 
+        YAML::Node comms;
+        comms["device_name"] = "/dev/ttyUSB0";
+        comms["baud_rate"]  = 2000000;
+        comms["protocol_version"]  = 1;
+        comms["motor_ids"] = std::vector<int>{1, 2}; 
+        comms["max_torque"] = std::vector<double>{0.35, 0.35}; 
+        comms["step_conversion"] = std::vector<double>{0.088, 0.088}; 
+        comms["rate"] = 10;  
+
+        instance = std::make_shared<DynamixelManipComms>(comms); 
     }
 
     void TearDown() override
@@ -22,39 +32,68 @@ protected:
     std::shared_ptr<IManipComms> instance;
 };
 
-TEST_F(DynamixelManipComms_Test, DynamixelCommsTest)
+void sendLoop(std::shared_ptr<DynamixelManipComms> comms)
+{
+    KDL::JntArray first(2);
+    first(0) = 90;
+    first(1) = 90;  
+
+    KDL::JntArray second(2); 
+    second(0) = 180;
+    second(1) = 180;  
+
+    int num = 0; 
+    int count = 100; 
+
+    RateController rate(10); 
+
+    while(num < count)
+    {
+        rate.start();
+
+        first(0) -= 0.5; 
+        first(1) -= 0.25; 
+        comms->sendJointCommand(first); 
+
+        rate.block(); 
+        num++; 
+    }
+
+}
+
+void readLoop(std::shared_ptr<DynamixelManipComms> comms)
+{
+    int num = 0; 
+    int count = 100; 
+
+    RateController rate(10);
+
+    while(num < count)
+    {
+        rate.start();
+
+        KDL::JntArray pos = comms->getJointPositions(); 
+        KDL::JntArray vel = comms->getJointVelocities(); 
+
+        std::cout << "Pos: " << pos.data << std::endl; 
+        std::cout << "Vel: " << vel.data << std::endl; 
+
+        rate.block(); 
+        num++; 
+    }
+}
+
+TEST_F(DynamixelManipComms_Test, WriteCommand)
 {
     ASSERT_TRUE(instance->init()); 
     sleep(2); 
 
-    KDL::JntArray first(1);
-    first(0) = 90; 
+    auto dxl = std::static_pointer_cast<DynamixelManipComms>(instance);
 
-    KDL::JntArray second(1); 
-    second(0) = 180; 
+    std::thread t1(readLoop, dxl);
+    std::thread t2(sendLoop, dxl);
 
-    instance->sendJointCommand(first); 
-    
-    for(int i = 0; i < 10; i++)
-    {
-        KDL::JntArray pos = instance->getJointPositions(); 
-        std::cout << pos(0) << std::endl; 
-    }
+    t1.join();
+    t2.join();
 
-    sleep(3);
-    instance->sendJointCommand(second);
-    for(int i = 0; i < 10; i++)
-    {
-        KDL::JntArray pos = instance->getJointPositions(); 
-        std::cout << pos(0) << std::endl; 
-    }
-
-    sleep(3); 
-    instance->sendJointCommand(first);
-    for(int i = 0; i < 10; i++)
-    {
-        KDL::JntArray pos = instance->getJointPositions(); 
-        std::cout << pos(0) << std::endl; 
-    } 
-    sleep(3); 
 }

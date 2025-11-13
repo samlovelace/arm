@@ -124,9 +124,11 @@ if(BUILD_TESTS_ARM)
   
   find_package(GTest REQUIRED)
   find_package(kdl_parser REQUIRED)
+  find_package(yaml-cpp REQUIRED)
 
   set(CORE_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   )
 
   set(TEST_SOURCES
@@ -138,7 +140,9 @@ if(BUILD_TESTS_ARM)
   target_link_libraries(test_arm 
     gtest 
     ${DYNAMIXEL_LIB}
-    kdl_parser::kdl_parser)
+    kdl_parser::kdl_parser
+    yaml-cpp
+  )
 
   target_include_directories(test_arm PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
