@@ -8,6 +8,7 @@ DynamixelManipComms::DynamixelManipComms(const YAML::Node& aCommsConfig) : mPort
     mDeviceName = aCommsConfig["device_name"].as<std::string>(); 
     mProtocolVersion = aCommsConfig["protocol_version"].as<int>(); 
     mBaudRate = aCommsConfig["baud_rate"].as<int>(); 
+    mCommsRate = aCommsConfig["comms_rate"].as<int>(); 
 
     std::vector<int> ids = aCommsConfig["motor_ids"].as<std::vector<int>>();
     std::vector<double> maxTorques = aCommsConfig["max_torque"].as<std::vector<double>>(); 
@@ -77,7 +78,7 @@ bool DynamixelManipComms::init()
 
 void DynamixelManipComms::commsLoop()
 {
-    RateController rate(10);
+    RateController rate(mCommsRate);
     mRunning.store(true); 
 
     while(mRunning)

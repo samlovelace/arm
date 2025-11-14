@@ -89,6 +89,7 @@ private:
    
     std::thread mCommsThread; 
     std::atomic<bool> mRunning;
+    int mCommsRate; 
     
     // command stuff 
     std::mutex mCmdMutex;

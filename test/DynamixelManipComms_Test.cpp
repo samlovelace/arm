@@ -18,7 +18,7 @@ public:
         comms["motor_ids"] = std::vector<int>{1, 2}; 
         comms["max_torque"] = std::vector<double>{0.35, 0.35}; 
         comms["step_conversion"] = std::vector<double>{0.088, 0.088}; 
-        comms["rate"] = 10;  
+        comms["comms_rate"] = 30;  
 
         instance = std::make_shared<DynamixelManipComms>(comms); 
     }
