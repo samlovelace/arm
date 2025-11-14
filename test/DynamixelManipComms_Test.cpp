@@ -32,7 +32,7 @@ protected:
     std::shared_ptr<IManipComms> instance;
 };
 
-void sendLoop(std::shared_ptr<DynamixelManipComms> comms)
+void sendLoop(std::shared_ptr<IManipComms> comms)
 {
     KDL::JntArray first(2);
     first(0) = 90;
@@ -51,8 +51,8 @@ void sendLoop(std::shared_ptr<DynamixelManipComms> comms)
     {
         rate.start();
 
-        first(0) -= 0.5; 
-        first(1) -= 0.25; 
+        first(0) -= 1; 
+        first(1) -= 2; 
         comms->sendJointCommand(first); 
 
         rate.block(); 
@@ -61,7 +61,7 @@ void sendLoop(std::shared_ptr<DynamixelManipComms> comms)
 
 }
 
-void readLoop(std::shared_ptr<DynamixelManipComms> comms)
+void readLoop(std::shared_ptr<IManipComms> comms)
 {
     int num = 0; 
     int count = 100; 
@@ -88,12 +88,9 @@ TEST_F(DynamixelManipComms_Test, WriteCommand)
     ASSERT_TRUE(instance->init()); 
     sleep(2); 
 
-    auto dxl = std::static_pointer_cast<DynamixelManipComms>(instance);
-
-    std::thread t1(readLoop, dxl);
-    std::thread t2(sendLoop, dxl);
+    std::thread t1(readLoop, instance);
+    std::thread t2(sendLoop, instance);
 
     t1.join();
     t2.join();
-
 }

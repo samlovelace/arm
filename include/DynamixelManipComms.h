@@ -97,7 +97,11 @@ private:
     // state stuff 
     std::mutex mStateMutex; 
     KDL::JntArray mJointPositions; 
+    KDL::JntArray mPrevJointPositions; 
     KDL::JntArray mJointVelocities; 
+
+    std::chrono::steady_clock::time_point mPrevTime; 
+
 
 };
 #endif //DYNAMIXELMANIPCOMMS_H

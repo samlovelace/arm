@@ -147,6 +147,7 @@ if(BUILD_TESTS_ARM)
   target_include_directories(test_arm PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
     /usr/local/include # installed location of dynamixel_sdk
+    ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
   )
 
 endif()

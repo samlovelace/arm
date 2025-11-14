@@ -67,6 +67,9 @@ bool DynamixelManipComms::init()
         toggleEnableState(motor, true); // re-enable motor 
     }
 
+    mPrevJointPositions.resize(mMotors.size()); 
+    mPrevTime = std::chrono::steady_clock::now(); 
+
     mCommsThread = std::thread(&DynamixelManipComms::commsLoop, this); 
 
     return true; 
@@ -137,7 +140,7 @@ void DynamixelManipComms::writeJointCommandToSerialPort(const KDL::JntArray& aJn
 void DynamixelManipComms::readStateFromSerialPort(KDL::JntArray& aJointPositions, KDL::JntArray& aJointVelocities)
 {
     // send request to read state(s)
-    int result = mJointPosWriter->txPacket(); 
+    int result = mJointStateReader->txRxPacket(); 
     
     if (result != COMM_SUCCESS) 
     {
@@ -148,22 +151,51 @@ void DynamixelManipComms::readStateFromSerialPort(KDL::JntArray& aJointPositions
     aJointPositions.resize(mMotors.size()); 
     aJointVelocities.resize(mMotors.size()); 
 
+    auto nowTime = std::chrono::steady_clock::now(); 
+    auto dt = std::chrono::duration<double>(nowTime - mPrevTime).count(); 
+
     for (int i = 0; i < mMotors.size(); i++)
     {
+        bool positionRead = false; 
+
         if(mJointStateReader->isAvailable(mMotors[i].mId, ADDR_MX_PRESENT_POSITION, LEN_MX_PRESENT_POSITION))
         {
             uint32_t pos_steps = mJointStateReader->getData(mMotors[i].mId, ADDR_MX_PRESENT_POSITION, LEN_MX_PRESENT_POSITION); 
             double pos_deg = pos_steps * mMotors[i].mStepConversion; 
-            aJointPositions(i) = pos_deg; 
+            aJointPositions(i) = pos_deg;
+            positionRead = true;  
+        }
+        else
+        {
+            LOGW << "Data not available for motor: " << mMotors[i].mId << " position"; 
         }
 
-        if(mJointStateReader->isAvailable(mMotors[i].mId, ADDR_MX_PRESENT_SPEED, LEN_MX_PRESENT_POSITION))
+        if(positionRead)
         {
-            uint32_t vel_steps = mJointStateReader->getData(mMotors[i].mId, ADDR_MX_PRESENT_SPEED, LEN_MX_PRESENT_POSITION);
-            double vel_dps = vel_steps * mMotors[i].mStepConversion; 
-            aJointVelocities(i) = vel_dps; 
+            aJointVelocities(i) = (aJointPositions(i) - mPrevJointPositions(i)) / dt;
         }
+    
+        // if(mJointStateReader->isAvailable(mMotors[i].mId, ADDR_MX_PRESENT_SPEED, LEN_MX_PRESENT_POSITION))
+        // {
+        //     uint32_t vel_steps = mJointStateReader->getData(mMotors[i].mId, ADDR_MX_PRESENT_SPEED, LEN_MX_PRESENT_POSITION);
+        //     double vel_rpm = vel_steps * 0.111; // convert to rpm via magic number from datasheet 
+
+        //     if (1024 <= vel_steps <= 2048)
+        //     {
+        //         // motor turning CW, negative vel
+        //         vel_rpm *= -1;  
+        //     }
+
+        //     aJointVelocities(i) = vel_rpm * (360.0 / 60.0); // convert to deg/s  
+        // }
+        // else
+        // {
+        //     LOGW << "Data not available for motor: " << mMotors[i].mId << " velocity"; 
+        // }
     }
+
+    mPrevJointPositions = aJointPositions; 
+    mPrevTime = nowTime; 
 }
 
 KDL::JntArray DynamixelManipComms::getJointPositions()
