@@ -41,11 +41,21 @@ private:
 
     template<typename MsgType, typename WaypointType>
     void handleWaypoint(const typename MsgType::SharedPtr& msg,
+                        const int aGoalSize, 
+                        const int aProperSize,
                         std::function<WaypointType(const typename MsgType::SharedPtr&)> converter)
     {
-        if (!mManip->isEnabled()) {
+        if (!mManip->isEnabled()) 
+        {
             LOGW << "Manipulator not enabled. Cannot accept waypoint";
             return;
+        }
+
+        if(aGoalSize != aProperSize)
+        {
+            LOGW << "Rejecting waypoint with goal size (" << aGoalSize 
+                 << ") not equal to proper size (" << aProperSize << ")."; 
+            return; 
         }
 
         auto wp = converter(msg);

@@ -92,7 +92,11 @@ void CommandHandler::enableCallback(const robot_idl::msg::Enable::SharedPtr anEn
 
 void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
-    handleWaypoint<robot_idl::msg::JointPositionWaypoint, JointPositionWaypoint>(aMsg, [](const auto& m) 
+    int numJoints = mManip->getKinematicsHandler()->getNrJoints(); 
+    int goalSize = aMsg->positions.size(); 
+
+    handleWaypoint<robot_idl::msg::JointPositionWaypoint, 
+                   JointPositionWaypoint>(aMsg, goalSize, numJoints, [](const auto& m) 
     {
         return JointPositionWaypoint(utils::toJntArray(m->positions), utils::toJntArray(m->tolerances));
     });
@@ -100,7 +104,11 @@ void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositio
 
 void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg)
 {
-    handleWaypoint<robot_idl::msg::JointVelocityWaypoint, JointVelocityWaypoint>(aMsg, [](const auto& m) 
+    int numJoints = mManip->getKinematicsHandler()->getNrJoints(); 
+    int goalSize = aMsg->velocities.size();
+
+    handleWaypoint<robot_idl::msg::JointVelocityWaypoint, JointVelocityWaypoint>(aMsg, goalSize, numJoints,
+         [](const auto& m) 
     {
         return JointVelocityWaypoint(utils::toJntArray(m->velocities), utils::toJntArray(m->tolerances));
     });
@@ -108,7 +116,9 @@ void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocit
 
 void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg)
 {
-    handleWaypoint<robot_idl::msg::TaskPositionWaypoint, TaskPositionWaypoint>(aMsg, [](const auto& wp)
+
+    handleWaypoint<robot_idl::msg::TaskPositionWaypoint, TaskPositionWaypoint>(aMsg, -1, -1, 
+        [](const auto& wp)
     {
         return TaskPositionWaypoint(utils::toFrame(wp->pose), utils::toArray6(wp->tolerance));
     });
@@ -116,7 +126,8 @@ void CommandHandler::taskPosWaypointCallback(const robot_idl::msg::TaskPositionW
 
 void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg)
 {
-    handleWaypoint<robot_idl::msg::TaskVelocityWaypoint, TaskVelocityWaypoint>(aMsg, [](const auto& wp)
+    handleWaypoint<robot_idl::msg::TaskVelocityWaypoint, TaskVelocityWaypoint>(aMsg, -1, -1, 
+        [](const auto& wp)
     {
         return TaskVelocityWaypoint(utils::toTwist(wp->goal), utils::toTwist(wp->tolerance));
     });
