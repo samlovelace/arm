@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>arm</name>
+  <name>arm_controller</name>
   <version>0.0.0</version>
-  <description>modular manipulation planning and control software</description>
+  <description>modular manipulation control software</description>
   <maintainer email="samlovelace12@gmail.com">sam</maintainer>
   <license>TODO</license>
 
@@ -20,8 +20,6 @@
   <depend>yaml-cpp</depend>
   <depend>pcl_msgs</depend> 
   <depend>pcl_conversions</depend>
-  <!-- <depend>nlohmann_json</depend>
-  <depend>ament_index_cpp</depend> -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
