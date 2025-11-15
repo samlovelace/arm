@@ -24,7 +24,9 @@ private:
     std::unique_ptr<ruckig::OutputParameter<0>> mOutput;
 
     ConfigManager::Config mConfig;
-    std::vector<double> mVelocityLimits;  
+    std::vector<double> mVelocityLimits; 
+    std::vector<double> mLowerPosLimits; 
+    std::vector<double> mUpperPosLimits;  
 
     bool mInitialSet;
 

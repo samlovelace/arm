@@ -16,17 +16,36 @@ void WaypointExecutor::init(int aNumDof, KinematicsHandler& aKinematicsHandler)
 {
     mNumDof = aNumDof;
     KDL::JntArray velLimits = aKinematicsHandler.getJointLimits("velocity");
+    KDL::JntArray lowerPosLimits = aKinematicsHandler.getJointLimits("lower");
+    KDL::JntArray upperPosLimits = aKinematicsHandler.getJointLimits("upper"); 
     
     mVelocityLimits.resize(mNumDof); 
+    mLowerPosLimits.resize(mNumDof); 
+    mUpperPosLimits.resize(mNumDof); 
 
     for(int i = 0; i < mNumDof; i++)
     {
         mVelocityLimits[i] = mConfig.velLimitFraction * velLimits(i); 
+        mLowerPosLimits[i] = 0.95 * lowerPosLimits(i); 
+        mUpperPosLimits[i] = 0.95 * upperPosLimits(i); 
     }
 
     mExecutor = std::make_unique<ruckig::Ruckig<0>>(mNumDof, 1/(float)mConfig.manipControlRate); // pass timestep
     mInput = std::make_unique<ruckig::InputParameter<0>>(mNumDof);
     mOutput = std::make_unique<ruckig::OutputParameter<0>>(mNumDof);
+
+    // resize ruckig vector
+    mInput->degrees_of_freedom = mNumDof; 
+    mInput->max_velocity.resize(mNumDof); 
+
+    for(int i = 0; i < mNumDof; i++)
+    {
+        mInput->max_velocity[i] = mConfig.velLimitFraction * velLimits(i); 
+    }
+ 
+    std::copy_n(mVelocityLimits.begin(), (int)mInput->degrees_of_freedom, mInput->max_velocity.begin()); 
+    std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin()); 
+    std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin()); 
 }
 
 bool WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType)
@@ -55,7 +74,8 @@ bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint, ruckig::Control
             { 
                 for(int i = 0; i < mNumDof; i++)
                 {
-                    goalPos[i] = aGoalWaypoint(i); 
+                    // clamp goal joint pos since open source ruckig doesnt do position limits 
+                    goalPos[i] = std::clamp(aGoalWaypoint(i), mLowerPosLimits[i], mUpperPosLimits[i]); 
                     goalVel[i] = 0.0; 
                     goalAccel[i] = 0.0;  
                 }
@@ -65,7 +85,7 @@ bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint, ruckig::Control
                 mInput->target_velocity = goalVel; 
                 mInput->target_acceleration = goalAccel; 
 
-                LOGD << "Setting Goal Joint Pos: " << mInput->target_position;
+                LOGV << "Setting Goal Joint Pos: " << mInput->target_position;
             }
         break;
     case ruckig::ControlInterface::Velocity: 
@@ -80,7 +100,7 @@ bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint, ruckig::Control
             mInput->target_velocity = goalVel; 
             mInput->target_acceleration = goalAccel; 
 
-            LOGD << "Setting Goal Joint Vel: " << mInput->target_velocity;
+            LOGV << "Setting Goal Joint Vel: " << mInput->target_velocity;
         }
         break; 
     default:
@@ -90,7 +110,8 @@ bool WaypointExecutor::setGoalState(KDL::JntArray aGoalWaypoint, ruckig::Control
     return true; 
 }
 
-void WaypointExecutor::setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel)
+void WaypointExecutor::setInitialState(const KDL::JntArray& aPos,
+                                       const KDL::JntArray& aVel)
 {
     for(int i = 0; i < aPos.rows(); i++)
     {
