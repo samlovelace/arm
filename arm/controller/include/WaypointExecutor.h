@@ -3,10 +3,11 @@
  
 #include <kdl/jntarray.hpp>
 #include <memory> 
+
 #include "ConfigManager.h"
 #include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
-#include "KinematicsHandler.h"
+#include "common/KinematicsHandler.h"
 
 class WaypointExecutor 
 { 

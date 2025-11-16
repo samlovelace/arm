@@ -1,6 +1,6 @@
 
 #include "JointPositionWaypoint.h"
-#include "KinematicsHandler.h"
+#include "common/KinematicsHandler.h"
 #include <stdexcept>
 #include <sstream>
 #include <cmath>

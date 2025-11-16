@@ -1,6 +1,6 @@
 
 #include "TaskVelocityWaypoint.h"
-#include "KinematicsHandler.h"
+#include "common/KinematicsHandler.h"
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
@@ -69,8 +69,6 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
 
 bool TaskVelocityWaypoint::arrived(const ControlInputs& s) const
 {
-    // should a task vel waypoint ever arrive? 
-    // with the current state machine, arrival would transition the state machine to IDLE
     return false; 
 }
 

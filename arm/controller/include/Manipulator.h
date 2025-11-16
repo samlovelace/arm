@@ -15,7 +15,7 @@
 #include "IWaypoint.hpp"
 #include "TaskPositionWaypoint.h"
 #include "JointPositionWaypoint.h"
-#include "KinematicsHandler.h"
+#include "common/KinematicsHandler.h"
 #include "IrmEntry.hpp"
 
 class Manipulator
