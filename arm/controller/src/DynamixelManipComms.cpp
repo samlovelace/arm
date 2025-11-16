@@ -1,7 +1,7 @@
 
 #include "DynamixelManipComms.h"
 #include "plog/Log.h"
-#include "RateController.h"
+#include "common/RateController.hpp"
 
 DynamixelManipComms::DynamixelManipComms(const YAML::Node& aCommsConfig) : mPortHandler(nullptr)
 {

@@ -46,7 +46,6 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/PcaGraspPlanner.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/PlannerFactory.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/PointCloudHandler.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/SimpleGripperVisualizer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
@@ -57,18 +56,15 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set(COMMON_INCLUDE_DIRS
-  ${CMAKE_CURRENT_LIST_DIR}/include
-  /opt/ros/humble/include/kdl_parser
-  /opt/ros/humble/include/urdf
-)
-
-include_directories(${PROJECT_NAME} 
-  ${COMMON_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
-  ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include
-  ${PCL_INCLUDE_DIRS}
-  /usr/local/include
+include_directories(${PROJECT_NAME}
+    ${CMAKE_CURRENT_LIST_DIR}/../common/include
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
+    ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include
+    ${PCL_INCLUDE_DIRS}
+    /usr/local/include
+    /opt/ros/humble/include/kdl_parser
+    /opt/ros/humble/include/urdf
 )
 
 set(COMMON_LIBS

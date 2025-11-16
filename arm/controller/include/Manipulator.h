@@ -10,7 +10,7 @@
 
 #include "IManipComms.h"
 #include "ConfigManager.h"
-#include "RateController.h"
+#include "common/RateController.hpp"
 #include "WaypointExecutor.h"
 #include "IWaypoint.hpp"
 #include "TaskPositionWaypoint.h"

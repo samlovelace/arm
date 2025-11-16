@@ -1,7 +1,7 @@
 #ifndef STATEMACHINE_H
 #define STATEMACHINE_H
  
-#include "RateController.h"
+#include "common/RateController.hpp"
 #include "Manipulator.h"
 #include "IArmTaskPlanner.hpp"
 #include <memory>
