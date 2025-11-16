@@ -1,0 +1,13 @@
+type: UR
+comms: simulated
+rate: 10 # Hz
+urdf: manipulator.urdf
+irm: IRM.json
+initial_positions: [0, -1.57, 0, 0, 0, 0]
+accel_limits: [3.14, 3.14, 3.14, 3.14, 3.14, 3.14]
+jerk_limits: [20, 20, 20, 20, 20, 20]
+vel_limit_fraction: 0.75 # 0-1
+
+mount:
+  position: [-0.2, 0, 0.3] #xyz
+  quaternion: [0, 0, 0, 1] #xyz w

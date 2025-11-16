@@ -1,0 +1,19 @@
+type: ur5
+comms: simulated
+rate: 10 # Hz
+urdf: manipulator.urdf
+irm: IRM.bin
+initial_positions: [0, -1.57, 0, 0, 0, 0, 0, 0]
+accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+jerk_limits: [1, 1, 1, 1, 1, 1, 1, 1]
+vel_limit_fraction: 0.95 # 0-1
+
+mount:
+  position: [-0.2, 0, 0.3] # xyz
+  quaternion: [0, 0, 0, 1] # xyz w
+
+deploy:
+  pos: [1, 1, 1, 1, 1, 1]
+
+stow:
+  pos: [0, 0, 0, 0, 0, 0]

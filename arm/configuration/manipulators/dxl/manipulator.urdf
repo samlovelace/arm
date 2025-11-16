@@ -1,0 +1,222 @@
+<?xml version="1.0" ?>
+<robot name="ur5_rg2">
+
+  <!-- Dummy root link with no inertia -->
+  <link name="dummy_root"/>
+
+  <!-- Fixed joint connecting dummy root to base_link -->
+  <joint name="dummy_root_to_base" type="fixed">
+    <parent link="dummy_root"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/base.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="-7.83914e-07 0.00442178 0.184343"/>
+      <mass value="4.210389694173812"/>
+      <inertia ixx="0.09309670560602573" ixy="5.711270872759674e-09" ixz="2.0039833861772347e-07" iyy="0.09257037651287492" iyz="0.0047053532779924665" izz="0.004310645613985299"/>
+    </inertial>
+  </link>
+  <link name="shoulder_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/shoulder.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="-3.81853e-06 0.00927291 -0.0018563"/>
+      <mass value="2.6078628081050645"/>
+      <inertia ixx="0.00615890739477387" ixy="8.486678716437087e-07" ixz="1.436028981488676e-07" iyy="0.005562932983198189" iyz="-0.00018809980689883695" izz="0.005255082470414319"/>
+    </inertial>
+  </link>
+  <link name="upper_arm_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/upperarm.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="9.68139e-10 -0.00107158 0.2125"/>
+      <mass value="9.034556202946057"/>
+      <inertia ixx="0.2566537454248199" ixy="-2.2173460061911962e-09" ixz="2.3397723734924104e-06" iyy="0.25483850258961777" iyz="5.701897149736449e-09" izz="0.016022276702360172"/>
+    </inertial>
+  </link>
+  <link name="forearm_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/forearm.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="-7.83914e-07 0.00442178 0.184343"/>
+      <mass value="4.210389694173812"/>
+      <inertia ixx="0.09309670560602573" ixy="5.711270872759674e-09" ixz="2.0039833861772347e-07" iyy="0.09257037651287492" iyz="0.0047053532779924665" izz="0.004310645613985299"/>
+    </inertial>
+  </link>
+  <link name="wrist_1_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/wrist1.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="2.12195e-06 0.0886236 -0.00357675"/>
+      <mass value="0.8652783044597422"/>
+      <inertia ixx="0.0011006744464830784" ixy="-4.062057055066431e-08" ixz="-2.441133081746347e-08" iyy="0.0010246557119841899" iyz="1.000924524333879e-05" izz="0.0007125213984803068"/>
+    </inertial>
+  </link>
+  <link name="wrist_2_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/wrist2.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="-2.12306e-06 -0.00357678 0.0901045"/>
+      <mass value="0.8652786866955592"/>
+      <inertia ixx="0.0010980920821000012" ixy="2.436032506659575e-08" ixz="4.047086050601145e-08" iyy="0.0007099378137563144" iyz="4.96085194908414e-06" izz="0.0010246570857519936"/>
+    </inertial>
+  </link>
+  <link name="wrist_3_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/ur5/wrist3.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="8.12548e-09 0.0630914 0.000189932"/>
+      <mass value="0.23285976783205536"/>
+      <inertia ixx="0.00010068520800989181" ixy="-1.3195380569038253e-11" ixz="2.0466677535340047e-11" iyy="0.00016016377462915846" iyz="3.421454203362164e-08" izz="9.951199288758246e-05"/>
+    </inertial>
+  </link>
+  <joint name="shoulder_pan_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0.089159"/>
+    <parent link="base_link"/>
+    <child link="shoulder_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="150" lower="-3.141592654" upper="3.141592654" velocity="3.15"/>
+    <dynamics damping="30" friction="4" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="shoulder_lift_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0.13585 0"/>
+    <parent link="shoulder_link"/>
+    <child link="upper_arm_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="150" lower="-1.57" upper="1.57" velocity="3.15"/>
+    <dynamics damping="45" friction="6" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="elbow_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 -0.1197 0.425"/>
+    <parent link="upper_arm_link"/>
+    <child link="forearm_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="150" lower="-2.75" upper="2.75" velocity="3.15"/>
+    <dynamics damping="35" friction="5" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="wrist_1_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0.39225"/>
+    <parent link="forearm_link"/>
+    <child link="wrist_1_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="28" lower="-6.28319" upper="6.28319" velocity="3.2"/>
+    <dynamics damping="25" friction="3.5" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="wrist_2_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0.093 0"/>
+    <parent link="wrist_1_link"/>
+    <child link="wrist_2_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="28" lower="-6.28319" upper="6.28319" velocity="3.2"/>
+    <dynamics damping="20" friction="2.5" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="wrist_3_joint" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0.09465"/>
+    <parent link="wrist_2_link"/>
+    <child link="wrist_3_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="28" lower="-6.28319" upper="6.28319" velocity="3.2"/>
+    <dynamics damping="15" friction="1.75" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="ur5_hand_joint" type="fixed">
+    <origin rpy="1.570796325 0 1.570796325" xyz="0 0.0823 0"/>
+    <parent link="wrist_3_link"/>
+    <child link="rg2_hand"/>
+  </joint>
+  <link name="rg2_hand">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file://meshes/visual/rg2/hand.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.057581 -0.000169308 -3.3334e-05"/>
+      <mass value="0.29881464108881906"/>
+      <inertia ixx="0.00010934311942148434" ixy="2.4297126288189813e-07" ixz="5.3958894994201004e-08" iyy="0.0003327568173229071" iyz="2.4899876853227836e-07" izz="0.00037338963627732164"/>
+    </inertial>
+  </link>
+  <link name="rg2_leftfinger">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <geometry>
+        <mesh filename="file://meshes/visual/rg2/finger.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0176873 -0.00819142 -4.15573e-05"/>
+      <mass value="0.24059267945559043"/>
+      <inertia ixx="3.3970932890017096e-05" ixy="-4.8854610840491595e-05" ixz="-1.1765879805737544e-08" iyy="0.00029230476124314346" iyz="1.6350676533062336e-08" izz="0.00030917405435097734"/>
+    </inertial>
+  </link>
+  <link name="rg2_rightfinger">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <visual>
+      <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file://meshes/visual/rg2/finger.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin rpy="3.141592653589793 0 0" xyz="-0.0176873 -0.00819142 -4.15573e-05"/>
+      <mass value="0.24059267945559043"/>
+      <inertia ixx="3.3970932890017096e-05" ixy="-4.8854610840491595e-05" ixz="-1.1765879805737544e-08" iyy="0.00029230476124314346" iyz="1.6350676533062336e-08" izz="0.00030917405435097734"/>
+    </inertial>
+  </link>
+  <joint name="rg2_finger_joint1" type="revolute">
+    <origin rpy="0 0 0" xyz="0.105 0.017 0"/>
+    <parent link="rg2_hand"/>
+    <child link="rg2_leftfinger"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="1000.6" lower="0.0" upper="1.18" velocity="1.57"/>
+    <dynamics damping="1" friction="0.005" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <joint name="rg2_finger_joint2" type="revolute">
+    <origin rpy="0 0 0" xyz="0.105 -0.017 0"/>
+    <parent link="rg2_hand"/>
+    <child link="rg2_rightfinger"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="1000.6" lower="0.0" upper="1.18" velocity="1.57"/>
+    <dynamics damping="1" friction="0.005" spring_reference="0" spring_stiffness="0"/>
+  </joint>
+  <link name="tool0">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </link>
+  <joint name="end_effector_frame_fixed_joint" type="fixed">
+    <origin rpy="-1.570796325 0 0" xyz="0 0.275 0"/>
+    <parent link="wrist_3_link"/>
+    <child link="tool0"/>
+  </joint>
+</robot>

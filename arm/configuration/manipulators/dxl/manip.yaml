@@ -1,0 +1,30 @@
+type: dynamixel
+comms: dynamixel
+rate: 10 # Hz
+urdf: manipulator.urdf
+irm:
+
+# TODO: define the below vals
+initial_positions: [0, -1.57, 0, 0, 0, 0, 0, 0]
+accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+jerk_limits: [5, 5, 5, 5, 5, 5, 5, 5]
+vel_limit_fraction: 0.75 # 0-1
+
+mount:
+  position: [-0.2, 0, 0.3] # xyz
+  quaternion: [0, 0, 0, 1] # xyz w
+
+deploy:
+  pos: [1, 1, 1, 1, 1, 1]
+
+stow:
+  pos: [0, 0, 0, 0, 0, 0]
+
+comms_configs:
+  device_name: /dev/ttyUSB0
+  baud_rate: 2000000
+  protocol_version: 1
+  motor_ids: [1, 2]
+  max_torque: [0.35, 0.35]
+  step_conversion: [0.088, 0.088] # conversion from steps to degrees
+  comms_rate: 10 # Hz

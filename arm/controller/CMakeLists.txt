@@ -5,9 +5,6 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-option(BUILD_ARM_TOOLS "build tools for a.r.m module" ON)
-option(BUILD_TESTS_ARM "build GTests" OFF)
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -29,7 +26,7 @@ set(DYNAMIXEL_LIB /usr/local/lib/libdxl_x64_cpp.so)
 # disable Ruckig examples and tests
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(dependencies/ruckig)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../dependencies/ruckig ruckig)
 
 set(COMMON_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
@@ -90,73 +87,5 @@ ament_target_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES} ${DYNAMIXEL_LIB})
 
-if(BUILD_ARM_TOOLS)
-    message(STATUS "Building test tool executable")
-
-    find_package(ament_index_cpp REQUIRED)
-    find_package(nlohmann_json REQUIRED)
-
-    set(TOOL_SOURCES
-      ${CMAKE_CURRENT_LIST_DIR}/tools/src/IrmGenerator.cpp
-      ${CMAKE_CURRENT_LIST_DIR}/tools/src/irm_generator.cpp
-      ${COMMON_SOURCES}
-    )
-
-    set(TOOL_INCLUDE_DIRS
-      tools/include
-      /opt/ros/humble/include/ament_index_cpp
-      ${COMMON_INCLUDE_DIRS}
-    )
-
-    set(TOOL_LIBS
-      ${COMMON_LIBS}
-    )
-
-    add_executable(irm_generator ${TOOL_SOURCES})
-    ament_target_dependencies(irm_generator ${TOOL_LIBS})
-    target_link_libraries(irm_generator yaml-cpp nlohmann_json::nlohmann_json)
-    target_include_directories(irm_generator PRIVATE ${TOOL_INCLUDE_DIRS})
-else()
-    message(STATUS "Not building test tool executable")
-endif()
-
-if(BUILD_TESTS_ARM)
-  
-  find_package(GTest REQUIRED)
-  find_package(kdl_parser REQUIRED)
-  find_package(yaml-cpp REQUIRED)
-
-  set(CORE_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/RateController.cpp
-  )
-
-  set(TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/test/DynamixelManipComms_Test.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/test/RunAll.cpp
-  )
-
-  add_executable(test_arm ${TEST_SOURCES} ${CORE_SOURCES})
-  target_link_libraries(test_arm 
-    gtest 
-    ${DYNAMIXEL_LIB}
-    kdl_parser::kdl_parser
-    yaml-cpp
-  )
-
-  target_include_directories(test_arm PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/include
-    /usr/local/include # installed location of dynamixel_sdk
-    ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
-  )
-
-endif()
-
-
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
-
-if(BUILD_ARM_TOOLS)
-  install(TARGETS irm_generator DESTINATION lib/${PROJECT_NAME})
-endif()
-
 ament_package()

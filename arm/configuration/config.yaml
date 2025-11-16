@@ -1,0 +1,12 @@
+Manipulator:
+  name: ur5
+
+StateMachine:
+  rate: 25 # Hz
+
+Planning:
+  type: mobile
+
+GraspPlanning:
+  type: pca
+  visualize: false

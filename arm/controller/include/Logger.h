@@ -68,7 +68,7 @@ void createLogger() {
     // Format time in HH_MM_SS
     std::ostringstream timeSS;
     timeSS << std::put_time(std::localtime(&now_time_t), "%H_%M_") << std::setw(2) << std::setfill('0') << seconds.count();
-    std::string logFileName = "ARM_Log_" + timeSS.str() + ".csv";
+    std::string logFileName = "arm_controller_log" + timeSS.str() + ".csv";
     //std::string datalogFileName = "NORA_DataLog_" + timeSS.str() + ".csv";
 
     // Full paths for log files
