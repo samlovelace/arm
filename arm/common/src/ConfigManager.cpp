@@ -1,5 +1,5 @@
 
-#include "ConfigManager.h"
+#include "common/ConfigManager.h"
 #include <yaml-cpp/yaml.h>
 #include "plog/Log.h"
 
@@ -7,6 +7,7 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
 {
     std::string shareDirFull = aConfigFilepath; 
     mYamlConfig = YAML::LoadFile(aConfigFilepath); 
+    load(aConfigFilepath); // load into mRoot; 
     LOGD << YAML::Dump(mYamlConfig); 
 
     // Substring to find and remove

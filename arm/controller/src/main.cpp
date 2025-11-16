@@ -4,7 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "common/Logger.hpp"
-#include "ConfigManager.h"
+#include "common/ConfigManager.h"
 #include "Manipulator.h"
 #include "StateMachine.h"
 #include "CommandHandler.h"
