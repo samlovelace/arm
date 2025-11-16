@@ -1,25 +1,22 @@
 
 #include <cstdio>
-#include "Logger.h"
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include "common/Logger.hpp"
 #include "ConfigManager.h"
 #include "Manipulator.h"
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include "StateMachine.h"
 #include "CommandHandler.h"
 #include "PlannerFactory.h"
-#include <rclcpp/rclcpp.hpp>
 
-void handle(int signal)
-{
-    exit(0); 
-}
 
 int main()
 {
-    std::signal(SIGINT, handle); 
+    std::signal(SIGINT, signalHandler); 
 
     rclcpp::init(0, nullptr);
-    createLogger();
+    createLogger("arm_controller_log-");
 
     std::string package_path = ament_index_cpp::get_package_share_directory("arm_configs");
     std::string config_path = package_path + "/config.yaml";

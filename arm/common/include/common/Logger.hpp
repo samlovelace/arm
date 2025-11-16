@@ -37,8 +37,8 @@ void createDirectory(const std::string& directoryName) {
     }
 }
 
-// Function to initialize logging
-void createLogger() {
+void createLogger(const std::string& aLogName) 
+{
     // Get current date and time
     auto now = std::chrono::system_clock::now();
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
@@ -68,8 +68,7 @@ void createLogger() {
     // Format time in HH_MM_SS
     std::ostringstream timeSS;
     timeSS << std::put_time(std::localtime(&now_time_t), "%H_%M_") << std::setw(2) << std::setfill('0') << seconds.count();
-    std::string logFileName = "arm_controller_log" + timeSS.str() + ".csv";
-    //std::string datalogFileName = "NORA_DataLog_" + timeSS.str() + ".csv";
+    std::string logFileName = aLogName + timeSS.str() + ".csv";
 
     // Full paths for log files
     std::string logFilePath = directoryName + "/" + logFileName;

@@ -11,7 +11,7 @@
 #include "robot_idl/msg/joint_position_waypoint.hpp"
 #include "robot_idl/msg/task_position_waypoint.hpp"
 #include "robot_idl/msg/task_velocity_waypoint.hpp"
-#include  "robot_idl/msg/joint_velocity_waypoint.hpp"
+#include "robot_idl/msg/joint_velocity_waypoint.hpp"
 #include "robot_idl/msg/enable.hpp"
 #include "robot_idl/msg/plan_command.hpp"
 #include "robot_idl/msg/plan_response.hpp"
