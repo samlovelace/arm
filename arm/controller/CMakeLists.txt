@@ -29,12 +29,12 @@ set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../dependencies/ruckig ruckig)
 
 set(COMMON_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/../common/src/ConfigManager.cpp
   ${CMAKE_CURRENT_LIST_DIR}/../common/src/KinematicsHandler.cpp
 )
 
 set(SOURCES 
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/ConfigManager.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp

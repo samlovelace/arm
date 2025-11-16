@@ -9,7 +9,7 @@
 #include <thread> 
 
 #include "IManipComms.h"
-#include "ConfigManager.h"
+#include "common/ConfigManager.h"
 #include "common/RateController.hpp"
 #include "WaypointExecutor.h"
 #include "IWaypoint.hpp"

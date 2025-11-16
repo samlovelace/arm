@@ -4,7 +4,7 @@
 #include <kdl/jntarray.hpp>
 #include <memory> 
 
-#include "ConfigManager.h"
+#include "common/ConfigManager.h"
 #include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
 #include "common/KinematicsHandler.h"

@@ -11,8 +11,8 @@
 #include "TaskVelocityWaypoint.h"
 #include "JointVelocityWaypoint.h"
 
-CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip, std::shared_ptr<IArmTaskPlanner> planner) : 
-    mStateMachine(msm), mManip(manip), mArmTaskPlanner(planner)
+CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_ptr<Manipulator> manip) : 
+    mStateMachine(msm), mManip(manip)
 {
     auto topicManager = RosTopicManager::getInstance(); 
     topicManager->createSubscriber<robot_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint", 
@@ -39,19 +39,11 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                                     this, 
                                                                                     std::placeholders::_1));
 
-    topicManager->createSubscriber<robot_idl::msg::PlanCommand>("arm/command", 
-                                                          std::bind(&CommandHandler::commandCallback, 
-                                                                    this, 
-                                                                    std::placeholders::_1)); 
-
-
-    // TODO: is this the best place to put this? Idk where else to put it 
-    topicManager->createPublisher<robot_idl::msg::PlanResponse>("arm/response"); 
-
     topicManager->spinNode(); 
 
     while (!topicManager->isROSInitialized())
     {
+        std::this_thread::sleep_for(std::chrono::seconds(1)); 
     }
     
     LOGD << "ROS Comms Initialized";
@@ -131,45 +123,5 @@ void CommandHandler::taskVelWaypointCallback(const robot_idl::msg::TaskVelocityW
     {
         return TaskVelocityWaypoint(utils::toTwist(wp->goal), utils::toTwist(wp->tolerance));
     });
-}
-
-void CommandHandler::commandCallback(const robot_idl::msg::PlanCommand::SharedPtr aCmd)
-{
-    std::string task = aCmd->operation_type == robot_idl::msg::PlanCommand::PICK ? "pick" : "place"; 
-    LOGD << "Receieved plan request for task: " << task; 
-
-    if(!mManip->isEnabled())
-    {
-        LOGW << "Manipulator not enabled. Cannot accept planning command"; 
-        return; 
-    }
-
-    if(!mArmTaskPlanner->init())
-    {
-        LOGE << "Failed to initiliaze task planner"; 
-        return; 
-    }
-     
-    setNewActiveState(StateMachine::STATE::PLANNING); 
-
-    // TODO: improve location where these are saved
-    std::string saveFilePath = "/home/sam/testing/test.ply"; 
-    PointCloudHandler::toFile(saveFilePath, aCmd->pick_obj_point_cloud_gl); 
-
-    geometry_msgs::msg::Point pt = aCmd->pick_obj_centroid_gl; 
-    Eigen::Vector3d centroid_gl(pt.x, pt.y, pt.z);  
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    PointCloudHandler::toPCL<pcl::PointXYZ>(aCmd->pick_obj_point_cloud_gl, *cloud); 
-
-    // TODO: probably need to respond somehow 
-    if(cloud->empty())
-    {
-        LOGE << "Cannot plan on empty object cloud"; 
-        return; 
-    }
- 
-    //TODO: dispatch to proper pick/place plan function
-    mArmTaskPlanner->planPick(centroid_gl, cloud);
 }
 

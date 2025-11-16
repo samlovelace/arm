@@ -1,6 +1,6 @@
 
 #include "GazeboManipComms.h"
-#include "RosTopicManager.hpp"
+#include "common/RosTopicManager.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "plog/Log.h"
 

@@ -24,13 +24,9 @@ int main()
     configManager->loadConfig(config_path); 
  
     auto manip = std::make_shared<Manipulator>(configManager->getConfig()); 
-    auto graspPlanner = PlannerFactory::createGraspPlanner(configManager->getRawConfig()["GraspPlanning"].as<YAML::Node>()); 
-    auto planner = PlannerFactory::createArmTaskPlanner(configManager->getRawConfig()["Planning"]["type"].as<std::string>());
-    planner->setGraspPlanner(graspPlanner); 
-    planner->setManipulator(manip); 
-
-    auto sm = std::make_shared<StateMachine>(manip, planner); 
-    CommandHandler* cm = new CommandHandler(sm, manip, planner);
+    auto sm = std::make_shared<StateMachine>(manip); 
+    CommandHandler* cm = new CommandHandler(sm, manip);
+    
     sm->run(); 
 
     return 0; 

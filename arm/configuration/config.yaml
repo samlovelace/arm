@@ -5,7 +5,7 @@ StateMachine:
   rate: 25 # Hz
 
 Engine:
-  rate: 5 # Hz
+  rate: 50 # Hz
 
 Planning:
   type: mobile

@@ -3,13 +3,10 @@
 #include <chrono>
 #include "plog/Log.h"
 #include "Utils.h"
-#include "RosTopicManager.hpp"
-#include "robot_idl/msg/plan_command.hpp"
-#include "robot_idl/msg/plan_response.hpp"
 
-StateMachine::StateMachine(std::shared_ptr<Manipulator> aManip, std::shared_ptr<IArmTaskPlanner> aPlanner) : 
+StateMachine::StateMachine(std::shared_ptr<Manipulator> aManip) : 
             mRate(std::make_unique<RateController>(50)), mActiveState(STATE::DISABLED), 
-            mManipulator(aManip), mPlanner(aPlanner)
+            mManipulator(aManip)
 {
 
 }
@@ -40,21 +37,6 @@ void StateMachine::run()
                 break;
             case StateMachine::STATE::MOVING: 
             {
-                // arm is currently moving to new goal jnt pos
-                if(!goalSet && !mPlanner->getCurrentPlans().empty())
-                {
-                    KDL::JntArray goal = mPlanner->getCurrentPlans()[0].mGoalJointPos; 
-                    KDL::JntArray tol(goal.rows()); 
-                    for(int i = 0; i < goal.rows(); i++)
-                    {    
-                        tol(i) = 1; 
-                    }
-
-                    JointPositionWaypoint wp(goal, tol);
-                    mManipulator->setGoalWaypoint(std::make_shared<JointPositionWaypoint>(wp)); 
-                    goalSet = true; 
-                }
-
                 if(mManipulator->isArrived())
                 {
                     setActiveState(StateMachine::STATE::IDLE); 
@@ -62,27 +44,6 @@ void StateMachine::run()
 
                 break;
             }
-            case StateMachine::STATE::PLANNING: 
-                
-                if(mPlanner->isPlanFound())
-                {
-                    LOGD << "Plan found!"; 
-                    
-                    // TODO: update ComandHandler to do this 
-                    // get the plan and publish 
-                    auto plans = mPlanner->getCurrentPlans(); 
-                    auto planResponse = utils::toIdl(plans); 
-
-                    RosTopicManager::getInstance()->publishMessage<robot_idl::msg::PlanResponse>("arm/response", planResponse);
-                    setActiveState(StateMachine::STATE::MOVING); 
-                }
-                else if (mPlanner->didPlanningFail())
-                {
-                    // TODO: send response back to autonomy 
-                    LOGD << "Failed to find plans :("; 
-                    setActiveState(StateMachine::STATE::IDLE); 
-                }
-                break;
             default:
                 break;
         }
@@ -120,9 +81,6 @@ std::string StateMachine::toString(StateMachine::STATE aState)
     case StateMachine::STATE::MOVING: 
         stringToReturn = "MOVING";
         break;
-    case StateMachine::STATE::PLANNING: 
-        stringToReturn = "PLANNING"; 
-        break; 
     default:
         stringToReturn = "UNKNOWN";
     }
