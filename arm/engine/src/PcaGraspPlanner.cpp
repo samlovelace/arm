@@ -10,6 +10,8 @@
 PcaGraspPlanner::PcaGraspPlanner(const YAML::Node& aConfig) : mVisualize(false)
 {
     mVisualize = aConfig["visualize"].as<bool>(); 
+    std::string visState = mVisualize == true ? "true" : "false"; 
+    LOGV << "Grasp Planning Visualization set to " << visState;  
 }
 
 PcaGraspPlanner::~PcaGraspPlanner()
@@ -48,6 +50,9 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
     Eigen::Vector4f manual_centroid(0.0f, 0.0f, 0.0f, 0.0f);
     int valid_points = 0;
 
+    /**
+     * DEBUGGING MANUALLY COMPUTE CENTROID 
+     */
     for (const auto& pt : aCloud->points) 
     {
         if (!std::isnan(pt.x) && !std::isnan(pt.y) && !std::isnan(pt.z)) 
@@ -65,6 +70,9 @@ bool PcaGraspPlanner::plan(pcl::PointCloud<pcl::PointXYZ>::Ptr aCloud, Eigen::Af
     }
     
     LOGD << "Manually computed object centroid: " << manual_centroid.head<3>(); 
+    /**
+     * END DEBUGGING 
+     */
 
     if (!eigenvectors.allFinite())
     {

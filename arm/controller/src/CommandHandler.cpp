@@ -4,7 +4,7 @@
 #include "plog/Log.h"
 #include <kdl/jntarray.hpp>
 #include "PointCloudHandler.h"
-#include "Utils.h"
+#include "common/Utils.hpp"
 
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"

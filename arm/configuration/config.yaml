@@ -7,9 +7,9 @@ StateMachine:
 Engine:
   rate: 50 # Hz
 
-Planning:
-  type: mobile
+  Planning:
+    type: mobile
 
-GraspPlanning:
-  type: pca
-  visualize: false
+  GraspPlanning:
+    type: pca
+    visualize: true

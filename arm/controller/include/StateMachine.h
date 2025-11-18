@@ -17,7 +17,6 @@ public:
         DISABLED,
         IDLE, 
         MOVING,
-        PLANNING, 
         NUM_TYPES
     }; 
 
@@ -32,7 +31,7 @@ private:
     std::mutex mActiveStateMutex;  
     std::shared_ptr<Manipulator> mManipulator; 
     std::unique_ptr<RateController> mRate; 
-    
+
     std::string toString(StateMachine::STATE aState);
    
 };

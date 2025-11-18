@@ -2,7 +2,9 @@
 #define ENGINE_H
  
 #include "robot_idl/msg/manipulation_command.hpp"
- 
+#include "INode.hpp"
+
+#include "IGraspPlanner.hpp"
 class Engine 
 { 
 public:
@@ -15,6 +17,10 @@ public:
 private:
 
     void commandCallback(const robot_idl::msg::ManipulationCommand::SharedPtr aCmd);
+    NodePtr mActiveTree; 
+    INode::Status mStatus; 
+
+    std::shared_ptr<IGraspPlanner> mGraspPlanner; 
    
 };
 #endif //ENGINE_H
