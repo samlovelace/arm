@@ -30,9 +30,11 @@ set(SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/PcaGraspPlanner.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlanGraspNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlannerFactory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/PlanPickTaskNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PointCloudHandler.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/SequenceNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/SimpleGripperVisualizer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/SimpleMobileTaskPlanner.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

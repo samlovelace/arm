@@ -1,7 +1,7 @@
 #ifndef PLANNERFACTORY_H
 #define PLANNERFACTORY_H
  
-//#include "IArmTaskPlanner.hpp"
+#include "IArmTaskPlanner.hpp"
 #include "IGraspPlanner.hpp"
 #include <memory>  
 #include <yaml-cpp/yaml.h>
@@ -12,7 +12,7 @@ public:
     PlannerFactory();
     ~PlannerFactory();
 
-    //static std::shared_ptr<IArmTaskPlanner> createArmTaskPlanner(const std::string& aPlannerType); 
+    static std::shared_ptr<IArmTaskPlanner> createArmTaskPlanner(const std::string& aPlannerType); 
     static std::shared_ptr<IGraspPlanner> createGraspPlanner(const YAML::Node& aGraspPlanningConfig); 
 
 private:

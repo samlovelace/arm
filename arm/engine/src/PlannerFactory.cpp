@@ -1,21 +1,27 @@
 
 #include "PlannerFactory.h"
-//#include "MobileArmTaskPlanner.h"
+#include "SimpleMobileTaskPlanner.h"
 #include "PcaGraspPlanner.h"
 #include "plog/Log.h"
 
-// std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std::string& aPlannerType)
-// {
-//     if("mobile" == aPlannerType)
-//     {
-//         return std::make_shared<MobileArmTaskPlanner>(); 
-//     }
-//     else
-//     {
-//         LOGE << "Unsupported planner type: " << aPlannerType; 
-//         return nullptr; 
-//     }
-// }
+std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std::string& aPlannerType)
+{
+    if("mobile" == aPlannerType)
+    {
+        // TODO: add this class from controller 
+        //return std::make_shared<MobileArmTaskPlanner>(); 
+    }
+    if("simple" == aPlannerType)
+    {
+        LOGV << "Using Simple Mobile Task Planner"; 
+        return std::make_shared<SimpleMobileTaskPlanner>(); 
+    }
+    else
+    {
+        LOGE << "Unsupported planner type: " << aPlannerType; 
+        return nullptr; 
+    }
+}
 
 std::shared_ptr<IGraspPlanner> PlannerFactory::createGraspPlanner(const YAML::Node& aGraspPlanningConfig)
 {

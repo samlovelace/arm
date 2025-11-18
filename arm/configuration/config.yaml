@@ -8,7 +8,7 @@ Engine:
   rate: 50 # Hz
 
   Planning:
-    type: mobile
+    type: simple
 
   GraspPlanning:
     type: pca

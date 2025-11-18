@@ -11,6 +11,7 @@
 
 #include "SequenceNode.h"
 #include "PlanGraspNode.h"
+#include "PlanPickTaskNode.h"
 
 #include "PlannerFactory.h"
 #include <yaml-cpp/yaml.h>
@@ -34,10 +35,18 @@ bool Engine::init()
     // grasp planner config 
     auto config = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.GraspPlanning").as<YAML::Node>(); 
     mGraspPlanner = PlannerFactory::createGraspPlanner(config);
+    auto taskPlannerConfig = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.Planning").as<YAML::Node>(); 
+    mTaskPlanner = PlannerFactory::createArmTaskPlanner(taskPlannerConfig["type"].as<std::string>()); 
 
     if(nullptr == mGraspPlanner)
     {
         LOGE << "Failed to create GraspPlanner from config"; 
+        return false; 
+    }
+
+    if(nullptr == mTaskPlanner)
+    {
+        LOGE << "Failed to create ArmTaskPlanner from config"; 
         return false; 
     }
 
@@ -89,7 +98,7 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
     {
         case ManipulationCommand::CMD_PICK:
         {
-            LOGI << "Recieved Pick Command";
+            LOGI << "Received Pick Command";
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
             PointCloudHandler::toPCL<pcl::PointXYZ>(aCmd->pick_obj_point_cloud_gl, *cloud); 
@@ -102,9 +111,13 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             }
 
             auto ctx = std::make_shared<PickContext>(cloud);  
+            
+            // instantiate nodes 
             auto planGraspNode = std::make_shared<PlanGraspNode>(ctx, mGraspPlanner); 
+            auto planPickTaskNode = std::make_shared<PlanPickTaskNode>(ctx, mTaskPlanner); 
 
-            std::vector<NodePtr> nodes = {planGraspNode}; 
+            // vector of nodes for SequenceNode 
+            std::vector<NodePtr> nodes = {planGraspNode, planPickTaskNode}; 
             auto tree = std::make_shared<SequenceNode>(nodes); 
 
             mActiveTree = tree; 

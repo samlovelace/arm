@@ -5,6 +5,7 @@
 #include "INode.hpp"
 
 #include "IGraspPlanner.hpp"
+#include "IArmTaskPlanner.hpp"
 class Engine 
 { 
 public:
@@ -21,6 +22,7 @@ private:
     INode::Status mStatus; 
 
     std::shared_ptr<IGraspPlanner> mGraspPlanner; 
+    std::shared_ptr<IArmTaskPlanner> mTaskPlanner; 
    
 };
 #endif //ENGINE_H
