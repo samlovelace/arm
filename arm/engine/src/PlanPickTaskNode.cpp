@@ -14,7 +14,7 @@ INode::Status PlanPickTaskNode::tick()
         return Status::FAILURE; 
     }
 
-    if(!mPlanner->planPick(mContext->mT_G_ee, mContext->mT_G_R))
+    if(!mPlanner->planPick(mContext))
     {
         return Status::FAILURE; 
     }

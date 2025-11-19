@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(robot_idl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yaml-cpp REQUIRED) 
+find_package(urdf REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(plog REQUIRED)
 
@@ -21,6 +22,7 @@ find_package(PCL REQUIRED)
 
 set(COMMON_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/../common/src/ConfigManager.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../common/src/KinematicsHandler.cpp
 )
 
 set(SOURCES
@@ -49,6 +51,7 @@ ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     robot_idl
     kdl_parser
+    urdf
     pcl_msgs
     pcl_conversions
 )

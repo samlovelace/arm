@@ -12,7 +12,7 @@ public:
     PlannerFactory();
     ~PlannerFactory();
 
-    static std::shared_ptr<IArmTaskPlanner> createArmTaskPlanner(const std::string& aPlannerType); 
+    static std::shared_ptr<IArmTaskPlanner> createArmTaskPlanner(const std::string& aPlannerType, std::shared_ptr<KinematicsHandler> aKine); 
     static std::shared_ptr<IGraspPlanner> createGraspPlanner(const YAML::Node& aGraspPlanningConfig); 
 
 private:

@@ -16,7 +16,7 @@
 #include "PlannerFactory.h"
 #include <yaml-cpp/yaml.h>
 
-Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr)
+Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
     RosTopicManager::getInstance()->createSubscriber<robot_idl::msg::ManipulationCommand>("/arm/command", 
                                                                                           std::bind(&Engine::commandCallback, 
@@ -32,11 +32,16 @@ Engine::~Engine()
 
 bool Engine::init()
 {
+    if(!mKinematicsHandler->init(ConfigManager::getInstance()->getConfig().urdfPath))
+    {
+        throw std::runtime_error("Failed to initialize kinematics"); 
+    }
+
     // grasp planner config 
     auto config = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.GraspPlanning").as<YAML::Node>(); 
     mGraspPlanner = PlannerFactory::createGraspPlanner(config);
     auto taskPlannerConfig = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.Planning").as<YAML::Node>(); 
-    mTaskPlanner = PlannerFactory::createArmTaskPlanner(taskPlannerConfig["type"].as<std::string>()); 
+    mTaskPlanner = PlannerFactory::createArmTaskPlanner(taskPlannerConfig["type"].as<std::string>(), mKinematicsHandler); 
 
     if(nullptr == mGraspPlanner)
     {
@@ -110,7 +115,9 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
                 return; 
             }
 
-            auto ctx = std::make_shared<PickContext>(cloud);  
+            // TODO: get object global pose from msg and populate PickContext with it 
+            auto ctx = std::make_shared<PickContext>(cloud); 
+            ctx->mT_G_O.p = KDL::Vector(1, 1, 1);  
             
             // instantiate nodes 
             auto planGraspNode = std::make_shared<PlanGraspNode>(ctx, mGraspPlanner); 

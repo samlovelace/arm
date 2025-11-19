@@ -74,7 +74,7 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
-    LOGW << "Chain size: " << mChain.getNrOfJoints() << " anInitPos size: " << anInitPos.rows(); 
+    //LOGW << "Chain size: " << mChain.getNrOfJoints() << " anInitPos size: " << anInitPos.rows(); 
     // TODO: error checking on JntArray sizes 
     int result = mIkSolver->CartToJnt(anInitPos, aGoalPose, aResultOut);
     
@@ -97,7 +97,7 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
 
     if(result != 0)
     {
-        LOGW << "Failed to solve IK, error code: " << result; 
+        //LOGW << "Failed to solve IK, error code: " << result; 
         return false; 
     }
 
@@ -156,9 +156,9 @@ KDL::JntArray KinematicsHandler::getJointLimits(const std::string& aLimitType)
 
 double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCfg)
 {
-    KDL::Jacobian jac(aJntCfg.rows()); 
+    KDL::Jacobian jac(mChain.getNrOfJoints()); 
     
-    if(mJacobianSolver->JntToJac(aJntCfg, jac) < 0)
+    if (mJacobianSolver->JntToJac(aJntCfg, jac) < 0)
     {
         LOGW << "Failed to compute jacobian"; 
         return 0.0; 
@@ -168,4 +168,5 @@ double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCfg)
     Eigen::MatrixXd JJt = J * J.transpose(); 
     return std::sqrt(JJt.determinant()); 
 }
+
 
