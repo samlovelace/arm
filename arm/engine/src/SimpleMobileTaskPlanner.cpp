@@ -19,12 +19,12 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
 {
     LOGV << "Planning pick task with simple mobile planner"; 
     
-    int numCandidates = 20; 
+    int numCandidates = 25; 
     int numDistances = 10; 
     double distStep = 0.05; 
     double maxAngle = M_PI; // max polar angle 
     double angleStep_rad = maxAngle / numCandidates; 
-    LOGV << "Generating " << numCandidates << " candidates with step size " << angleStep_rad << " rad"; 
+    LOGV << "Generating " << numCandidates*numDistances << " candidates with step size " << angleStep_rad << " rad"; 
     double r = 0.25; // radius of circle centered at pick object centroid, TODO: get from config or make arm specific 
 
     std::vector<BaseCandidate> candidates; 
@@ -40,7 +40,8 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
     KDL::Frame T_G_ee = utils::affineToKDLFrame(aPickContext->mT_G_ee); 
 
     LOGV << "Object global pose (x, y, z): " << T_G_O.p.x() << "," << T_G_O.p.y() << "," << T_G_O.p.z();  
-    
+    int numCandidate = 0; 
+
     for(int j = 0; j < numDistances; j++)
     {
         // check further distances from object 
@@ -48,6 +49,7 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
 
         for (int i = 0; i < numCandidates; i++)
         {
+            numCandidate++; 
             double theta = -maxAngle/2 + i * angleStep_rad; // theta = 0 means robot is directly “in front” of object
 
             double x = r * cos(theta);
@@ -66,7 +68,7 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
             // Now convert to global frame
             KDL::Frame T_G_R = T_G_O * T_O_R;
 
-            LOGV << "Candidate " << i << " = " << T_G_R.p.x() << "," << T_G_R.p.y() << "," << T_G_R.p.z();
+            LOGV << "Candidate " << numCandidate << " = " << T_G_R.p.x() << "," << T_G_R.p.y() << "," << T_G_R.p.z();
         
             // ee pose relative to robot
             KDL::Frame T_R_ee = T_G_R.Inverse() * T_G_ee;
@@ -99,6 +101,8 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
         //mPlanningFailed = true;
         return false;
     }
+
+    LOGD << "Found " << candidates.size() << " mobile base pose candidates!"; 
 
     std::sort(candidates.begin(), candidates.end(),
               [](const BaseCandidate& a, const BaseCandidate& b){ return a.manipulability > b.manipulability; });

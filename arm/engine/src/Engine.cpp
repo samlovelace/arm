@@ -128,6 +128,7 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             auto tree = std::make_shared<SequenceNode>(nodes); 
 
             mActiveTree = tree; 
+             
             break;
         }
         case ManipulationCommand::CMD_PLACE: 
@@ -140,4 +141,6 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             mActiveTree = nullptr; 
             break;
     }
+
+    mStatus = INode::Status::RUNNING; // set status to running so main loop will tick the new tree
 }
