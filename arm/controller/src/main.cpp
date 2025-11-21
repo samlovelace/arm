@@ -8,7 +8,6 @@
 #include "Manipulator.h"
 #include "StateMachine.h"
 #include "CommandHandler.h"
-#include "PlannerFactory.h"
 
 
 int main()

@@ -38,16 +38,6 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWayp
     }
     
     mInitialGoalWp = std::make_shared<JointPositionWaypoint>(firstWp, firstTol); 
-
-    if(mConfig.inverseReachMap != "")
-    {
-        loadInverseReachabilityMap(mConfig.inverseReachMap);
-        
-        if(mInverseReachabilityMap.empty())
-        {
-            throw std::runtime_error("Inverse Reachability Map is empty"); 
-        }
-    } 
 }
 
 Manipulator::~Manipulator()
@@ -331,55 +321,3 @@ void Manipulator::arrivalLoop()
         }
     }
 }
-
-
-void Manipulator::loadInverseReachabilityMap(const std::string& aFilePath)
-{
-    std::ifstream infile(aFilePath, std::ios::binary);
-    if (!infile.is_open())
-    {
-        LOGE << "Failed to open IRM binary file: " << aFilePath;
-        return;
-    }
-
-    // Determine file size and number of entries
-    infile.seekg(0, std::ios::end);
-    size_t fileSize = infile.tellg();
-    infile.seekg(0, std::ios::beg);
-
-    size_t numEntries = fileSize / sizeof(IrmEntryBinary);
-    if (numEntries == 0)
-    {
-        LOGE << "IRM binary file is empty or invalid: " << aFilePath;
-        return;
-    }
-
-    std::vector<IrmEntryBinary> rawEntries(numEntries);
-    infile.read(reinterpret_cast<char*>(rawEntries.data()), fileSize);
-    infile.close();
-
-    mInverseReachabilityMap.clear();
-    mInverseReachabilityMap.reserve(numEntries);
-
-    for (const auto& raw : rawEntries)
-    {
-        // Build KDL::Frame from binary entry
-        KDL::Rotation rot(
-            raw.orientation[0], raw.orientation[1], raw.orientation[2],
-            raw.orientation[3], raw.orientation[4], raw.orientation[5],
-            raw.orientation[6], raw.orientation[7], raw.orientation[8]
-        );
-
-        KDL::Vector pos(raw.position[0], raw.position[1], raw.position[2]);
-        KDL::Frame frame(rot, pos);
-
-        IrmEntry irmEntry;
-        irmEntry.T_ee_base = frame;
-        irmEntry.manipulability = raw.manipulability;
-
-        mInverseReachabilityMap.push_back(std::move(irmEntry));
-    }
-
-    LOGD << "Loaded " << mInverseReachabilityMap.size() << " IRM entries from binary file!";
-}
-

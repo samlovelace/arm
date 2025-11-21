@@ -5,7 +5,6 @@
 #include <kdl/jntarray.hpp>
 #include "plog/Log.h" 
 #include <Eigen/Geometry>
-#include "IArmTaskPlanner.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -70,39 +69,6 @@ namespace utils
 
         return KDL::Frame(kdl_rot, kdl_trans);
     }
-
-    // inline robot_idl::msg::PlanResponse toIdl(std::vector<IArmTaskPlanner::Plan> aPlans)
-    // {   
-    //     // TODO: assumes we can only get a single task plan command so vector of plans is only size 1 
-    //     // TODO: fix Plan struct namespace visibility 
-    //     IArmTaskPlanner::Plan plan = aPlans[0]; 
-
-    //     uint8_t type = plan.mPlanType == "pick" ? robot_idl::msg::PlanCommand::PICK : robot_idl::msg::PlanCommand::PLACE; 
-        
-    //     geometry_msgs::msg::Point position;
-    //     position.set__x(plan.mT_G_V.p.x());
-    //     position.set__y(plan.mT_G_V.p.y());
-    //     position.set__z(plan.mT_G_V.p.z()); 
-
-    //     double x, y, z, w; 
-    //     plan.mT_G_V.M.GetQuaternion(x, y, z, w); 
-
-    //     geometry_msgs::msg::Quaternion quat; 
-    //     quat.set__w(w); 
-    //     quat.set__x(x); 
-    //     quat.set__y(y); 
-    //     quat.set__z(z); 
-
-    //     geometry_msgs::msg::Pose T_G_V; 
-    //     T_G_V.set__position(position); 
-    //     T_G_V.set__orientation(quat); 
-
-    //     robot_idl::msg::PlanResponse response; 
-    //     response.set__operation_type(type); 
-    //     response.set__robot_global_pose(T_G_V); 
-        
-    //     return response; 
-    // }
 
     inline std::array<float, 6> toArray6(const std::vector<double>& v) 
     {

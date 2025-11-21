@@ -16,7 +16,6 @@
 #include "TaskPositionWaypoint.h"
 #include "JointPositionWaypoint.h"
 #include "common/KinematicsHandler.h"
-#include "IrmEntry.hpp"
 
 class Manipulator
 {
@@ -40,7 +39,6 @@ public:
     bool sendToPose(Manipulator::POSE aPose); 
     void setEnabledState(bool anEnabledFlag); 
 
-    const std::vector<IrmEntry>& getInverseReachabilityMap() const {return mInverseReachabilityMap; }
     std::shared_ptr<KinematicsHandler> getKinematicsHandler() {return mKinematicsHandler; }
     KDL::JntArray getCurrentJointPos() {return mManipComms->getJointPositions();}
     KDL::Frame getBaseInVehicleFrame() {return mConfig.T_V_B;}
@@ -69,8 +67,6 @@ private:
 
     std::map<POSE, KDL::JntArray> mArmPoseMap; 
 
-    std::vector<IrmEntry> mInverseReachabilityMap; 
-
     std::thread mControlThread; 
     std::thread mArrivalThread; 
     
@@ -80,8 +76,6 @@ private:
     bool checkArrival(); 
 
     void logWaypointError(); 
-
-    void loadInverseReachabilityMap(const std::string& aFilePath); 
 
     void setArrivalState(bool aFlag);
 

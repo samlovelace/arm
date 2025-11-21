@@ -14,6 +14,7 @@ find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(plog REQUIRED)
 
 find_package(pcl_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
@@ -42,11 +43,6 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/MobileArmTaskPlanner.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/PcaGraspPlanner.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/PlannerFactory.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/PointCloudHandler.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/SimpleGripperVisualizer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskVelocityWaypoint.cpp
