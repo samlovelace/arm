@@ -19,8 +19,8 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
 {
     LOGV << "Planning pick task with simple mobile planner"; 
     
-    int numCandidates = 25; 
-    int numDistances = 10; 
+    int numCandidates = 5; 
+    int numDistances = 5; 
     double distStep = 0.05; 
     double maxAngle = M_PI; // max polar angle 
     double angleStep_rad = maxAngle / numCandidates; 
@@ -84,6 +84,13 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
             }
 
             LOGI << "Solved IK!!!!!!!!!"; 
+
+            if(!mKinematicsHandler->checkCollisions(finalJnts))
+            {
+                LOGV << "Rejecting candidate for planned collision";
+                continue;
+            }
+
             double manipulability = mKinematicsHandler->computeManipulability(finalJnts); 
 
             BaseCandidate cand; 

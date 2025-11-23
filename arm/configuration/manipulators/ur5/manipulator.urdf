@@ -42,7 +42,7 @@
                iyz="-0.00018809980689883695" izz="0.005255082470414319"/>
     </inertial>
     <collision>
-      <origin xyz="0 0 0.0"/>
+      <origin xyz="0.0 0.0 0.0"/>
       <geometry>
         <cylinder radius="0.08" length="0.12"/>
       </geometry>

@@ -5,6 +5,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# fix intermeittent segfault in manipulability computation
+add_compile_options(-mno-avx512f)
+
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(robot_idl REQUIRED)
