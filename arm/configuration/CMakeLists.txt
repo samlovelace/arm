@@ -6,5 +6,6 @@ find_package(ament_cmake REQUIRED)
 
 install(FILES config.yaml DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY manipulators/ DESTINATION share/${PROJECT_NAME}/manipulators)
+install(DIRECTORY robots/ DESTINATION share/${PROJECT_NAME}/robots)
 
 ament_package()

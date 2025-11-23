@@ -8,6 +8,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include "plog/Log.h"
 
 class PointCloudHandler 
 { 
@@ -22,9 +23,11 @@ public:
     template<typename PointT>
     static bool toPCL(sensor_msgs::msg::PointCloud2& aRosCloud, pcl::PointCloud<PointT>& aPclCloudOut)
     {
+        LOGV << "Converting point cloud to PCL"; 
         pcl::PCLPointCloud2 pcl_pc2;
         pcl_conversions::toPCL(aRosCloud, pcl_pc2);
         pcl::fromPCLPointCloud2(pcl_pc2, aPclCloudOut);
+        LOGV << "Done converting"; 
     }
 
 private:

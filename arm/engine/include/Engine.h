@@ -1,12 +1,15 @@
 #ifndef ENGINE_H
 #define ENGINE_H
- 
+
+#include <mutex>
+
 #include "robot_idl/msg/manipulation_command.hpp"
 #include "INode.hpp"
 
 #include "IGraspPlanner.hpp"
 #include "IArmTaskPlanner.hpp"
 #include "common/KinematicsHandler.h"
+
 class Engine 
 { 
 public:
@@ -17,11 +20,13 @@ public:
     void run(); 
 
 private:
+    INode::Status tickActiveTree(); 
     void commandCallback(const robot_idl::msg::ManipulationCommand::SharedPtr aCmd);
     
 private: 
     NodePtr mActiveTree; 
-    INode::Status mStatus; 
+    std::mutex mTreeMutex; 
+    INode::Status mStatus;
 
     std::shared_ptr<IGraspPlanner> mGraspPlanner; 
     std::shared_ptr<IArmTaskPlanner> mTaskPlanner; 

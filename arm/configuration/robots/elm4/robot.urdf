@@ -1,0 +1,366 @@
+<?xml version="1.0"?>
+<robot name="elm4_chassis">
+
+  <!-- ========================= -->
+  <!--         BASE LINK         -->
+  <!-- ========================= -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="18.71"/>
+      <inertia ixx="0.3986" iyy="1.092" izz="1.337" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0.0875" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.8 0.389 0.171"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/BaseMetal.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/BaseRubber.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/BasePlastic.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/BaseClear.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <!-- ========================= -->
+  <!--      FRONT LEFT ARM       -->
+  <!-- ========================= -->
+  <link name="front_left_arm">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.16"/>
+      <inertia ixx="0.006274" iyy="0.007678" izz="0.009408"
+               ixy="0.002744" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0.055 0 -0.0305" rpy="0 0.505 0"/>
+      <geometry>
+        <box size="0.21 0.075 0.075"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmLeftMetal.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmLeftPlastic.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="front_left_arm_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_left_arm"/>
+    <origin xyz="0.263 0.238 0.029" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="0" velocity="0"/>
+  </joint>
+
+  <link name="front_left_wheel">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="3.854"/>
+      <inertia ixx="0.009002" iyy="0.01313" izz="0.009003"
+               ixy="0.0006021" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.108" length="0.06"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/HubMotor.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/RubberWheel.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="front_left_wheel_joint" type="revolute">
+    <parent link="front_left_arm"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="0.11861 0.095 -0.07453" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1e16" upper="1e16" effort="0" velocity="0"/>
+  </joint>
+
+  <!-- ========================= -->
+  <!--      BACK LEFT ARM        -->
+  <!-- ========================= -->
+  <link name="back_left_arm">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.16"/>
+      <inertia ixx="0.006274" iyy="0.007678" izz="0.009408"
+               ixy="0.002744" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0.055 0 -0.0305" rpy="0 0.505 0"/>
+      <geometry>
+        <box size="0.21 0.075 0.075"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmLeftMetal.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmLeftPlastic.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="back_left_arm_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="back_left_arm"/>
+    <origin xyz="-0.263 -0.238 0.029" rpy="0 0 3.14159265359"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="0" velocity="0"/>
+  </joint>
+
+  <link name="back_left_wheel">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="3.854"/>
+      <inertia ixx="0.009002" iyy="0.01313" izz="0.009003"
+               ixy="0.0006021" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.108" length="0.06"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/HubMotor.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/RubberWheel.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="back_left_wheel_joint" type="revolute">
+    <parent link="back_left_arm"/>
+    <child link="back_left_wheel"/>
+    <origin xyz="0.11861 0.095 -0.07453" rpy="0 0 3.14159265359"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1e16" upper="1e16" effort="0" velocity="0"/>
+  </joint>
+
+  <!-- ========================= -->
+  <!--      FRONT RIGHT ARM      -->
+  <!-- ========================= -->
+  <link name="front_right_arm">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.16"/>
+      <inertia ixx="0.006274" iyy="0.007678" izz="0.009408"
+               ixy="0.002744" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0.055 0 -0.0305" rpy="0 0.505 0"/>
+      <geometry>
+        <box size="0.21 0.075 0.075"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0.017 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmRightMetal.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0.017 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmRightPlastic.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="front_right_arm_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_right_arm"/>
+    <origin xyz="0.263 -0.238 0.029" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="0" velocity="0"/>
+  </joint>
+
+  <link name="front_right_wheel">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="3.854"/>
+      <inertia ixx="0.009002" iyy="0.01313" izz="0.009003"
+               ixy="0.0006021" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.108" length="0.06"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/HubMotor.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/RubberWheel.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="front_right_wheel_joint" type="revolute">
+    <parent link="front_right_arm"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="0.11861 -0.095 -0.07453" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1e16" upper="1e16" effort="0" velocity="0"/>
+  </joint>
+
+  <!-- ========================= -->
+  <!--      BACK RIGHT ARM       -->
+  <!-- ========================= -->
+  <link name="back_right_arm">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.16"/>
+      <inertia ixx="0.006274" iyy="0.007678" izz="0.009408"
+               ixy="0.002744" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0.055 0 -0.0305" rpy="0 0.505 00"/>
+      <geometry>
+        <box size="0.21 0.075 0.075"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0.017 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmRightMetal.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0.017 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/ArmRightPlastic.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="back_right_arm_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="back_right_arm"/>
+    <origin xyz="-0.263 0.238 0.029" rpy="0 0 3.14159265359"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="0" velocity="0"/>
+  </joint>
+
+  <link name="back_right_wheel">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="3.854"/>
+      <inertia ixx="0.009002" iyy="0.01313" izz="0.009003"
+               ixy="0.0006021" ixz="0" iyz="0"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder radius="0.108" length="0.06"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/HubMotor.dae"/>
+      </geometry>
+    </visual>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 3.14159265359"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ELM4-Chassis/meshes/RubberWheel.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="back_right_wheel_joint" type="revolute">
+    <parent link="back_right_arm"/>
+    <child link="back_right_wheel"/>
+    <origin xyz="0.11861 -0.095 -0.07453" rpy="0 0 3.14159265359"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1e16" upper="1e16" effort="0" velocity="0"/>
+  </joint>
+
+</robot>

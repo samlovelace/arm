@@ -4,7 +4,9 @@
 #include <iostream> 
 #include <eigen3/Eigen/Dense>
 
-KinematicsHandler::KinematicsHandler() : mModel(std::make_shared<urdf::Model>())
+KinematicsHandler::KinematicsHandler() : 
+    mModel(std::make_shared<urdf::Model>()), 
+    mRobotModel(std::make_shared<urdf::Model>())
 {
 
 }
@@ -14,15 +16,14 @@ KinematicsHandler::~KinematicsHandler()
 
 }
 
-bool KinematicsHandler::init(const std::string& anUrdfPath)
+
+bool KinematicsHandler::init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath)
 { 
     if(!kdl_parser::treeFromFile(anUrdfPath, mTree))
     {
         LOGE << "Failed to parse urdf to KDL::Tree"; 
         return false; 
-    }
-
-    LOGD << "Successfully parsed urdf with " << mTree.getNrOfJoints() << " joints!"; 
+    } 
 
     // TODO: this will break with any other arm that doesnt have base_link or tool0
     if (!mTree.getChain("base_link", "tool0", mChain)) 
@@ -33,7 +34,6 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
 	for(int i = 0; i < mChain.getNrOfSegments(); i++)
 	{
 		const auto& seg = mChain.getSegment(i); 
-
 		mSegmentNameMap.insert({seg.getName(), i});
 
 		LOGV << "Segment " << i << " has"
@@ -48,9 +48,9 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
         return false; 
     }
 
-	if(!parseCollisionGeometry())
+	if(!parseManipCollisionGeometry())
 	{
-		LOGE << "Failed to parse collision geometry"; 
+		LOGE << "Failed to parse manipulator collision geometry"; 
 		return false; 
 	}
 
@@ -85,87 +85,42 @@ bool KinematicsHandler::init(const std::string& anUrdfPath)
     mIkSolver = std::make_shared<KDL::ChainIkSolverPos_NR_JL>(mChain, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-1);
     mJacobianSolver = std::make_shared<KDL::ChainJntToJacSolver>(mChain); 
 
+    // parse mobile robot if present 
+    if(!aRobotUrdfPath.empty())
+    {
+        mRobotModel->clear();  
+        if(!mRobotModel->initFile(aRobotUrdfPath))
+        {
+            LOGE << "Failed to parse robot urdf file"; 
+            return false; 
+        } 
+
+        LOGV << "Parsed robot urdf file"; 
+
+        if(!parseRobotCollisionGeometry())
+        {
+            LOGE << "Failed to parse robot collision geometry"; 
+            return false; 
+        }
+        
+    }
+
     LOGD << "KinematicsHandler initialized successfully"; 
     return true; 
 }
 
-bool KinematicsHandler::parseCollisionGeometry() 
+bool KinematicsHandler::parseManipCollisionGeometry()  
 {
 	mCollisionShells.resize(mChain.getNrOfSegments());  
 	std::vector<CollisionShell> linkCollisions; 
 
 	for (const auto& kv : mModel->links_) 
 	{
-		const urdf::LinkConstSharedPtr& link = kv.second;
-		linkCollisions.clear(); 
+        urdf::LinkConstSharedPtr link = kv.second; 
+        parseLinkCollisions(link, linkCollisions); 
 
-		for (const auto& coll : link->collision_array) 
-		{
-			if (!coll || !coll->geometry) continue;
-
-			double roll, pitch, yaw; 
-			coll->origin.rotation.getRPY(roll, pitch, yaw);
-			
-			KDL::Rotation rot = KDL::Rotation::RPY(roll, pitch, yaw);
-			KDL::Vector t = KDL::Vector(coll->origin.position.x, coll->origin.position.y, coll->origin.position.z);
-			KDL::Frame T_link_shell(rot, t);
-
-			CollisionShell cs;
-			cs.T_link_shell = T_link_shell; 
-			cs.T_base_shell = KDL::Frame::Identity(); // TODO: probably compute this based on initial joint state
-
-			CollisionShape shape; 
-			std::string shapeType = ""; 
-
-			switch (coll->geometry->type) 
-			{
-				case urdf::Geometry::BOX: 
-				{
-					shapeType = "BOX"; 
-					auto* box = dynamic_cast<urdf::Box*>(coll->geometry.get());
-					shape.type = CollisionShape::Box;
-					shape.bx = box->dim.x; shape.by = box->dim.y; shape.bz = box->dim.z;
-					break;
-				}
-				case urdf::Geometry::CYLINDER: 
-				{
-					shapeType = "CYLINDER"; 
-					auto* cyl = dynamic_cast<urdf::Cylinder*>(coll->geometry.get());
-					shape.type = CollisionShape::Cylinder;
-					shape.radius = cyl->radius; shape.length = cyl->length;
-					break;
-				}
-				case urdf::Geometry::SPHERE: 
-				{
-					shapeType = "SPHERE"; 
-					auto* sph = dynamic_cast<urdf::Sphere*>(coll->geometry.get());
-					shape.type = CollisionShape::Sphere;
-					shape.sr = sph->radius;
-					break;
-				}
-				case urdf::Geometry::MESH: 
-				{
-					shapeType = "MESH"; 
-					auto* mesh = dynamic_cast<urdf::Mesh*>(coll->geometry.get());
-					shape.type = CollisionShape::Mesh;
-					shape.mesh_filename = mesh->filename;
-					shape.mesh_scale_x = mesh->scale.x;
-					shape.mesh_scale_y = mesh->scale.y;
-					shape.mesh_scale_z = mesh->scale.z;
-					break;
-				}
-
-				default: break;
-			}
-
-			cs.shape = shape; 
-			linkCollisions.push_back(std::move(cs)); 
-		}
-
-		if(linkCollisions.size() == 0)
-		{
+		if(linkCollisions.empty())
 			continue;
-		}
 
 		LOGV << "Adding " << linkCollisions.size() << " collision geometries for link " 
 			 << link->name;
@@ -182,6 +137,90 @@ bool KinematicsHandler::parseCollisionGeometry()
 	}
 
 	return true; 
+}
+
+bool KinematicsHandler::parseRobotCollisionGeometry()
+{
+    std::vector<CollisionShell> linkShells; 
+
+    for(const auto& kv : mRobotModel->links_)
+    {
+        urdf::LinkConstSharedPtr link = kv.second; 
+        parseLinkCollisions(link, linkShells); 
+
+        if(linkShells.empty())
+            continue;
+        
+        LOGV << "Adding " << linkShells.size() << " collision geometries for link " 
+			 << link->name;
+        mRobotShells.push_back(linkShells); 
+    }   
+
+    return true; 
+}
+
+void KinematicsHandler::parseLinkCollisions(urdf::LinkConstSharedPtr& aLink, std::vector<CollisionShell>& aLinkShellsOut)
+{
+    aLinkShellsOut.clear(); 
+
+    for (const auto& coll : aLink->collision_array) 
+    {
+        if (!coll || !coll->geometry) continue;
+
+        double roll, pitch, yaw; 
+        coll->origin.rotation.getRPY(roll, pitch, yaw);
+        
+        KDL::Rotation rot = KDL::Rotation::RPY(roll, pitch, yaw);
+        KDL::Vector t = KDL::Vector(coll->origin.position.x, coll->origin.position.y, coll->origin.position.z);
+        KDL::Frame T_link_shell(rot, t);
+
+        CollisionShell cs;
+        cs.T_link_shell = T_link_shell; 
+        cs.T_base_shell = KDL::Frame::Identity(); // TODO: probably compute this based on initial joint state
+
+        CollisionShape shape; 
+        std::string shapeType = ""; 
+
+        switch (coll->geometry->type) 
+        {
+            case urdf::Geometry::BOX: 
+            {
+                auto* box = dynamic_cast<urdf::Box*>(coll->geometry.get());
+                shape.type = CollisionShape::Box;
+                shape.bx = box->dim.x; shape.by = box->dim.y; shape.bz = box->dim.z;
+                break;
+            }
+            case urdf::Geometry::CYLINDER: 
+            {
+                auto* cyl = dynamic_cast<urdf::Cylinder*>(coll->geometry.get());
+                shape.type = CollisionShape::Cylinder;
+                shape.radius = cyl->radius; shape.length = cyl->length;
+                break;
+            }
+            case urdf::Geometry::SPHERE: 
+            {
+                auto* sph = dynamic_cast<urdf::Sphere*>(coll->geometry.get());
+                shape.type = CollisionShape::Sphere;
+                shape.sr = sph->radius;
+                break;
+            }
+            case urdf::Geometry::MESH: 
+            {
+                auto* mesh = dynamic_cast<urdf::Mesh*>(coll->geometry.get());
+                shape.type = CollisionShape::Mesh;
+                shape.mesh_filename = mesh->filename;
+                shape.mesh_scale_x = mesh->scale.x;
+                shape.mesh_scale_y = mesh->scale.y;
+                shape.mesh_scale_z = mesh->scale.z;
+                break;
+            }
+
+            default: break;
+        }
+
+        cs.shape = shape; 
+        aLinkShellsOut.push_back(std::move(cs)); 
+    }
 }
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
@@ -276,13 +315,16 @@ double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCnfg)
         return -1;
     }
 
-    // Map KDL Jacobian safely (unaligned + row-major)
-    Eigen::Map<
-        const Eigen::Matrix<double, 6, Eigen::Dynamic, Eigen::RowMajor>,
-        Eigen::Unaligned
-    > Jmap(jac.data.data(), 6, jac.columns());
+    const int rows = 6;
+    const int cols = jac.columns();
 
-    Eigen::MatrixXd J = Jmap;
+    // SAFE COPY
+    Eigen::MatrixXd J(rows, cols);
+    for (int r = 0; r < rows; ++r)
+        for (int c = 0; c < cols; ++c)
+            J(r, c) = jac(r, c);
+
+    // Compute manipulability
     Eigen::MatrixXd JJt = J * J.transpose();
     double det = JJt.determinant();
 
@@ -351,6 +393,21 @@ bool KinematicsHandler::checkCollisions(const KDL::JntArray& aJntConfig)
 				}
 			}
 		}
+
+        for(size_t j = 0; j < mRobotShells.size(); j++)
+        {
+            for(const auto& shellA : mCollisionShells[i])
+            {
+                for(const auto& shellB : mRobotShells[j])
+                {
+                    if(collides(shellA, shellB))
+                    {
+                        LOGW << "Detected collision between manip and robot"; 
+                        return false; 
+                    }
+                }
+            }
+        }
 	}
 
 	return true; 

@@ -83,8 +83,6 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
                 continue;
             }
 
-            LOGI << "Solved IK!!!!!!!!!"; 
-
             if(!mKinematicsHandler->checkCollisions(finalJnts))
             {
                 LOGV << "Rejecting candidate for planned collision";
@@ -99,6 +97,7 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
             cand.manipulability = manipulability; 
 
             candidates.push_back(cand); 
+            LOGI << "Found feasible base pose candidate!"; 
         }
     }
 

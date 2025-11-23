@@ -31,6 +31,7 @@ public:
         std::vector<double> jerkLimit; 
         double velLimitFraction; 
         KDL::Frame T_V_B; 
+        std::string robotUrdfPath = "";
     };
 
     bool load(const std::string& filename) 

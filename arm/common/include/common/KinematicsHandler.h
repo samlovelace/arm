@@ -43,7 +43,7 @@ public:
     KinematicsHandler();
     ~KinematicsHandler();
 
-    bool init(const std::string& anUrdfPath); 
+    bool init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
     bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut, int aSegmentNr = -1); 
@@ -57,7 +57,10 @@ public:
     int getNrJoints() {return mChain.getNrOfJoints(); }
 
 private: 
-    bool parseCollisionGeometry(); 
+    bool parseManipCollisionGeometry();
+    bool parseRobotCollisionGeometry();     
+    void parseLinkCollisions(urdf::LinkConstSharedPtr& aLink, std::vector<CollisionShell>& aLinkShellsOut);
+
     bool collides(const CollisionShell& aFirstShell, const CollisionShell& aSecondShell); 
     void shellToPoints(const CollisionShell& aShell, std::vector<KDL::Vector>& aPoints);
     double segmentDistance(const KDL::Vector& p1, const KDL::Vector& q1, const KDL::Vector& p2, const KDL::Vector& q2); 
@@ -67,12 +70,14 @@ private:
     KDL::Tree mTree; 
     KDL::Chain mChain; 
     std::shared_ptr<urdf::Model> mModel; 
+    std::shared_ptr<urdf::Model> mRobotModel; 
 
     std::vector<std::string> mJointNames; 
     
     std::map<std::string, KDL::JntArray> mLimitsMap; 
     std::map<std::string, unsigned int> mSegmentNameMap; 
     std::vector<std::vector<CollisionShell>> mCollisionShells; 
+    std::vector<std::vector<CollisionShell>> mRobotShells; 
 
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
     std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 

@@ -53,4 +53,15 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     
     KDL::Frame T_V_B(r, p); 
     mConfig.T_V_B = T_V_B; 
+
+    if(mYamlConfig["Robot"].IsDefined())
+    {
+        std::string robotConfigPath = shareDirFull + "robots/" + mYamlConfig["Robot"]["name"].as<std::string>(); 
+        LOGD << "robot config path: " << robotConfigPath;   
+
+        YAML::Node robotConfig = YAML::LoadFile(robotConfigPath + "/robot.yaml");
+        LOGD << "Robot Config: " << YAML::Dump(robotConfig); 
+
+        mConfig.robotUrdfPath = robotConfigPath + "/" + robotConfig["urdf"].as<std::string>();
+    }
 }

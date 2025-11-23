@@ -23,6 +23,8 @@ Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr), mKinematicsHand
                                                                                                     this, 
                                                                                                     std::placeholders::_1)); 
     RosTopicManager::getInstance()->spinNode(); 
+
+    mStatus = INode::Status::RUNNING; 
 }
 
 Engine::~Engine()
@@ -32,7 +34,9 @@ Engine::~Engine()
 
 bool Engine::init()
 {
-    if(!mKinematicsHandler->init(ConfigManager::getInstance()->getConfig().urdfPath))
+    std::string manipUrdfPath = ConfigManager::getInstance()->getConfig().urdfPath; 
+    std::string robotUrdfpath = ConfigManager::getInstance()->getConfig().robotUrdfPath; 
+    if(!mKinematicsHandler->init(manipUrdfPath, robotUrdfpath))
     {
         throw std::runtime_error("Failed to initialize kinematics"); 
     }
@@ -76,37 +80,48 @@ void Engine::run()
     int rate_hz = ConfigManager::getInstance()->getValue<int>("Engine.rate");
     RateController rate(rate_hz); 
 
-    mStatus = INode::Status::RUNNING; 
-
     // main program loop, should never exit 
-    while(true)
+    while (true) 
     {
-        while(INode::Status::RUNNING == mStatus)
+        rate.start();
+
+        INode::Status status;
         {
-            rate.start(); 
-            
-            // tick tree if set
-            if(mActiveTree)
-                mStatus = mActiveTree->tick(); 
-            
-            rate.block(); 
+            std::lock_guard<std::mutex> lock(mTreeMutex);
+            status = mStatus;
+
+            if (mActiveTree && mStatus == INode::Status::RUNNING)
+            {
+                LOGV << "Ticking tree..."; 
+                mStatus = mActiveTree->tick();
+            }
         }
+
+        rate.block();
     }
 
+}
+
+INode::Status Engine::tickActiveTree()
+{
+    std::lock_guard<std::mutex> lock(mTreeMutex); 
+    return mActiveTree->tick(); 
 }
 
 void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd)
 {
     using namespace robot_idl::msg; 
+    NodePtr tree; 
+    auto cmd = *aCmd; 
 
-    switch (aCmd->cmd)
+    switch (cmd.cmd)
     {
         case ManipulationCommand::CMD_PICK:
         {
             LOGI << "Received Pick Command";
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-            PointCloudHandler::toPCL<pcl::PointXYZ>(aCmd->pick_obj_point_cloud_gl, *cloud); 
+            PointCloudHandler::toPCL<pcl::PointXYZ>(cmd.pick_obj_point_cloud_gl, *cloud); 
 
             // TODO: probably need to respond somehow 
             if(cloud->empty())
@@ -118,29 +133,40 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             // TODO: get object global pose from msg and populate PickContext with it 
             auto ctx = std::make_shared<PickContext>(cloud); 
             ctx->mT_G_O.p = KDL::Vector(1, 1, 1);  
-            
+
             // instantiate nodes 
             auto planGraspNode = std::make_shared<PlanGraspNode>(ctx, mGraspPlanner); 
             auto planPickTaskNode = std::make_shared<PlanPickTaskNode>(ctx, mTaskPlanner); 
 
             // vector of nodes for SequenceNode 
             std::vector<NodePtr> nodes = {planGraspNode, planPickTaskNode}; 
-            auto tree = std::make_shared<SequenceNode>(nodes); 
-
-            mActiveTree = tree; 
+            tree = std::make_shared<SequenceNode>(nodes); 
              
             break;
         }
         case ManipulationCommand::CMD_PLACE: 
+        {
             LOGD << "GOT PLACE CMD"; 
-            break; 
-        case ManipulationCommand::CMD_PLACE_REL:
-            LOGD << "GOT PLACE REL CMD"; 
-            break; 
-        default:
-            mActiveTree = nullptr; 
             break;
+        }     
+        case ManipulationCommand::CMD_PLACE_REL:
+        {
+            LOGD << "GOT PLACE REL CMD"; 
+            break;
+        }     
+        default:
+        {
+            LOGV << "Setting tree to null"; 
+            tree = nullptr; 
+            break;
+        }       
     }
 
-    mStatus = INode::Status::RUNNING; // set status to running so main loop will tick the new tree
+    LOGV << "Out of switch statement"; 
+    {
+        std::lock_guard<std::mutex> lock(mTreeMutex);
+        LOGV << "Setting active tree";  
+        mActiveTree = tree; 
+        mStatus = INode::Status::RUNNING; // set status to running so main loop will tick the new tree
+    }
 }

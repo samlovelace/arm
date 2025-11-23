@@ -1,6 +1,11 @@
 Manipulator:
   name: ur5
 
+Robot:
+  name: elm4
+  manip_attach_link: base_link
+  robot_attach_link: arm_mount
+
 StateMachine:
   rate: 25 # Hz
 
