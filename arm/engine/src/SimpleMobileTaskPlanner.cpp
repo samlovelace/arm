@@ -19,8 +19,8 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
 {
     LOGV << "Planning pick task with simple mobile planner"; 
     
-    int numCandidates = 5; 
-    int numDistances = 5; 
+    int numCandidates = 15; 
+    int numDistances = 10; 
     double distStep = 0.05; 
     double maxAngle = M_PI; // max polar angle 
     double angleStep_rad = maxAngle / numCandidates; 

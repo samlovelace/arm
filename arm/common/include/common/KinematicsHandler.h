@@ -64,7 +64,10 @@ private:
     bool collides(const CollisionShell& aFirstShell, const CollisionShell& aSecondShell); 
     void shellToPoints(const CollisionShell& aShell, std::vector<KDL::Vector>& aPoints);
     double segmentDistance(const KDL::Vector& p1, const KDL::Vector& q1, const KDL::Vector& p2, const KDL::Vector& q2); 
-
+    double segmentBoxDistance(const KDL::Vector& p1_world,
+                              const KDL::Vector& p2_world,
+                              const KDL::Frame& box_frame,
+                              double bx, double by, double bz);
 private:
 
     KDL::Tree mTree; 

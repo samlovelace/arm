@@ -16,7 +16,6 @@ KinematicsHandler::~KinematicsHandler()
 
 }
 
-
 bool KinematicsHandler::init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath)
 { 
     if(!kdl_parser::treeFromFile(anUrdfPath, mTree))
@@ -102,7 +101,6 @@ bool KinematicsHandler::init(const std::string& anUrdfPath, const std::string& a
             LOGE << "Failed to parse robot collision geometry"; 
             return false; 
         }
-        
     }
 
     LOGD << "KinematicsHandler initialized successfully"; 
@@ -400,9 +398,15 @@ bool KinematicsHandler::checkCollisions(const KDL::JntArray& aJntConfig)
             {
                 for(const auto& shellB : mRobotShells[j])
                 {
+                    // skip manip base link shell
+                    if(i == 0) continue;
+
                     if(collides(shellA, shellB))
                     {
-                        LOGW << "Detected collision between manip and robot"; 
+                        const auto& manipLinkName = mChain.getSegment(i).getName(); 
+
+                        LOGW << "Detected collision between manip " << manipLinkName 
+                             << " and robot";  
                         return false; 
                     }
                 }
@@ -437,6 +441,26 @@ bool KinematicsHandler::collides(const CollisionShell& aFirstShell, const Collis
 
 		return dist <= (r1 + r2); 
 	}
+    else if(firstShellType == CollisionShape::Cylinder && secondShellType == CollisionShape::Box)
+    {   
+        double dist = segmentBoxDistance(firstPts[0], firstPts[1],
+                                         aSecondShell.T_base_shell, 
+                                         aSecondShell.shape.bx, 
+                                         aSecondShell.shape.by, 
+                                         aSecondShell.shape.bz); 
+        double r = aFirstShell.shape.radius; 
+        return dist <= r; 
+    }
+    else if(firstShellType == CollisionShape::Box && secondShellType == CollisionShape::Cylinder)
+    {
+        double dist = segmentBoxDistance(secondPts[0], secondPts[1],
+                                         aFirstShell.T_base_shell, 
+                                         aFirstShell.shape.bx, 
+                                         aFirstShell.shape.by, 
+                                         aFirstShell.shape.bz); 
+        double r = aSecondShell.shape.radius; 
+        return dist <= r;
+    }
 	else
 	{
 		LOGW << "Checking collision between dissimilar types not yet supported"; 
@@ -457,11 +481,8 @@ void KinematicsHandler::shellToPoints(const CollisionShell& aShell, std::vector<
 		double h = aShell.shape.length; 
 		KDL::Vector center = aShell.T_base_shell.p; 
 
-		//
 		KDL::Vector p1 = center; 
 		KDL::Vector p2 = center + h * axis; 
-		//KDL::Vector p1 = center - (0.5 * h * axis);
-		//KDL::Vector p2 = center + (0.5 * h * axis); 
 
 		aPoints.push_back(p1); 
 		aPoints.push_back(p2); 
@@ -517,3 +538,70 @@ double KinematicsHandler::segmentDistance(const KDL::Vector& p1, const KDL::Vect
     KDL::Vector cp2 = p2 + d2 * t; // fixed
     return (cp1 - cp2).Norm();
 }
+
+double KinematicsHandler::segmentBoxDistance(const KDL::Vector& p1_world,
+                                             const KDL::Vector& p2_world,
+                                             const KDL::Frame& box_frame,
+                                             double bx, double by, double bz)
+{
+    // Box half extents
+    KDL::Vector h(bx/2.0, by/2.0, bz/2.0);
+
+    // Transform endpoints into box-local coordinates
+    KDL::Rotation R = box_frame.M;
+    KDL::Vector t  = box_frame.p;
+
+    KDL::Vector p1 = R.Inverse() * (p1_world - t);
+    KDL::Vector p2 = R.Inverse() * (p2_world - t);
+
+    // Direction and vector to compute t
+    KDL::Vector d = p2 - p1;
+
+    double t0 = 0.0, t1 = 1.0;
+
+    // Liang–Barsky clipping for segment vs AABB
+    auto clip = [&](double denom, double numer)->bool {
+        if (std::abs(denom) < 1e-9) {
+            if (numer < 0) return false;
+            return true;
+        }
+        double t = numer / denom;
+        if (denom > 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+        } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+        }
+        return true;
+    };
+
+    // AABB defines planes along x,y,z
+    if (!clip( d.x(), -h.x() - p1.x() )) return (p1 - p2).Norm();
+    if (!clip( d.x(),  h.x() - p1.x() )) return (p1 - p2).Norm();
+
+    if (!clip( d.y(), -h.y() - p1.y() )) return (p1 - p2).Norm();
+    if (!clip( d.y(),  h.y() - p1.y() )) return (p1 - p2).Norm();
+
+    if (!clip( d.z(), -h.z() - p1.z() )) return (p1 - p2).Norm();
+    if (!clip( d.z(),  h.z() - p1.z() )) return (p1 - p2).Norm();
+
+    // If clipped segment intersects box
+    if (t0 <= t1) {
+        return 0.0;  // collision/contact
+    }
+
+    // Otherwise compute shortest distance from endpoints to box
+    auto pointAABBDistance = [&](const KDL::Vector& p)->double {
+        double dx = std::max({0.0, p.x() - h.x(), -h.x() - p.x()});
+        double dy = std::max({0.0, p.y() - h.y(), -h.y() - p.y()});
+        double dz = std::max({0.0, p.z() - h.z(), -h.z() - p.z()});
+        return std::sqrt(dx*dx + dy*dy + dz*dz);
+    };
+
+    double d1 = pointAABBDistance(p1);
+    double d2 = pointAABBDistance(p2);
+
+    return std::min(d1, d2);
+}
+
