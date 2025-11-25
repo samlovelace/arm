@@ -13,6 +13,9 @@
 #include "JointPositionWaypoint.h"
 #include "TaskPositionWaypoint.h"
 
+#include "robot_idl/msg/manipulator_state.hpp"
+#include "common/RosTopicManager.hpp"
+
 
 Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)), 
                 mKinematicsHandler(std::make_shared<KinematicsHandler>()), mEnabled(false), mIsArrived(false)
@@ -38,6 +41,8 @@ Manipulator::Manipulator(ConfigManager::Config aConfig) : mConfig(aConfig),mWayp
     }
     
     mInitialGoalWp = std::make_shared<JointPositionWaypoint>(firstWp, firstTol); 
+
+    RosTopicManager::getInstance()->createPublisher<robot_idl::msg::ManipulatorState>("arm/state");
 }
 
 Manipulator::~Manipulator()
@@ -45,6 +50,16 @@ Manipulator::~Manipulator()
     if(mControlThread.joinable())
     {
         mControlThread.join(); 
+    }
+
+    if(mArrivalThread.joinable())
+    {
+        mArrivalThread.join(); 
+    }
+
+    if(mPublishThread.joinable())
+    {
+        mPublishThread.join(); 
     }
 }
 
@@ -256,9 +271,15 @@ void Manipulator::startControl()
     {
         mArrivalThread.join(); 
     }
+
+    if(mPublishThread.joinable())
+    {
+        mPublishThread.join(); 
+    }
     
     mControlThread = std::thread(&Manipulator::controlLoop, this);
     mArrivalThread = std::thread(&Manipulator::arrivalLoop, this); 
+    mPublishThread = std::thread(&Manipulator::publishStateLoop, this); 
 }
 
 void Manipulator::controlLoop()
@@ -282,7 +303,7 @@ void Manipulator::arrivalLoop()
 {
     RateController arrivalCheckRate(mConfig.manipControlRate);
     std::chrono::time_point<std::chrono::steady_clock> arrivalTime; 
-    std::chrono::duration<double> arrivalThreshold = std::chrono::seconds(3); 
+    std::chrono::duration<double> arrivalThreshold = std::chrono::seconds(1); 
     bool arrivalAcknowledged = false;
 
     while(isEnabled())
@@ -320,4 +341,41 @@ void Manipulator::arrivalLoop()
             arrivalTime = std::chrono::time_point<std::chrono::steady_clock>();
         }
     }
+}
+
+void Manipulator::publishStateLoop()
+{
+    RateController rate(10); 
+
+    while(isEnabled())
+    {
+        rate.start(); 
+
+        KDL::JntArray pos = mManipComms->getJointPositions();
+        KDL::JntArray vel = mManipComms->getJointVelocities(); 
+
+        robot_idl::msg::ManipulatorState state; 
+        state.state = robot_idl::msg::ManipulatorState::MOVING;  
+
+        bool arrived = isArrived();
+        if(arrived)
+        {
+            state.state = robot_idl::msg::ManipulatorState::ARRIVED;
+        }
+
+        std::vector<double> position(pos.rows()); 
+        std::vector<double> velocity(vel.rows()); 
+
+        for(int i = 0; i < pos.rows(); i++)
+        {
+            position[i] = pos(i); 
+            velocity[i] = vel(i); 
+        }
+
+        state.set__position(position); 
+        state.set__velocity(velocity); 
+            
+        RosTopicManager::getInstance()->publishMessage("arm/state", state); 
+        rate.block(); 
+    }   
 }

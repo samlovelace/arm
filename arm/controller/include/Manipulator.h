@@ -69,9 +69,11 @@ private:
 
     std::thread mControlThread; 
     std::thread mArrivalThread; 
+    std::thread mPublishThread; 
     
     void controlLoop();
     void arrivalLoop(); 
+    void publishStateLoop();    
 
     bool checkArrival(); 
 
