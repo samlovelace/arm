@@ -5,7 +5,9 @@
 #include "plog/Log.h"
 #include "common/ConfigManager.h"
 
-std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std::string& aPlannerType, std::shared_ptr<KinematicsHandler> aKine)
+std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std::string& aPlannerType, 
+                                                                      std::shared_ptr<KinematicsHandler> aKine,
+                                                                      std::shared_ptr<TrajectoryPlanner> aTrajPlanner)
 {
     if("mobile" == aPlannerType)
     {
@@ -15,7 +17,7 @@ std::shared_ptr<IArmTaskPlanner> PlannerFactory::createArmTaskPlanner(const std:
     if("simple" == aPlannerType)
     {
         LOGV << "Using Simple Mobile Task Planner"; 
-        return std::make_shared<SimpleMobileTaskPlanner>(aKine, ConfigManager::getInstance()->getConfig().T_V_B); 
+        return std::make_shared<SimpleMobileTaskPlanner>(aKine, ConfigManager::getInstance()->getConfig().T_V_B, aTrajPlanner); 
     }
     else
     {

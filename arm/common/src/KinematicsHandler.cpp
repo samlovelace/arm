@@ -361,14 +361,6 @@ void KinematicsHandler::updateCollisionShells(const KDL::JntArray& aCurrentJoint
 
 bool KinematicsHandler::checkCollisions(const KDL::JntArray& aJntConfig)
 {
-	std::stringstream s; 
-	s << "Checking collision shells for joint configuration "; 
-	for(int i = 0; i < aJntConfig.rows(); i++)
-	{
-		s << aJntConfig(i) << ",";
-	}
-	LOGV << s.str(); 
-	
 	updateCollisionShells(aJntConfig); 
 
 	for (size_t i = 0; i < mCollisionShells.size(); ++i) 
@@ -385,7 +377,7 @@ bool KinematicsHandler::checkCollisions(const KDL::JntArray& aJntConfig)
 					{
 						const auto& linkAName = mChain.getSegment(i).getName();
 						const auto& linkBName = mChain.getSegment(j).getName();
-						LOGW << "Detected collision between " << linkAName << " and " << linkBName;
+						//LOGW << "Detected collision between " << linkAName << " and " << linkBName;
 						return false; 
 					}
 				}
@@ -405,8 +397,8 @@ bool KinematicsHandler::checkCollisions(const KDL::JntArray& aJntConfig)
                     {
                         const auto& manipLinkName = mChain.getSegment(i).getName(); 
 
-                        LOGW << "Detected collision between manip " << manipLinkName 
-                             << " and robot";  
+                        //LOGW << "Detected collision between manip " << manipLinkName 
+                        //     << " and robot";  
                         return false; 
                     }
                 }
@@ -428,13 +420,7 @@ bool KinematicsHandler::collides(const CollisionShell& aFirstShell, const Collis
 	CollisionShape::Type secondShellType = aSecondShell.shape.type; 
 
 	if(firstShellType == CollisionShape::Cylinder && secondShellType == CollisionShape::Cylinder)
-	{
-		// LOGV << "p1: " << firstPts[0].x() << "," << firstPts[0].y() << "," << firstPts[0].z()
-		// 	 << ", " << "q1: " << firstPts[1].x() << "," << firstPts[1].y() << "," << firstPts[1].z(); 
-		
-		// LOGV << "p2: " << secondPts[0].x() << "," << secondPts[0].y() << "," << secondPts[0].z()
-		// 	 << ", " << "q2: " << secondPts[1].x() << "," << secondPts[1].y() << "," << secondPts[1].z();
-		
+	{		
 		double dist = segmentDistance(firstPts[0], firstPts[1], secondPts[0], secondPts[1]); 
 		double r1 = aFirstShell.shape.radius; 
 		double r2 = aSecondShell.shape.radius; 
@@ -489,7 +475,7 @@ void KinematicsHandler::shellToPoints(const CollisionShell& aShell, std::vector<
 		break;
 	}
 	default:
-		LOGW << "Converting shell to points for type: " << aShell.shape.type << " not supported yet"; 
+		//LOGW << "Converting shell to points for type: " << aShell.shape.type << " not supported yet"; 
 		break;
 	}
 

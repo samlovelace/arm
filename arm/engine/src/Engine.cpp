@@ -41,11 +41,15 @@ bool Engine::init()
         throw std::runtime_error("Failed to initialize kinematics"); 
     }
 
+    mTrajectoryPlanner = std::make_shared<TrajectoryPlanner>(mKinematicsHandler);
+
     // grasp planner config 
     auto config = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.GraspPlanning").as<YAML::Node>(); 
     mGraspPlanner = PlannerFactory::createGraspPlanner(config);
     auto taskPlannerConfig = ConfigManager::getInstance()->getValue<YAML::Node>("Engine.Planning").as<YAML::Node>(); 
-    mTaskPlanner = PlannerFactory::createArmTaskPlanner(taskPlannerConfig["type"].as<std::string>(), mKinematicsHandler); 
+    mTaskPlanner = PlannerFactory::createArmTaskPlanner(taskPlannerConfig["type"].as<std::string>(), 
+                                                        mKinematicsHandler, 
+                                                        mTrajectoryPlanner); 
 
     if(nullptr == mGraspPlanner)
     {

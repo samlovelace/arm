@@ -8,6 +8,7 @@
 
 #include "IGraspPlanner.hpp"
 #include "IArmTaskPlanner.hpp"
+#include "TrajectoryPlanner.h"
 #include "common/KinematicsHandler.h"
 
 class Engine 
@@ -31,6 +32,7 @@ private:
     std::shared_ptr<IGraspPlanner> mGraspPlanner; 
     std::shared_ptr<IArmTaskPlanner> mTaskPlanner; 
     std::shared_ptr<KinematicsHandler> mKinematicsHandler; 
+    std::shared_ptr<TrajectoryPlanner> mTrajectoryPlanner; 
    
 };
 #endif //ENGINE_H

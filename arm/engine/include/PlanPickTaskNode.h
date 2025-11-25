@@ -4,6 +4,7 @@
 #include "INode.hpp" 
 #include "Context.hpp"
 #include "IArmTaskPlanner.hpp"
+#include "TrajectoryPlanner.h"
 
 class PlanPickTaskNode : public INode 
 { 

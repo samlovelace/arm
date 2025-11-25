@@ -3,8 +3,8 @@
 #include "plog/Log.h"
 #include "common/Utils.hpp"
 
-SimpleMobileTaskPlanner::SimpleMobileTaskPlanner(std::shared_ptr<KinematicsHandler> aKine, const KDL::Frame& aT_R_B) : 
-    mT_R_B(aT_R_B)
+SimpleMobileTaskPlanner::SimpleMobileTaskPlanner(std::shared_ptr<KinematicsHandler> aKine, const KDL::Frame& aT_R_B, std::shared_ptr<TrajectoryPlanner> aTrajPlanner) : 
+    mT_R_B(aT_R_B), mTrajectoryPlanner(aTrajPlanner) 
 {
     mKinematicsHandler = aKine; 
 }
@@ -83,18 +83,27 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
                 continue;
             }
 
-            if(!mKinematicsHandler->checkCollisions(finalJnts))
+            // if(!mKinematicsHandler->checkCollisions(finalJnts))
+            // {
+            //     LOGV << "Rejecting candidate for planned collision at final state";
+            //     continue;
+            // }
+
+            std::vector<KDL::JntArray> path; 
+            if(!mTrajectoryPlanner->plan(initJnts, finalJnts, path))
             {
-                LOGV << "Rejecting candidate for planned collision";
-                continue;
+                LOGV << "Rejecting candidate for infeasible trajectory"; 
+                continue; 
             }
 
+            LOGV << "Found feasible trajectory with " << path.size() << " waypoints"; 
             double manipulability = mKinematicsHandler->computeManipulability(finalJnts); 
 
             BaseCandidate cand; 
             cand.T_g_base = T_G_R; 
             cand.jntAnglesFromIK = finalJnts; 
             cand.manipulability = manipulability; 
+            cand.mPath = path;
 
             candidates.push_back(cand); 
             LOGI << "Found feasible base pose candidate!"; 
@@ -117,7 +126,12 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
     LOGD << "Best score: " << best.manipulability;
     LOGD << "Desired vehicle pose (global):";
     utils::logFrame(best.T_g_base);
-    LOGD << "Goal joints: " << best.jntAnglesFromIK.data;
+    LOGV << "Goal State: " << best.jntAnglesFromIK.data; 
+    
+    for(int i = 0; i < best.mPath.size(); i++)
+    {
+        LOGV << "Wp " << i << ": " << best.mPath[i].data; 
+    }
     
     return true;
 }
