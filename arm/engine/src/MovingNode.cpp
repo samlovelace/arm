@@ -1,6 +1,7 @@
 
 #include "MovingNode.h"
 #include "common/RosTopicManager.hpp"
+#include "plog/Log.h"
 
 MovingNode::MovingNode()
 {
@@ -29,6 +30,7 @@ INode::Status MovingNode::tick()
         auto arrived = robot_idl::msg::ManipulatorState::ARRIVED; 
         if(arrived == mTopicBuffer->mLastMsg.state)
         {
+            LOGV << "Waypoint arrived..."; 
             return INode::Status::SUCCESS; 
         }
 
