@@ -27,3 +27,8 @@ INode::Status SequenceNode::tick()
     // if here, all nodes succeeded
     return Status::SUCCESS;
 }
+
+void SequenceNode::reset()
+{
+    mActiveIndex = 0; 
+}

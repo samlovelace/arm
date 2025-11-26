@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include <mutex>
+#include "Context.hpp"
 
 #include "robot_idl/msg/manipulation_command.hpp"
 #include "INode.hpp"
@@ -28,6 +29,8 @@ private:
     NodePtr mActiveTree; 
     std::mutex mTreeMutex; 
     INode::Status mStatus;
+
+    std::shared_ptr<PickContext> mPickContext; 
 
     std::shared_ptr<IGraspPlanner> mGraspPlanner; 
     std::shared_ptr<IArmTaskPlanner> mTaskPlanner; 

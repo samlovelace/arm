@@ -29,12 +29,15 @@ set(COMMON_SOURCES
 set(SOURCES
     ${COMMON_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/src/Engine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/ExecutePathNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/MovingNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PcaGraspPlanner.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlanGraspNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlannerFactory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlanPickTaskNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PointCloudHandler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/SendWaypointNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/SequenceNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/SimpleGripperVisualizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/SimpleMobileTaskPlanner.cpp

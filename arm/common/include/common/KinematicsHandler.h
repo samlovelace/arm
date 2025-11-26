@@ -43,7 +43,7 @@ public:
     KinematicsHandler();
     ~KinematicsHandler();
 
-    bool init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath); 
+    bool init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath = ""); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
     bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut, int aSegmentNr = -1); 

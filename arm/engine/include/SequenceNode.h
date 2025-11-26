@@ -11,6 +11,7 @@ public:
     ~SequenceNode() override; 
 
     Status tick() override; 
+    void reset(); 
 
 private:
  

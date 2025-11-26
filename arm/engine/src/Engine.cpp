@@ -1,20 +1,21 @@
 
 #include "Engine.h"
 
+#include <yaml-cpp/yaml.h>
 #include "common/RosTopicManager.hpp"
 #include "common/RateController.hpp"
 #include "common/ConfigManager.h"
-
-#include "PointCloudHandler.h"
-
 #include "plog/Log.h"
+#include "PointCloudHandler.h"
 
 #include "SequenceNode.h"
 #include "PlanGraspNode.h"
 #include "PlanPickTaskNode.h"
+#include "ExecutePathNode.h"
+#include "SendWaypointNode.h"
+#include "MovingNode.h"
 
 #include "PlannerFactory.h"
-#include <yaml-cpp/yaml.h>
 
 Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
@@ -23,7 +24,6 @@ Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr), mKinematicsHand
                                                                                                     this, 
                                                                                                     std::placeholders::_1)); 
     RosTopicManager::getInstance()->spinNode(); 
-
     mStatus = INode::Status::RUNNING; 
 }
 
@@ -96,7 +96,6 @@ void Engine::run()
 
             if (mActiveTree && mStatus == INode::Status::RUNNING)
             {
-                LOGV << "Ticking tree..."; 
                 mStatus = mActiveTree->tick();
             }
         }
@@ -135,17 +134,31 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             }
 
             // TODO: get object global pose from msg and populate PickContext with it 
-            auto ctx = std::make_shared<PickContext>(cloud); 
-            ctx->mT_G_O.p = KDL::Vector(1, 1, 1);  
+            mPickContext.reset(); 
+            mPickContext = std::make_shared<PickContext>(cloud); 
+            mPickContext->mT_G_O.p = KDL::Vector(1, 1, 1);  
 
             // instantiate nodes 
-            auto planGraspNode = std::make_shared<PlanGraspNode>(ctx, mGraspPlanner); 
-            auto planPickTaskNode = std::make_shared<PlanPickTaskNode>(ctx, mTaskPlanner); 
+            auto planGraspNode = std::make_shared<PlanGraspNode>(mPickContext, mGraspPlanner); 
+            auto planPickTaskNode = std::make_shared<PlanPickTaskNode>(mPickContext, mTaskPlanner); 
 
             // vector of nodes for SequenceNode 
-            std::vector<NodePtr> nodes = {planGraspNode, planPickTaskNode}; 
-            tree = std::make_shared<SequenceNode>(nodes); 
-             
+            std::vector<NodePtr> planNodes = {planGraspNode, planPickTaskNode};
+            auto planTree = std::make_shared<SequenceNode>(planNodes); 
+
+            // execute tree 
+            auto wpPtr = std::make_shared<KDL::JntArray>(); 
+            
+            auto sendWpNode = std::make_shared<SendWaypointNode>(wpPtr); 
+            auto movingNode = std::make_shared<MovingNode>(); 
+            std::vector<NodePtr> execNodes = {sendWpNode, movingNode};
+
+            auto seqNode = std::make_shared<SequenceNode>(execNodes);
+            auto execTree = std::make_shared<ExecutePathNode>(mPickContext, wpPtr, seqNode); 
+
+            std::vector<NodePtr> fullSeq = {planTree, execTree}; 
+            auto topNode = std::make_shared<SequenceNode>(fullSeq); 
+            tree = topNode;
             break;
         }
         case ManipulationCommand::CMD_PLACE: 
@@ -158,6 +171,25 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             LOGD << "GOT PLACE REL CMD"; 
             break;
         }     
+        // case ManipulationCommand::EXE_PICK:
+        // {
+        //     LOGV << "Executing Pick operation!"; 
+        //     if(nullptr == mPickContext)
+        //     {
+        //         // could probably plan pick here before executing 
+        //         return; 
+        //     }
+
+        //     auto wpPtr = std::make_shared<KDL::JntArray>(); 
+            
+        //     auto sendWpNode = std::make_shared<SendWaypointNode>(wpPtr); 
+        //     std::vector<NodePtr> nodes = {sendWpNode};
+
+        //     auto seqNode = std::make_shared<SequenceNode>(nodes);
+        //     auto execPathNode = std::make_shared<ExecutePathNode>(mPickContext->mPath, wpPtr); 
+        //     tree = execPathNode; 
+        //     break;
+        // }
         default:
         {
             LOGV << "Setting tree to null"; 
@@ -165,8 +197,7 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             break;
         }       
     }
-
-    LOGV << "Out of switch statement"; 
+ 
     {
         std::lock_guard<std::mutex> lock(mTreeMutex);
         LOGV << "Setting active tree";  

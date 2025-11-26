@@ -26,7 +26,6 @@ public:
 
 private:
     KDL::Frame mT_R_B;
-
     std::shared_ptr<TrajectoryPlanner> mTrajectoryPlanner; 
    
 };

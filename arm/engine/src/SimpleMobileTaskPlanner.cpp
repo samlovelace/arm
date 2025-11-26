@@ -83,12 +83,6 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
                 continue;
             }
 
-            // if(!mKinematicsHandler->checkCollisions(finalJnts))
-            // {
-            //     LOGV << "Rejecting candidate for planned collision at final state";
-            //     continue;
-            // }
-
             std::vector<KDL::JntArray> path; 
             if(!mTrajectoryPlanner->plan(initJnts, finalJnts, path))
             {
@@ -113,7 +107,6 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
     if (candidates.empty())
     {
         LOGW << "No feasible base candidates found"; 
-        //mPlanningFailed = true;
         return false;
     }
 
@@ -127,11 +120,16 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
     LOGD << "Desired vehicle pose (global):";
     utils::logFrame(best.T_g_base);
     LOGV << "Goal State: " << best.jntAnglesFromIK.data; 
-    
+
+    std::deque<KDL::JntArray> path; 
     for(int i = 0; i < best.mPath.size(); i++)
     {
-        LOGV << "Wp " << i << ": " << best.mPath[i].data; 
+        LOGV << "Wp " << i << ": " << best.mPath[i].data;
+        path.push_back(best.mPath[i]); 
     }
+
+    aPickContext->mPath = path; 
+    aPickContext->mT_G_R = best.T_g_base;
     
     return true;
 }
