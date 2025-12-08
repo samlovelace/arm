@@ -31,6 +31,6 @@ INode::Status SendWaypointNode::tick()
     wp.set__tolerances(tol); 
 
     RosTopicManager::getInstance()->publishMessage("arm/joint_position_waypoint", wp); 
-    sleep(2); // sleep briefly to allow arm to start moving
+    sleep(1); // sleep briefly to allow arm to start moving
     return INode::Status::SUCCESS; 
 }

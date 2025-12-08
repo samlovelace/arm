@@ -14,6 +14,7 @@
 #include "ExecutePathNode.h"
 #include "SendWaypointNode.h"
 #include "MovingNode.h"
+#include "MoveVehicleNode.h"
 
 #include "PlannerFactory.h"
 
@@ -141,14 +142,15 @@ void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd
             // instantiate nodes 
             auto planGraspNode = std::make_shared<PlanGraspNode>(mPickContext, mGraspPlanner); 
             auto planPickTaskNode = std::make_shared<PlanPickTaskNode>(mPickContext, mTaskPlanner); 
+            auto moveVehNode = std::make_shared<MoveVehicleNode>(mPickContext);
 
             // vector of nodes for SequenceNode 
-            std::vector<NodePtr> planNodes = {planGraspNode, planPickTaskNode};
+            std::vector<NodePtr> planNodes = {planGraspNode, planPickTaskNode, moveVehNode};
             auto planTree = std::make_shared<SequenceNode>(planNodes); 
 
             // execute tree 
             auto wpPtr = std::make_shared<KDL::JntArray>(); 
-            
+             
             auto sendWpNode = std::make_shared<SendWaypointNode>(wpPtr); 
             auto movingNode = std::make_shared<MovingNode>(); 
             std::vector<NodePtr> execNodes = {sendWpNode, movingNode};

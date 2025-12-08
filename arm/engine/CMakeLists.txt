@@ -31,6 +31,7 @@ set(SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/Engine.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/ExecutePathNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/MoveVehicleNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/MovingNode.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PcaGraspPlanner.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PlanGraspNode.cpp

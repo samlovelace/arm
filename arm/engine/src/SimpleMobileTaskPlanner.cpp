@@ -120,6 +120,10 @@ bool SimpleMobileTaskPlanner::planPick(std::shared_ptr<PickContext> aPickContext
     LOGD << "Desired vehicle pose (global):";
     utils::logFrame(best.T_g_base);
     LOGV << "Goal State: " << best.jntAnglesFromIK.data; 
+    KDL::Frame T_B_ee; 
+    mKinematicsHandler->solveFk(best.jntAnglesFromIK, T_B_ee); 
+    KDL::Frame T_G_ee_planned = best.T_g_base * mT_R_B * T_B_ee; 
+    utils::logFrame(T_G_ee_planned); 
 
     std::deque<KDL::JntArray> path; 
     for(int i = 0; i < best.mPath.size(); i++)
