@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<robot name="ur5_rg2">
+
+  <!-- ROOT LINK -->
+  <link name="dummy_root"/>
+
+  <!-- FIXED ROOT → BASE -->
+  <joint name="dummy_root_to_base" type="fixed">
+    <parent link="dummy_root"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- BASE LINK -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/base.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="-7.83914e-07 0.00442178 0.184343"/>
+      <mass value="4.210389694173812"/>
+      <inertia ixx="0.09309670560602573" ixy="5.711270872759674e-09"
+               ixz="2.0039833861772347e-07" iyy="0.09257037651287492"
+               iyz="0.0047053532779924665" izz="0.004310645613985299"/>
+    </inertial>
+  </link>
+
+  <!-- SHOULDER LINK -->
+  <link name="shoulder_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/shoulder.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="-3.81853e-06 0.00927291 -0.0018563"/>
+      <mass value="2.6078628081050645"/>
+      <inertia ixx="0.00615890739477387" ixy="8.486678716437087e-07"
+               ixz="1.436028981488676e-07" iyy="0.005562932983198189"
+               iyz="-0.00018809980689883695" izz="0.005255082470414319"/>
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0.0"/>
+      <geometry>
+        <cylinder radius="0.08" length="0.14"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- SHOULDER PAN JOINT -->
+  <joint name="shoulder_pan_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="shoulder_link"/>
+    <origin xyz="0 0 0.089159"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.141592654" upper="3.141592654" velocity="3.15" effort="150"/>
+  </joint>
+
+  <!-- UPPER ARM LINK -->
+  <link name="upper_arm_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/upperarm.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="9.68139e-10 -0.00107158 0.2125"/>
+      <mass value="9.034556202946057"/>
+      <inertia ixx="0.2566537454248199" ixy="-2.2173460061911962e-09"
+               ixz="2.3397723734924104e-06" iyy="0.25483850258961777"
+               iyz="5.701897149736449e-09" izz="0.016022276702360172"/>
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0.21"/>
+      <geometry>
+        <cylinder radius="0.09" length="0.54"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- SHOULDER LIFT JOINT -->
+  <joint name="shoulder_lift_joint" type="revolute">
+    <parent link="shoulder_link"/>
+    <child link="upper_arm_link"/>
+    <origin xyz="0 0.13585 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" velocity="3.15" effort="150"/>
+  </joint>
+
+  <!-- FOREARM LINK -->
+  <link name="forearm_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/forearm.dae"/>
+      </geometry>
+    </visual>
+    <inertial>
+      <origin xyz="-7.83914e-07 0.00442178 0.184343"/>
+      <mass value="4.210389694173812"/>
+      <inertia ixx="0.09309670560602573" ixy="5.711270872759674e-09"
+               ixz="2.0039833861772347e-07" iyy="0.09257037651287492"
+               iyz="0.0047053532779924665" izz="0.004310645613985299"/>
+    </inertial>
+    <collision>
+      <origin xyz="0 0 0.2"/>
+      <geometry>
+        <cylinder radius="0.07" length="0.445"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ELBOW JOINT -->
+  <joint name="elbow_joint" type="revolute">
+    <parent link="upper_arm_link"/>
+    <child link="forearm_link"/>
+    <origin xyz="0 -0.1197 0.425"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.75" upper="2.75" velocity="3.15" effort="150"/>
+  </joint>
+
+  <!-- WRIST 1 LINK -->
+  <link name="wrist_1_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/wrist1.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0.1 0"/>
+      <geometry>
+        <cylinder radius="0.06" length="0.14"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="wrist_1_joint" type="revolute">
+    <parent link="forearm_link"/>
+    <child link="wrist_1_link"/>
+    <origin xyz="0 0 0.39225"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-6.28319" upper="6.28319" velocity="3.2" effort="28"/>
+  </joint>
+
+  <!-- WRIST 2 LINK -->
+  <link name="wrist_2_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/wrist2.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.1" rpy="1.57 0 0"/>
+      <geometry>
+        <cylinder radius="0.065" length="0.12"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="wrist_2_joint" type="revolute">
+    <parent link="wrist_1_link"/>
+    <child link="wrist_2_link"/>
+    <origin xyz="0 0.093 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28319" upper="6.28319" velocity="3.2" effort="28"/>
+  </joint>
+
+  <!-- WRIST 3 LINK -->
+  <link name="wrist_3_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/wrist3.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0.065 0" rpy="1.57 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="wrist_3_joint" type="revolute">
+    <parent link="wrist_2_link"/>
+    <child link="wrist_3_link"/>
+    <origin xyz="0 0 0.09465"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-6.28319" upper="6.28319" velocity="3.2" effort="28"/>
+  </joint>
+
+  <!-- RG2 HAND -->
+  <joint name="ur5_hand_joint" type="fixed">
+    <parent link="wrist_3_link"/>
+    <child link="rg2_hand"/>
+    <origin xyz="0 0.0823 0" rpy="1.570796325 0 1.570796325"/>
+  </joint>
+
+  <link name="rg2_hand">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/rg2/hand.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57 0"/>
+      <geometry>
+        <cylinder radius="0.045" length="0.14"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- RG2 FINGERS -->
+  <joint name="rg2_finger_joint1" type="revolute">
+    <parent link="rg2_hand"/>
+    <child link="rg2_leftfinger"/>
+    <origin xyz="0.105 0.017 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0.0" upper="1.18" velocity="1.57" effort="1000"/>
+  </joint>
+
+  <link name="rg2_leftfinger">
+    <visual>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/rg2/finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57 0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="rg2_finger_joint2" type="revolute">
+    <parent link="rg2_hand"/>
+    <child link="rg2_rightfinger"/>
+    <origin xyz="0.105 -0.017 0"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="0.0" upper="1.18" velocity="1.57" effort="1000"/>
+  </joint>
+
+  <link name="rg2_rightfinger">
+    <visual>
+      <origin rpy="3.141592653589793 0 0"/>
+      <geometry>
+        <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/rg2/finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57 0"/>
+      <geometry>
+        <cylinder radius="0.025" length="0.1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- TOOL0 FRAME -->
+  <link name="tool0"/>
+  <joint name="end_effector_frame_fixed_joint" type="fixed">
+    <parent link="wrist_3_link"/>
+    <child link="tool0"/>
+    <origin xyz="0 0.275 0" rpy="-1.570796325 0 0"/>
+  </joint>
+
+</robot>
