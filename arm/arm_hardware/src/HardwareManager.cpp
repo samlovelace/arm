@@ -49,6 +49,9 @@ void HardwareManager::run()
     KDL::JntArray pos, vel;
     std::vector<double> posV, velV;
 
+    arm_msgs::msg::HardwareState state;
+    // TODO: set name from config
+
     while(mRunning)
     {
         rate.start();
@@ -64,10 +67,8 @@ void HardwareManager::run()
             velV[i] = vel(i);
         }
 
-        arm_msgs::msg::HardwareState state;
         state.set__position(posV);
         state.set__velocity(velV);
-
         RosTopicManager::getInstance()->publishMessage("arm/hardware_state", state);
 
         rate.block();
