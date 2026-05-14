@@ -34,15 +34,12 @@ set(COMMON_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/../common/src/KinematicsHandler.cpp
 )
 
-set(SOURCES 
+set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/DynamixelManipComms.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/GazeboManipComms.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointVelocityWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/src/ManipulatorFactory.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskVelocityWaypoint.cpp

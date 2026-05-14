@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(arm_common REQUIRED)
+find_package(arm_msgs REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(kdl_parser REQUIRED)
@@ -37,6 +38,7 @@ ament_target_dependencies(${PROJECT_NAME}
     std_msgs
     sensor_msgs
     arm_common
+    arm_msgs
     Eigen3
     kdl_parser
 )

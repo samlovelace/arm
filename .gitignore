@@ -1,3 +1,6 @@
 .vscode/**
 build/**
 arm/archive/**
+build/
+install/
+log/
