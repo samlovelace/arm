@@ -1,16 +1,18 @@
 #ifndef WAYPOINTEXECUTOR_H
 #define WAYPOINTEXECUTOR_H
- 
+
 #include <kdl/jntarray.hpp>
-#include <memory> 
+#include <memory>
 
-#include "common/ConfigManager.h"
-#include "JointPositionWaypoint.h"
 #include "ruckig/ruckig.hpp"
-#include "common/KinematicsHandler.h"
 
-class WaypointExecutor 
-{ 
+#include "arm_common/ConfigManager.h"
+#include "arm_common/KinematicsHandler.h"
+
+#include "arm_controller/JointPositionWaypoint.h"
+
+class WaypointExecutor
+{
 public:
     WaypointExecutor(ConfigManager::Config& aConfig);
     ~WaypointExecutor();
@@ -25,16 +27,16 @@ private:
     std::unique_ptr<ruckig::OutputParameter<0>> mOutput;
 
     ConfigManager::Config mConfig;
-    std::vector<double> mVelocityLimits; 
-    std::vector<double> mLowerPosLimits; 
-    std::vector<double> mUpperPosLimits;  
+    std::vector<double> mVelocityLimits;
+    std::vector<double> mLowerPosLimits;
+    std::vector<double> mUpperPosLimits;
 
     bool mInitialSet;
 
-    int mNumDof; 
-    
+    int mNumDof;
+
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
     bool setGoalState(KDL::JntArray aGoalJointPos, ruckig::ControlInterface aControlType);
-   
+
 };
-#endif //TRAJECTORYExecutor_H    
+#endif //TRAJECTORYExecutor_H

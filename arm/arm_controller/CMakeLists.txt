@@ -8,6 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+
+find_package(arm_common REQUIRED)
+find_package(arm_msgs REQUIRED)
+
 find_package(robot_idl REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
@@ -29,13 +33,9 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../dependencies/ruckig ruckig)
 
-set(COMMON_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/../common/src/ConfigManager.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/../common/src/KinematicsHandler.cpp
-)
-
 set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/CommandHandler.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/HardwareInterface.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/JointVelocityWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
@@ -44,7 +44,6 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskVelocityWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/WaypointExecutor.cpp
-  ${COMMON_SOURCES}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -67,11 +66,12 @@ set(COMMON_LIBS
 
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
+  arm_common
+  arm_msgs
   std_msgs
   robot_idl
   pcl_msgs
   pcl_conversions
-  ${COMMON_LIBS}
 )
 
 target_link_libraries(${PROJECT_NAME} yaml-cpp ruckig ${PCL_LIBRARIES} ${DYNAMIXEL_LIB})

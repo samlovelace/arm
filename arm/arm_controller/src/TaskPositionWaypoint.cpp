@@ -1,20 +1,23 @@
-#include "TaskPositionWaypoint.h"
-#include "common/KinematicsHandler.h"
+
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
 #include "plog/Log.h"
 #include <iomanip>
 
+#include "arm_common/KinematicsHandler.h"
+
+#include "arm_controller/TaskPositionWaypoint.h"
+
 TaskPositionWaypoint::TaskPositionWaypoint(const KDL::Frame& T_goal, const Tol6& tol) : mGoal(T_goal), mTol(tol)
 {
-    for (double v : mTol) 
+    for (double v : mTol)
     {
         if (v < 0.0) throw std::invalid_argument("TaskPositionWaypoint: negative tolerance");
     }
 }
 
-IWaypoint::Type TaskPositionWaypoint::type() const noexcept 
+IWaypoint::Type TaskPositionWaypoint::type() const noexcept
 {
   return Type::TaskPosition;
 }
@@ -24,8 +27,8 @@ bool TaskPositionWaypoint::toJointGoal(const KDL::JntArray& q_seed,
                                   KDL::JntArray& q_goal_out) const
 {
     KDL::JntArray q_sol(q_seed.rows());
-    
-    if (!kin.solveIK(q_seed, mGoal, q_sol)) 
+
+    if (!kin.solveIK(q_seed, mGoal, q_sol))
     {
         return false;
     }
@@ -56,14 +59,14 @@ bool TaskPositionWaypoint::arrived(const ControlInputs& s) const
 
     // // if here, arrived, so log task pos error
     // // arrived so we can log final state
-    // std::stringstream ss; 
-    // ss << std::fixed << std::setprecision(3); 
+    // std::stringstream ss;
+    // ss << std::fixed << std::setprecision(3);
     // ss << "Task Error: " << "\n";
-    // std::vector<std::string> axes = {"x: ", "y: ", "z: "}; 
+    // std::vector<std::string> axes = {"x: ", "y: ", "z: "};
 
     // for(int i = 0; i < 3; i++)
     // {
-    //     ss << axes[i] << " (m): " << err.p.data[i] << "\n"; 
+    //     ss << axes[i] << " (m): " << err.p.data[i] << "\n";
     // }
 
     // LOGD << ss.str();
@@ -74,7 +77,7 @@ bool TaskPositionWaypoint::arrived(const ControlInputs& s) const
 const KDL::Frame& TaskPositionWaypoint::goal() const noexcept { return mGoal; }
 const TaskPositionWaypoint::Tol6& TaskPositionWaypoint::tol() const noexcept { return mTol; }
 
-std::string TaskPositionWaypoint::describe() const 
+std::string TaskPositionWaypoint::describe() const
 {
     std::ostringstream oss;
     oss << "TaskPositionWaypoint";

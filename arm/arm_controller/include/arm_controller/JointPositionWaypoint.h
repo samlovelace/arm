@@ -1,9 +1,11 @@
 #ifndef JOINTPOSITIONWAYPOINT_H
 #define JOINTPOSITIONWAYPOINT_H
 
-#include "IWaypoint.hpp"
+#include "arm_common/KinematicsHandler.h"
 
-class JointPositionWaypoint final : public IWaypoint 
+#include "arm_controller/IWaypoint.hpp"
+
+class JointPositionWaypoint final : public IWaypoint
 {
 
 public:
@@ -27,4 +29,4 @@ private:
     KDL::JntArray mTol;  // per-joint radians
 };
 
-#endif 
+#endif

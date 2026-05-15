@@ -1,15 +1,18 @@
 
-#include "TaskVelocityWaypoint.h"
-#include "common/KinematicsHandler.h"
+
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
 #include "plog/Log.h"
 #include <iomanip>
 
+#include "arm_common/KinematicsHandler.h"
+
+#include "arm_controller/TaskVelocityWaypoint.h"
+
 TaskVelocityWaypoint::TaskVelocityWaypoint(const KDL::Twist& aGoal, const KDL::Twist& aTol) : mGoal(aGoal), mTol(aTol)
 {
-   // TODO: validate tolerance 
+   // TODO: validate tolerance
 }
 
 TaskVelocityWaypoint::~TaskVelocityWaypoint()
@@ -17,7 +20,7 @@ TaskVelocityWaypoint::~TaskVelocityWaypoint()
 
 }
 
-IWaypoint::Type TaskVelocityWaypoint::type() const noexcept 
+IWaypoint::Type TaskVelocityWaypoint::type() const noexcept
 {
     return Type::TaskVelocity;
 }
@@ -26,20 +29,20 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
                                        KinematicsHandler& aKinematicsHandler,
                                        KDL::JntArray& q_goal_out) const
 {
-    int numJoints = q_seed.rows(); 
-    KDL::JntArray q_dot_goal(numJoints); 
+    int numJoints = q_seed.rows();
+    KDL::JntArray q_dot_goal(numJoints);
 
     if(!aKinematicsHandler.solveIK(q_seed, mGoal, q_dot_goal))
     {
-        LOGW << "Failed to generate joint vel goal from task vel"; 
-        return false; 
-    } 
+        LOGW << "Failed to generate joint vel goal from task vel";
+        return false;
+    }
 
-    q_goal_out = q_dot_goal; 
-    return true; 
+    q_goal_out = q_dot_goal;
+    return true;
 
-    // TODO: add Velocity saturation 
-    // aKinematicsHandler.getJointLimits("velocity"); 
+    // TODO: add Velocity saturation
+    // aKinematicsHandler.getJointLimits("velocity");
 
     // for (unsigned int i = 0; i < n; ++i) {
     //     if (i < qdot_max.size() && qdot_max[i] > 0.0) {
@@ -47,17 +50,17 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
     //     }
     // }
 
-    // KDL::JntArray qmin = aKinematicsHandler.getJointLimits("lower"); 
-    // KDL::JntArray qmax = aKinematicsHandler.getJointLimits("upper"); 
+    // KDL::JntArray qmin = aKinematicsHandler.getJointLimits("lower");
+    // KDL::JntArray qmax = aKinematicsHandler.getJointLimits("upper");
 
     // Integrate
     // q_goal_out.resize(numJoints);
 
-    // for (unsigned int i = 0; i < numJoints; ++i) 
+    // for (unsigned int i = 0; i < numJoints; ++i)
     // {
     //     //double qi = q_seed(i) + dt * q_dot_goal(i);
-        
-    //     if (i < qmin.rows() && i < qmax.rows()) 
+
+    //     if (i < qmin.rows() && i < qmax.rows())
     //     {
     //         qi = std::max(qmin(i), std::min(qmax(i), qi));
     //     }
@@ -69,10 +72,10 @@ bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
 
 bool TaskVelocityWaypoint::arrived(const ControlInputs& s) const
 {
-    return false; 
+    return false;
 }
 
-std::string TaskVelocityWaypoint::describe() const 
+std::string TaskVelocityWaypoint::describe() const
 {
     std::ostringstream oss;
     oss << "TaskVelocityWaypoint";
