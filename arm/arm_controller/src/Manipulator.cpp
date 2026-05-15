@@ -287,16 +287,16 @@ void Manipulator::controlLoop()
 {
     LOGD << "Starting manipulator control loop!";
 
-    mArmControlRate = std::make_unique<RateController>(mConfig.manipControlRate);
+    mArmControlRate = RateController(mConfig.manipControlRate);
 
     while(isEnabled())
     {
-        mArmControlRate->start();
+        mArmControlRate.start();
 
         KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
         mHardware->sendJointCommand(wp);
 
-        mArmControlRate->block();
+        mArmControlRate.block();
     }
 }
 

@@ -1,4 +1,5 @@
 
+#include <arm_common/RosTopicManager.hpp>
 #include <cstdio>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -16,6 +17,7 @@ int main()
 
     rclcpp::init(0, nullptr);
     Logger::get().createMainLog("arm_controller");
+    RosTopicManager::getInstance("arm_controller")->spinNode();
 
     std::string package_path = ament_index_cpp::get_package_share_directory("arm_configs");
     std::string config_path = package_path + "/config.yaml";

@@ -41,8 +41,6 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                                     this,
                                                                                     std::placeholders::_1));
 
-    topicManager->spinNode();
-
     while (!topicManager->isROSInitialized())
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));

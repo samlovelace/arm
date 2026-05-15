@@ -15,6 +15,7 @@ find_package(arm_msgs REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(kdl_parser REQUIRED)
+find_package(urdf REQUIRED)
 
 set(DYNAMIXEL_LIB /usr/local/lib/libdxl_x64_cpp.so)
 

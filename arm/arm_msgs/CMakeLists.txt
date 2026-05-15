@@ -6,7 +6,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/HardwareState.msg"
+    "msg/HardwareGoal.msg"
+    "msg/HardwareState.msg"
 )
 
 ament_package()
