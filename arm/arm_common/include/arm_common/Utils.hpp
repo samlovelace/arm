@@ -88,6 +88,7 @@ namespace utils
         KDL::JntArray jntArr(v.size()); 
         for(int i = 0; i < v.size(); i++)
         {
+            LOGV << "Converting to JntArray: " << v[i];
             jntArr(i) = v[i];
         }
 

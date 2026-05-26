@@ -16,6 +16,7 @@ find_package(arm_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
+find_package(plog REQUIRED)
 
 set(DYNAMIXEL_LIB /usr/local/lib/libdxl_x64_cpp.so)
 
@@ -44,7 +45,7 @@ ament_target_dependencies(${PROJECT_NAME}
     kdl_parser
 )
 
-target_link_libraries(${PROJECT_NAME} ${DYNAMIXEL_LIB})
+target_link_libraries(${PROJECT_NAME} ${DYNAMIXEL_LIB} plog::plog)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 

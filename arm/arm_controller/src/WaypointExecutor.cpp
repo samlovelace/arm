@@ -44,11 +44,15 @@ void WaypointExecutor::init(int aNumDof, KinematicsHandler& aKinematicsHandler)
     }
 
     std::copy_n(mVelocityLimits.begin(), (int)mInput->degrees_of_freedom, mInput->max_velocity.begin());
-    std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin());
-    std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin());
+    //std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin());
+    //std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin());
 }
 
-bool WaypointExecutor::initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType)
+bool WaypointExecutor::initializeExecutor(
+    KDL::JntArray aGoalJointPos,
+    KDL::JntArray aCurrentJointPos,
+    KDL::JntArray aCurrentJointVel,
+    ruckig::ControlInterface aControlType)
 {
     setInitialState(aCurrentJointPos, aCurrentJointVel);
     return setGoalState(aGoalJointPos, aControlType);
@@ -124,8 +128,8 @@ void WaypointExecutor::setInitialState(const KDL::JntArray& aPos,
 
     mInput->degrees_of_freedom = mNumDof;
     std::copy_n(mVelocityLimits.begin(), (int)mInput->degrees_of_freedom, mInput->max_velocity.begin());
-    std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin());
-    std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin());
+    //std::copy_n(mConfig.accelLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_acceleration.begin());
+    //std::copy_n(mConfig.jerkLimit.begin(), (int)mInput->degrees_of_freedom, mInput->max_jerk.begin());
 }
 
 KDL::JntArray WaypointExecutor::getNextWaypoint()
@@ -145,6 +149,7 @@ KDL::JntArray WaypointExecutor::getNextWaypoint()
     else
     {
         // Handle error
+        LOGE << "Ruckig failed to compute next waypoint! Result: " << static_cast<int>(result);
     }
 
     return newJntPos;

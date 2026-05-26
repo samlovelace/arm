@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "plog/Log.h"
+
 #include <sensor_msgs/msg/joint_state.hpp>
 
 #include "arm_hardware/IManipComms.hpp"
@@ -53,6 +55,11 @@ public:
                 "Command size mismatch: got %u, expected %u", aCmd.rows(), mGoal.rows());
             return;
         }
+
+        LOGV << "Received joint command: ";
+        for(int i = 0; i < aCmd.rows(); i++)        {
+            LOGV << "aCmd(" << i << "): " << aCmd(i);
+        }
         mGoal = aCmd;
     }
 
@@ -75,6 +82,7 @@ private:
     {
         sensor_msgs::msg::JointState msg;
         msg.header.stamp = RosTopicManager::getInstance()->now();
+        msg.header.frame_id = "world";
         msg.name = mJointNames;
 
         for (unsigned int i = 0; i < mPositions.rows(); ++i)

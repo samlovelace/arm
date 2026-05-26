@@ -23,7 +23,9 @@ public:
         std::string shareDir; 
         std::string manipType;
         std::string manipCommsType;  
-        std::string urdfPath; 
+        std::string urdfPath;
+        std::string manipBaseLink; 
+        std::string manipEndLink;  
         std::string inverseReachMap = ""; 
         int manipControlRate; 
         std::vector<double> initialPosition; 
@@ -32,6 +34,7 @@ public:
         double velLimitFraction; 
         KDL::Frame T_V_B; 
         std::string robotUrdfPath = "";
+        std::string manipAttachLink; 
     };
 
     bool load(const std::string& filename) 

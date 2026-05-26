@@ -1,14 +1,28 @@
 type: dynamixel
-comms: dynamixel
+comms: simulated
 rate: 10 # Hz
 urdf: manipulator.urdf
 irm:
 
 # TODO: define the below vals
-initial_positions: [0, -1.57, 0, 0, 0, 0, 0, 0]
+initial_positions: [1, 1, 1, 1, 1, 1, 1, 1, 1]
 accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 jerk_limits: [5, 5, 5, 5, 5, 5, 5, 5]
 vel_limit_fraction: 0.75 # 0-1
+
+base_link: widow_xl_base
+end_link: wrist_rotate_link
+
+joint_names:
+  - x_joint
+  - y_joint
+  - yaw_joint
+  - wxr_shoulder_joint
+  - wxr_forearm_joint
+  - wxr_wrist_joint
+  - wxr_wrist_rotate_joint
+  - wxr_left_finger_joint
+  - wxr_right_finger_joint
 
 mount:
   position: [-0.2, 0, 0.3] # xyz

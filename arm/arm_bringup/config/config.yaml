@@ -1,10 +1,9 @@
 Manipulator:
-  name: ur5
+  name: dxl
 
 Robot:
-  name: elm4
-  manip_attach_link: base_link
-  robot_attach_link: arm_mount
+  name: abv
+  manip_attach_link: vehicle_link
 
 StateMachine:
   rate: 25 # Hz

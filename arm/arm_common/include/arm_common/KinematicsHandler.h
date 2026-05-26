@@ -5,14 +5,16 @@
 #include <unordered_map>
 
 #include <kdl/tree.hpp>
-#include <kdl/chain.hpp>
-#include <kdl/chainiksolvervel_pinv.hpp>
-#include <kdl/chainiksolverpos_nr_jl.hpp>
-#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/treejnttojacsolver.hpp>
+#include <kdl/treeiksolvervel_wdls.hpp>
+#include <kdl/treeiksolverpos_nr_jl.hpp>
+#include <kdl/treefksolverpos_recursive.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/frames.hpp>
 #include <urdf/model.h>
+
+#include "arm_common/ConfigManager.h"
 
 struct CollisionShape 
 {
@@ -43,10 +45,10 @@ public:
     KinematicsHandler();
     ~KinematicsHandler();
 
-    bool init(const std::string& anUrdfPath, const std::string& aRobotUrdfPath = ""); 
+    bool init(const ConfigManager::Config& aConfig); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
-    bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut, int aSegmentNr = -1); 
+    bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut, const std::string& aSegmentName = ""); 
 
     void updateCollisionShells(const KDL::JntArray& aCurrentJointState);
     bool checkCollisions(const KDL::JntArray& aJntConfig);
@@ -54,7 +56,7 @@ public:
     double computeManipulability(const KDL::JntArray& aJntCfg);
 
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
-    int getNrJoints() {return mChain.getNrOfJoints(); }
+    int getNrJoints() {return mTree.getNrOfJoints(); }
 
 private: 
     bool parseManipCollisionGeometry();
@@ -71,21 +73,21 @@ private:
 private:
 
     KDL::Tree mTree; 
-    KDL::Chain mChain; 
     std::shared_ptr<urdf::Model> mModel; 
     std::shared_ptr<urdf::Model> mRobotModel; 
 
     std::vector<std::string> mJointNames; 
+    std::string mManipEndLink; 
     
     std::map<std::string, KDL::JntArray> mLimitsMap; 
     std::map<std::string, unsigned int> mSegmentNameMap; 
     std::vector<std::vector<CollisionShell>> mCollisionShells; 
     std::vector<std::vector<CollisionShell>> mRobotShells; 
 
-    std::shared_ptr<KDL::ChainFkSolverPos_recursive> mFkSolver; 
-    std::shared_ptr<KDL::ChainIkSolverVel_pinv> mVelSolver; 
-    std::shared_ptr<KDL::ChainIkSolverPos_NR_JL> mIkSolver; 
-    std::shared_ptr<KDL::ChainJntToJacSolver> mJacobianSolver;  
+    std::shared_ptr<KDL::TreeFkSolverPos_recursive> mFkSolver; 
+    std::shared_ptr<KDL::TreeIkSolverVel_wdls> mVelSolver; 
+    std::shared_ptr<KDL::TreeIkSolverPos_NR_JL> mIkSolver; 
+    std::shared_ptr<KDL::TreeJntToJacSolver> mJacobianSolver;  
 
 };
 #endif //KINEMATICSHANDLER_H

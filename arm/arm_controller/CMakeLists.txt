@@ -49,7 +49,6 @@ set(SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 include_directories(${PROJECT_NAME}
-    ${CMAKE_CURRENT_LIST_DIR}/../common/include
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${CMAKE_CURRENT_LIST_DIR}/dependencies/plog/plog-master/include
     ${CMAKE_CURRENT_LIST_DIR}/dependencies/ruckig/include

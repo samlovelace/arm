@@ -1,3 +1,4 @@
+#include "plog/Log.h"
 
 #include "arm_common/RosTopicManager.hpp"
 
@@ -43,6 +44,7 @@ void HardwareInterface::sendJointCommand(const KDL::JntArray &aCmd)
     std::vector<double> goal(aCmd.rows());
     for(int i = 0; i < goal.size(); i++)
     {
+        //LOGV << "Sending joint command: aCmd(" << i << "): " << aCmd(i);
         goal[i] = aCmd(i);
     }
 

@@ -24,7 +24,7 @@ Manipulator::Manipulator(ConfigManager::Config aConfig)
     mHardware = std::make_shared<HardwareInterface>();
     mHardware->init();
 
-    if(!mKinematicsHandler->init(mConfig.urdfPath))
+    if(!mKinematicsHandler->init(mConfig))
     {
         throw std::runtime_error("Failed to initialize kinematics");
     }
@@ -124,17 +124,22 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
         case IWaypoint::Type::JointPosition:
         case IWaypoint::Type::TaskPosition:
             controlType = ruckig::ControlInterface::Position;
-            LOGD << "Setting ControlInterface to Position";
+            LOGD << "Set ControlInterface to Position";
             break;
 
         case IWaypoint::Type::TaskVelocity:
         case IWaypoint::Type::JointVelocity:
             controlType = ruckig::ControlInterface::Velocity;
-            LOGD << "Setting ControlInterface to Velocity";
+            LOGD << "Set ControlInterface to Velocity";
 
             break;
         default:
             break;
+    }
+
+    for(int i = 0; i < numArmJoints; i++)
+    {
+        LOGD << "Current Joint " << i << ": " << q_cur(i) << ", Goal Joint " << i << ": " << q_goal(i);
     }
 
     // q_goal is joint pos or joint vel based on waypoint type
@@ -287,16 +292,16 @@ void Manipulator::controlLoop()
 {
     LOGD << "Starting manipulator control loop!";
 
-    mArmControlRate = RateController(mConfig.manipControlRate);
+    mArmControlRate = std::make_unique<RateController>(mConfig.manipControlRate);
 
     while(isEnabled())
     {
-        mArmControlRate.start();
+        mArmControlRate->start();
 
         KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
         mHardware->sendJointCommand(wp);
 
-        mArmControlRate.block();
+        mArmControlRate->block();
     }
 }
 

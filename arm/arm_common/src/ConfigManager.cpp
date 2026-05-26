@@ -34,6 +34,8 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     mConfig.manipCommsType = manipConfig["comms"].as<std::string>();
     mConfig.manipControlRate = manipConfig["rate"].as<int>();
     mConfig.urdfPath = manipConfigPath + "/" + manipConfig["urdf"].as<std::string>();
+    mConfig.manipBaseLink = manipConfig["base_link"].as<std::string>(); 
+    mConfig.manipEndLink = manipConfig["end_link"].as<std::string>(); 
 
     if(manipConfig["irm"])
     {
@@ -57,11 +59,9 @@ void ConfigManager::loadConfig(const std::string& aConfigFilepath)
     if(mYamlConfig["Robot"].IsDefined())
     {
         std::string robotConfigPath = shareDirFull + "robots/" + mYamlConfig["Robot"]["name"].as<std::string>();
-        LOGD << "robot config path: " << robotConfigPath;
-
         YAML::Node robotConfig = YAML::LoadFile(robotConfigPath + "/robot.yaml");
-        LOGD << "Robot Config: " << YAML::Dump(robotConfig);
 
         mConfig.robotUrdfPath = robotConfigPath + "/" + robotConfig["urdf"].as<std::string>();
+        mConfig.manipAttachLink = mYamlConfig["Robot"]["manip_attach_link"].as<std::string>(); 
     }
 }

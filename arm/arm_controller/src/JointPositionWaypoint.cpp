@@ -10,8 +10,9 @@
 
 JointPositionWaypoint::JointPositionWaypoint(const KDL::JntArray& goal, const KDL::JntArray& tol) : mGoal(goal), mTol(tol)
 {
-    if (goal.rows() == 0 || tol.rows() != goal.rows())
+    if (mGoal.rows() == 0 || mTol.rows() != mGoal.rows())
     {
+        LOGE << "Invalid goal size (" << goal.rows() << " OR mismatch with tolerance (" << tol.rows(); 
         throw std::invalid_argument("JointPositionWaypoint: size mismatch");
     }
     for (unsigned i = 0; i < mTol.rows(); ++i)
@@ -30,6 +31,7 @@ bool JointPositionWaypoint::toJointGoal(const KDL::JntArray& /*q_seed*/,
                                 KinematicsHandler& /*kin*/,
                                 KDL::JntArray& q_goal_out) const
 {
+    LOGV << "Copying goal directly for joint position waypoint";
     q_goal_out = mGoal; // trivial copy
     return true;
 }

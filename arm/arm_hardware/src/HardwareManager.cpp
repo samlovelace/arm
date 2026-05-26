@@ -59,7 +59,7 @@ void HardwareManager::run()
         rate.start();
 
         pos = mComms->getJointPositions();
-        vel = mComms->getJointPositions();
+        vel = mComms->getJointVelocities();
         posV.clear(); velV.clear();
         posV.resize(pos.rows()); velV.resize(vel.rows());
 

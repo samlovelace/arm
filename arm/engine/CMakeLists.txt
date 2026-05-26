@@ -7,6 +7,9 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+
+find_package(arm_common REQUIRED)
+
 find_package(robot_idl REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yaml-cpp REQUIRED) 
@@ -20,11 +23,6 @@ find_package(pcl_conversions REQUIRED)
 
 set(PCL_DIR "/usr/local/pcl-1.15/lib/cmake/pcl")
 find_package(PCL REQUIRED)
-
-set(COMMON_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/../common/src/ConfigManager.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/../common/src/KinematicsHandler.cpp
-)
 
 set(SOURCES
     ${COMMON_SOURCES}
@@ -56,6 +54,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
+    arm_common
     robot_idl
     kdl_parser
     urdf
