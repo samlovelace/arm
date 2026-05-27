@@ -37,7 +37,7 @@ Manipulator::Manipulator(ConfigManager::Config aConfig)
 
     for(int i = 0; i < numJoints; i++)
     {
-        firstWp(i) = mConfig.initialPosition[i];
+        firstWp(i) = mConfig.initialPositions[i];
         firstTol(i) = 0.01;
     }
 
@@ -291,23 +291,22 @@ void Manipulator::startControl()
 void Manipulator::controlLoop()
 {
     LOGD << "Starting manipulator control loop!";
-
-    mArmControlRate = std::make_unique<RateController>(mConfig.manipControlRate);
+    RateController controlRate(mConfig.controlRateHz);
 
     while(isEnabled())
     {
-        mArmControlRate->start();
+        controlRate.start();
 
         KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
         mHardware->sendJointCommand(wp);
 
-        mArmControlRate->block();
+        controlRate.block();
     }
 }
 
 void Manipulator::arrivalLoop()
 {
-    RateController arrivalCheckRate(mConfig.manipControlRate);
+    RateController arrivalCheckRate(mConfig.controlRateHz);
     std::chrono::time_point<std::chrono::steady_clock> arrivalTime;
     std::chrono::duration<double> arrivalThreshold = std::chrono::seconds(1);
     bool arrivalAcknowledged = false;

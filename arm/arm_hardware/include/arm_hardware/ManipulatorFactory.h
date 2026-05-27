@@ -9,12 +9,11 @@
 class ManipulatorFactory
 {
 public:
-    ManipulatorFactory(/* args */);
+    ManipulatorFactory();
     ~ManipulatorFactory();
 
-    static std::shared_ptr<IManipComms> create(const YAML::Node& aConfig);
+    static std::shared_ptr<IManipComms> create();
 private:
-    /* data */
 
 };
 #endif

@@ -19,12 +19,9 @@ int main()
     Logger::get().createMainLog("arm_controller");
     RosTopicManager::getInstance("arm_controller")->spinNode();
 
-    std::string package_path = ament_index_cpp::get_package_share_directory("arm_bringup");
-    std::string config_path = package_path + "/config/config.yaml";
-    auto configManager = ConfigManager::getInstance();
-    configManager->loadConfig(config_path);
+    ConfigManager::getInstance()->loadConfig();
 
-    auto manip = std::make_shared<Manipulator>(configManager->getConfig());
+    auto manip = std::make_shared<Manipulator>(ConfigManager::getInstance()->getConfig());
     auto sm = std::make_shared<StateMachine>(manip);
     CommandHandler* cm = new CommandHandler(sm, manip);
 

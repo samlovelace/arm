@@ -20,9 +20,8 @@
     <limit effort="0" lower="-1.0" upper="1.0" velocity="0.5"/>
   </joint>
   <link name="x_link"/>
+  
   <!-- Y translation -->
-  s
-
   <joint name="y_joint" type="prismatic">
     <parent link="x_link"/>
     <child link="y_link"/>

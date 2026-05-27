@@ -1,33 +1,34 @@
 #include "plog/Log.h"
 
+#include "arm_common/ConfigManager.h"
+
 #include "arm_hardware/ManipulatorFactory.h"
 #include "arm_hardware/GazeboManipComms.h"
 #include "arm_hardware/DynamixelManipComms.h"
 #include "arm_hardware/SimManipComms.hpp"
 
-std::shared_ptr<IManipComms> ManipulatorFactory::create(const YAML::Node& aConfig)
+std::shared_ptr<IManipComms> ManipulatorFactory::create()
 {
-    std::string manipType = aConfig["type"].as<std::string>();
-    std::string commsType = aConfig["comms"].as<std::string>();
+    auto config = ConfigManager::getInstance()->getConfig(); 
 
-    if(("ur10" == manipType || "ur5" == manipType) && "gazebo" == commsType)
+    if(("ur10" == config.manipType || "ur5" == config.manipType) && "gazebo" == config.commsMode)
     {
         LOGW << "Using GazeboManipComms";
-        return std::make_shared<GazeboManipComms>(manipType);
+        return std::make_shared<GazeboManipComms>(config.manipType);
     }
-    else if ("dynamixel" == manipType && "dynamixel" == commsType)
+    else if ("dynamixel" == config.manipType && "dynamixel" == config.commsMode)
     {
         LOGW << "Using DynamixelManipComms";
-        return std::make_shared<DynamixelManipComms>(aConfig["comms_configs"].as<YAML::Node>());
+        return std::make_shared<DynamixelManipComms>(ConfigManager::getInstance()->getRawNode()["comms_config"]);
     }
-    else if("simulated" == commsType)
+    else if("simulated" == config.commsMode)
     {
         // any manip type can use this comms type
-        return std::make_shared<SimManipComms>(aConfig["joint_names"].as<std::vector<std::string>>());
+        return std::make_shared<SimManipComms>(config.jointNames);
     }
     else
     {
-        LOGE << "Manip type: " << manipType << " not yet supported";
+        LOGE << "Manip type: " << config.manipType << " not yet supported";
     }
 
 }

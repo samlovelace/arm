@@ -9,8 +9,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>arm_configs</depend>
+  <depend>arm_bringup</depend>
   <depend>arm_msgs</depend>
+  <depend>arm_common</depend>
   <depend>robot_idl</depend>
 
   <depend>rclcpp</depend>

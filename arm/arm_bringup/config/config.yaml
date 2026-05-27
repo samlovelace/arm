@@ -1,9 +1,5 @@
 Manipulator:
-  name: dxl
-
-Robot:
-  name: abv
-  manip_attach_link: vehicle_link
+  name: abv_dxl
 
 StateMachine:
   rate: 25 # Hz

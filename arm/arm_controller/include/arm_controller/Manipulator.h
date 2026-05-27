@@ -57,7 +57,6 @@ private:
 
     std::mutex mGoalJntPosMutex;
     KDL::JntArray mGoalJntPos;
-    std::unique_ptr<RateController> mArmControlRate;
 
     std::mutex mEnabledMutex;
     bool mEnabled;

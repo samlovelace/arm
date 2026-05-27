@@ -31,7 +31,7 @@ bool HardwareManager::init()
     RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareGoal>("arm/hardware/goal",
         std::bind(&HardwareManager::goalCallback, this, std::placeholders::_1));
 
-    mComms = ManipulatorFactory::create(ConfigManager::getInstance()->getManipConfig());
+    mComms = ManipulatorFactory::create();
     mComms->init();
 
     if(nullptr == mComms)

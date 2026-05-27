@@ -18,34 +18,34 @@ KinematicsHandler::~KinematicsHandler()
 
 bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
 {
-    if(!kdl_parser::treeFromFile(aConfig.robotUrdfPath, mTree))
+    if(!kdl_parser::treeFromFile(aConfig.vehicle.urdfPath, mTree))
     {
         LOGE << "Failed to parse robot urdf file to tree"; 
         return false; 
     }
 
     KDL::Tree manip; 
-    if(!kdl_parser::treeFromFile(aConfig.urdfPath, manip))
+    if(!kdl_parser::treeFromFile(aConfig.manipulator.urdfPath, manip))
     {
         LOGE << "Failed to parse manipulator urdf to KDL::Tree";
         return false;
     }
 
-    if(!mTree.addTree(manip, aConfig.manipAttachLink))
+    if(!mTree.addTree(manip, aConfig.vehicle.manipAttachLink))
     {
-        LOGE << "Failed to attach manip tree to base at link: " << aConfig.manipAttachLink; 
+        LOGE << "Failed to attach manip tree to base at link: " << aConfig.vehicle.manipAttachLink; 
         return false; 
     }
 
     mModel->clear();
-    if(!mModel->initFile(aConfig.urdfPath))
+    if(!mModel->initFile(aConfig.manipulator.urdfPath))
     {
         LOGE << "Could not parse model from urdf";
         return false;
-    }
+    }   
 
     mRobotModel->clear(); 
-    if(!mRobotModel->initFile(aConfig.robotUrdfPath))
+    if(!mRobotModel->initFile(aConfig.vehicle.urdfPath))
     {
         LOGE << "Failed to parse robot urdf"; 
         return false; 
@@ -130,7 +130,7 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
     KDL::JntArray q_min = getJointLimits("lower");
     KDL::JntArray q_max = getJointLimits("upper");
 
-    mManipEndLink = aConfig.manipEndLink; 
+    mManipEndLink = aConfig.manipulator.endLink; 
     std::vector<std::string> endpoints = {mManipEndLink}; 
 
     mFkSolver  = std::make_shared<KDL::TreeFkSolverPos_recursive>(mTree);
