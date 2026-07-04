@@ -194,7 +194,7 @@ private:
     }
 
     // Resolve a path relative to a base directory.
-    static std::string resolvePath(const std::filesystem::path& base,
+    static std::string  resolvePath(const std::filesystem::path& base,
                                    const std::string& relative)
     {
         return (base / relative).lexically_normal().string();
