@@ -7,12 +7,12 @@
   <!-- FIXED ROOT → BASE -->
   <joint name="dummy_root_to_base" type="fixed">
     <parent link="dummy_root"/>
-    <child link="base_link"/>
+    <child link="ur5_base_link"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
   <!-- BASE LINK -->
-  <link name="base_link">
+  <link name="ur5_base_link">
     <visual>
       <geometry>
         <mesh filename="package://robot_simulator/models/ur5_rg2/meshes/visual/ur5/base.dae"/>
@@ -51,7 +51,7 @@
 
   <!-- SHOULDER PAN JOINT -->
   <joint name="shoulder_pan_joint" type="revolute">
-    <parent link="base_link"/>
+    <parent link="ur5_base_link"/>
     <child link="shoulder_link"/>
     <origin xyz="0 0 0.089159"/>
     <axis xyz="0 0 1"/>

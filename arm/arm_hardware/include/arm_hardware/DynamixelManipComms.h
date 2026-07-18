@@ -51,7 +51,12 @@ struct MotorConfig
 class DynamixelManipComms : public IManipComms
 {
 public:
-    DynamixelManipComms(const YAML::Node& aCommsConfig);
+    // aNumArmJoints splits mMotors (built from comms_configs.motor_ids,
+    // arm-first) into an arm slice [0, aNumArmJoints) and a gripper slice
+    // [aNumArmJoints, mMotors.size()) — both share the same serial
+    // port/thread, so this is the addressing split, not a separate comms
+    // instance.
+    DynamixelManipComms(const YAML::Node& aCommsConfig, int aNumArmJoints);
     DynamixelManipComms() {}
     ~DynamixelManipComms() override;
 
@@ -62,11 +67,15 @@ public:
     KDL::JntArray getJointVelocities() override;
     void sendJointCommand(const KDL::JntArray &aCmd) override;
 
+    KDL::JntArray getGripperPositions() override;
+    KDL::JntArray getGripperVelocities() override;
+    void sendGripperCommand(const KDL::JntArray &aCmd) override;
+
 private:
 
     void writeMaxTorque(const MotorConfig& aMotor);
     void commsLoop();
-    void setLatestJointCommand(const KDL::JntArray& aCmd);
+    void setLatestJointCommand(const KDL::JntArray& aCmd, int aStartIdx, int aCount);
     KDL::JntArray getLatestJointCommand();
 
     void setLatestJointPositions(const KDL::JntArray& aJntPos);
@@ -87,6 +96,7 @@ private:
     std::string mDeviceName;
     int mProtocolVersion;
     int mBaudRate;
+    int mNumArmJoints;
     std::vector<MotorConfig> mMotors;
 
     std::thread mCommsThread;

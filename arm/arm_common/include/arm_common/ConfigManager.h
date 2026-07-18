@@ -18,7 +18,8 @@
 //
 // Path resolution (all derived from the arm_bringup package share dir):
 //   config.yaml   →  <share>/config/config.yaml
-//   manip.yaml    →  <share>/manipulators/<Manipulator.name>/manip.yaml
+//   manip.yaml    →  <share>/config/manipulators/<Manipulator.name>/manip.yaml
+//   base.yaml     →  <share>/config/mobile_base/<MobileBase.name>/base.yaml (optional)
 // ---------------------------------------------------------------------------
 class ConfigManager
 {
@@ -27,10 +28,10 @@ public:
     // Sub-structs — mirror the YAML hierarchy; used for per-subsystem access
     // -----------------------------------------------------------------------
 
-    struct VehicleConfig
+    struct MobileBaseConfig
     {
         std::string              urdfPath;        // resolved absolute path
-        std::string              manipAttachLink; // link on vehicle where arm attaches
+        std::string              manipAttachLink; // link on the base where the arm attaches
         std::vector<std::string> jointNames;
         std::vector<double>      initialPositions;
         std::vector<double>      accelLimits;
@@ -52,6 +53,19 @@ public:
         std::optional<std::vector<double>> stowPos;
     };
 
+    // Gripper joints — deliberately kept separate from ManipulatorConfig and
+    // never merged into Config's flat jointNames/limits vectors. These joints
+    // must never enter FK/IK or WaypointExecutor's trajectory generation.
+    struct GripperConfig
+    {
+        std::vector<std::string> jointNames;
+        std::vector<double>      initialPositions;
+
+        // Named joint-space presets (optional)
+        std::optional<std::vector<double>> openPos;
+        std::optional<std::vector<double>> closedPos;
+    };
+
     struct Config
     {
         // Top-level
@@ -59,19 +73,24 @@ public:
         std::string commsMode;      // "simulated" | "hardware"
         int         controlRateHz = 10;
 
-        // Per-subsystem configs — use when addressing vehicle or arm
-        // joints independently (e.g. IK solvers, named presets)
-        VehicleConfig     vehicle;
-        ManipulatorConfig manipulator;
+        // Per-subsystem configs — use when addressing the mobile base or arm
+        // joints independently (e.g. IK solvers, named presets).
+        // mobileBase is nullopt for a standalone manipulator (not mounted on
+        // anything selectable — e.g. a fixed-base arm).
+        std::optional<MobileBaseConfig> mobileBase;
+        ManipulatorConfig                manipulator;
+        std::optional<GripperConfig>     gripper;
 
-        // Combined flat vectors — ordered [vehicle joints..., arm joints...]
+        // Combined flat vectors — ordered [mobile base joints..., arm joints...]
+        // (or arm joints only, if there's no mobile base).
         // Use for whole-body planners, limit arrays, joint state indexing, etc.
         std::vector<std::string> jointNames;
         std::vector<double>      initialPositions;
         std::vector<double>      accelLimits;
         std::vector<double>      jerkLimits;
 
-        // Transform: vehicle frame -> manipulator base frame
+        // Transform: attach point (mobile base's attach link, or world if
+        // standalone) -> manipulator base frame
         KDL::Frame T_V_B;
     };
 
@@ -211,10 +230,11 @@ private:
     }
 
     // -----------------------------------------------------------------------
-    // Section loaders (all operate on mManipRoot)
+    // Section loaders
     // -----------------------------------------------------------------------
-    void loadVehicleSection    (const std::filesystem::path& manipDir);
+    void loadMobileBaseSection (const std::filesystem::path& baseDir);
     void loadManipulatorSection(const std::filesystem::path& manipDir);
+    void loadGripperSection    ();
     void loadMountSection      ();
     void mergeJointData        ();
 
@@ -223,4 +243,5 @@ private:
     // -----------------------------------------------------------------------
     Config     mConfig;
     YAML::Node mManipRoot;  // root of the active manip.yaml
+    YAML::Node mBaseRoot;   // root of the active mobile_base's base.yaml (if any)
 };

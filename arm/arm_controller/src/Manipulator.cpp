@@ -43,6 +43,16 @@ Manipulator::Manipulator(ConfigManager::Config aConfig)
 
     mInitialGoalWp = std::make_shared<JointPositionWaypoint>(firstWp, firstTol);
 
+    if(mConfig.gripper)
+    {
+        KDL::JntArray firstGripperWp(mConfig.gripper->jointNames.size());
+        for(size_t i = 0; i < mConfig.gripper->jointNames.size(); i++)
+        {
+            firstGripperWp(i) = mConfig.gripper->initialPositions[i];
+        }
+        mHardware->sendGripperCommand(firstGripperWp);
+    }
+
     RosTopicManager::getInstance()->createPublisher<robot_idl::msg::ManipulatorState>("arm/state");
 }
 
@@ -144,6 +154,11 @@ bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
 
     // q_goal is joint pos or joint vel based on waypoint type
     return mWaypointExecutor->initializeExecutor(q_goal, q_cur, mHardware->getJointVelocities(), controlType);
+}
+
+void Manipulator::setGripperGoal(const KDL::JntArray& aGripperGoal)
+{
+    mHardware->sendGripperCommand(aGripperGoal);
 }
 
 std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()

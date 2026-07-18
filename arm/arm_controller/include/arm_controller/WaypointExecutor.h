@@ -39,4 +39,4 @@ private:
     bool setGoalState(KDL::JntArray aGoalJointPos, ruckig::ControlInterface aControlType);
 
 };
-#endif //TRAJECTORYExecutor_H
+#endif //WAYPOINTEXECUTOR_H

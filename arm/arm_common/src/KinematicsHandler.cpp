@@ -2,6 +2,8 @@
 #include "arm_common/KinematicsHandler.h"
 #include "plog/Log.h"
 #include <iostream>
+#include <set>
+#include <functional>
 #include <eigen3/Eigen/Dense>
 
 KinematicsHandler::KinematicsHandler() :
@@ -18,23 +20,43 @@ KinematicsHandler::~KinematicsHandler()
 
 bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
 {
-    if(!kdl_parser::treeFromFile(aConfig.vehicle.urdfPath, mTree))
+    if(aConfig.mobileBase)
     {
-        LOGE << "Failed to parse robot urdf file to tree"; 
-        return false; 
-    }
+        if(!kdl_parser::treeFromFile(aConfig.mobileBase->urdfPath, mTree))
+        {
+            LOGE << "Failed to parse mobile base urdf file to tree";
+            return false;
+        }
 
-    KDL::Tree manip; 
-    if(!kdl_parser::treeFromFile(aConfig.manipulator.urdfPath, manip))
-    {
-        LOGE << "Failed to parse manipulator urdf to KDL::Tree";
-        return false;
-    }
+        KDL::Tree manip;
+        if(!kdl_parser::treeFromFile(aConfig.manipulator.urdfPath, manip))
+        {
+            LOGE << "Failed to parse manipulator urdf to KDL::Tree";
+            return false;
+        }
 
-    if(!mTree.addTree(manip, aConfig.vehicle.manipAttachLink))
+        if(!mTree.addTree(manip, aConfig.mobileBase->manipAttachLink))
+        {
+            LOGE << "Failed to attach manip tree to base at link: " << aConfig.mobileBase->manipAttachLink;
+            return false;
+        }
+
+        mRobotModel->clear();
+        if(!mRobotModel->initFile(aConfig.mobileBase->urdfPath))
+        {
+            LOGE << "Failed to parse mobile base urdf";
+            return false;
+        }
+    }
+    else
     {
-        LOGE << "Failed to attach manip tree to base at link: " << aConfig.vehicle.manipAttachLink; 
-        return false; 
+        if(!kdl_parser::treeFromFile(aConfig.manipulator.urdfPath, mTree))
+        {
+            LOGE << "Failed to parse manipulator urdf to KDL::Tree";
+            return false;
+        }
+
+        mRobotModel.reset();
     }
 
     mModel->clear();
@@ -42,13 +64,17 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
     {
         LOGE << "Could not parse model from urdf";
         return false;
-    }   
+    }
 
-    mRobotModel->clear(); 
-    if(!mRobotModel->initFile(aConfig.vehicle.urdfPath))
+    if(aConfig.gripper)
     {
-        LOGE << "Failed to parse robot urdf"; 
-        return false; 
+        KDL::Tree pruned;
+        if(!pruneJoints(mTree, aConfig.gripper->jointNames, pruned))
+        {
+            LOGE << "Failed to prune gripper joints from kinematics tree";
+            return false;
+        }
+        mTree = pruned;
     }
 
     const unsigned int nj = mTree.getNrOfJoints();
@@ -81,8 +107,8 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
         }
 
         auto urdfJoint = mModel->getJoint(jointName);
-        if(nullptr == urdfJoint)
-            urdfJoint = mRobotModel->getJoint(jointName); 
+        if(nullptr == urdfJoint && mRobotModel)
+            urdfJoint = mRobotModel->getJoint(jointName);
 
         if(nullptr == urdfJoint)
         {
@@ -228,6 +254,48 @@ KDL::JntArray KinematicsHandler::getJointLimits(const std::string& aLimitType)
     }
 
     return limits;
+}
+
+bool KinematicsHandler::pruneJoints(const KDL::Tree& aTree,
+                                     const std::vector<std::string>& aJointNamesToRemove,
+                                     KDL::Tree& aTreeOut)
+{
+    const std::set<std::string> toRemove(aJointNamesToRemove.begin(), aJointNamesToRemove.end());
+    std::set<std::string> found;
+
+    KDL::SegmentMap::const_iterator rootIt = aTree.getRootSegment();
+    aTreeOut = KDL::Tree(rootIt->first);
+
+    std::function<void(const KDL::SegmentMap::const_iterator&, const std::string&)> addChildren =
+        [&](const KDL::SegmentMap::const_iterator& aParentIt, const std::string& aParentName)
+    {
+        for(const auto& childIt : aParentIt->second.children)
+        {
+            const std::string& jointName = childIt->second.segment.getJoint().getName();
+
+            if(toRemove.count(jointName))
+            {
+                found.insert(jointName);
+                LOGV << "Pruning gripper joint (and its subtree) from kinematics tree: " << jointName;
+                continue;
+            }
+
+            aTreeOut.addSegment(childIt->second.segment, aParentName);
+            addChildren(childIt, childIt->first);
+        }
+    };
+
+    addChildren(rootIt, rootIt->first);
+
+    for(const auto& jointName : aJointNamesToRemove)
+    {
+        if(!found.count(jointName))
+        {
+            LOGW << "Configured gripper joint not found in kinematics tree: " << jointName;
+        }
+    }
+
+    return true;
 }
 
 double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCnfg)

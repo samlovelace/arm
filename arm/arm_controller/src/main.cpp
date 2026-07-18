@@ -11,9 +11,16 @@
 #include "arm_controller/StateMachine.h"
 #include "arm_controller/CommandHandler.h"
 
+void signalHandler(int signal)
+{
+    RCLCPP_INFO(rclcpp::get_logger("arm_controller"), "Received signal %d", signal);
+    rclcpp::shutdown();
+    exit(0); 
+}
+
 int main()
 {
-    //std::signal(SIGINT, signalHandler);
+    std::signal(SIGINT, signalHandler);
 
     rclcpp::init(0, nullptr);
     Logger::get().createMainLog("arm_controller");

@@ -58,7 +58,14 @@ public:
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
     int getNrJoints() {return mTree.getNrOfJoints(); }
 
-private: 
+private:
+    // Remove aJointNamesToRemove (and everything downstream of each) from
+    // aTree, producing aTreeOut. Used to keep gripper joints out of the
+    // joint space used for FK/IK/Jacobian solving and trajectory generation.
+    bool pruneJoints(const KDL::Tree& aTree,
+                      const std::vector<std::string>& aJointNamesToRemove,
+                      KDL::Tree& aTreeOut);
+
     bool parseManipCollisionGeometry();
     bool parseRobotCollisionGeometry();     
     void parseLinkCollisions(urdf::LinkConstSharedPtr& aLink, std::vector<CollisionShell>& aLinkShellsOut);

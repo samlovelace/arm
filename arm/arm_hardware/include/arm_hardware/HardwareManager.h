@@ -20,9 +20,11 @@ public:
 
 private:
     void goalCallback(arm_msgs::msg::HardwareGoal::SharedPtr aGoal);
+    void gripperGoalCallback(arm_msgs::msg::HardwareGoal::SharedPtr aGoal);
 
 private:
     std::shared_ptr<IManipComms> mComms;
     std::atomic_bool mRunning;
+    bool mHasGripper;
 };
 #endif

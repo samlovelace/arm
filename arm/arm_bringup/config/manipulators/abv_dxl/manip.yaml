@@ -2,48 +2,49 @@ type: dynamixel
 comms: simulated
 rate: 10 # Hz
 
-vehicle:
-  urdf: ../../robots/abv/robot.urdf
-  manip_attach_link: vehicle_link
-  joint_names:
-    - x_joint
-    - y_joint
-    - yaw_joint
-  initial_positions: [0, 0, 0]
-  accel_limits: [0.5, 0.5, 0.5]
-  jerk_limits: [5, 5, 5]
+urdf: manipulator.urdf
+base_link: widow_xl_base
+end_link: wrist_rotate_link
+joint_names:
+  - wxr_shoulder_joint
+  - wxr_forearm_joint
+  - wxr_wrist_joint
+  - wxr_wrist_rotate_joint
 
-manipulator:
-  urdf: manipulator.urdf
-  base_link: widow_xl_base
-  end_link: wrist_rotate_link
-  joint_names:
-    - wxr_shoulder_joint
-    - wxr_forearm_joint
-    - wxr_wrist_joint
-    - wxr_wrist_rotate_joint
-    - wxr_left_finger_joint
-    - wxr_right_finger_joint
+initial_positions: [1, 1, 1, 1]
+accel_limits: [0.5, 0.5, 0.5, 0.5]
+jerk_limits: [5, 5, 5, 5]
 
-  initial_positions: [1, 1, 1, 1, 1, 1]
-  accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-  jerk_limits: [5, 5, 5, 5, 5, 5]
+deploy:
+  pos: [1, 1, 1, 1]
 
-  deploy:
-    pos: [1, 1, 1, 1, 1, 1]
-
-  stow:
-    pos: [0, 0, 0, 0, 0, 0]
+stow:
+  pos: [0, 0, 0, 0]
 
 mount:
   position: [-0.2, 0, 0.3] # xyz
   quaternion: [0, 0, 0, 1] # xyz w
 
+# finger joints — excluded from FK/IK and trajectory generation, commanded
+# directly via the arm/gripper_position_waypoint topic. Real URDF joint
+# names (not the wxr_-prefixed arm joint_names above) since these must
+# match the KDL tree exactly for KinematicsHandler to prune them.
+gripper:
+  joint_names:
+    - left_finger_joint
+    - right_finger_joint
+  initial_positions: [0, 0]
+
+# NOTE: motor_ids/max_torque/step_conversion below are placeholders — the
+# first 4 entries (arm) were never configured with real hardware IDs prior
+# to this change; fill in actual Dynamixel IDs before running on hardware.
+# Arm and gripper motors share one serial bus/thread, so all 6 motors are
+# listed together here, arm-first, matching DynamixelManipComms's split.
 comms_configs:
   device_name: /dev/ttyUSB0
   baud_rate: 2000000
   protocol_version: 1
-  motor_ids: [1, 2]
-  max_torque: [0.35, 0.35]
-  step_conversion: [0.088, 0.088] # conversion from steps to degrees
+  motor_ids: [1, 2, 3, 4, 5, 6]
+  max_torque: [0.35, 0.35, 0.35, 0.35, 0.35, 0.35]
+  step_conversion: [0.088, 0.088, 0.088, 0.088, 0.088, 0.088] # conversion from steps to degrees
   comms_rate: 10 # Hz

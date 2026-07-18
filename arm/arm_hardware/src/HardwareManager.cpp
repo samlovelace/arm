@@ -31,6 +31,15 @@ bool HardwareManager::init()
     RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareGoal>("arm/hardware/goal",
         std::bind(&HardwareManager::goalCallback, this, std::placeholders::_1));
 
+    mHasGripper = ConfigManager::getInstance()->getConfig().gripper.has_value();
+
+    if(mHasGripper)
+    {
+        RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareState>("arm/hardware/gripper_state");
+        RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareGoal>("arm/hardware/gripper_goal",
+            std::bind(&HardwareManager::gripperGoalCallback, this, std::placeholders::_1));
+    }
+
     mComms = ManipulatorFactory::create();
     mComms->init();
 
@@ -52,6 +61,7 @@ void HardwareManager::run()
     std::vector<double> posV, velV;
 
     arm_msgs::msg::HardwareState state;
+    arm_msgs::msg::HardwareState gripperState;
     // TODO: set name from config
 
     while(mRunning)
@@ -73,6 +83,25 @@ void HardwareManager::run()
         state.set__velocity(velV);
         RosTopicManager::getInstance()->publishMessage("arm/hardware/state", state);
 
+        if(mHasGripper)
+        {
+            KDL::JntArray gripperPos = mComms->getGripperPositions();
+            KDL::JntArray gripperVel = mComms->getGripperVelocities();
+
+            std::vector<double> gripperPosV(gripperPos.rows());
+            std::vector<double> gripperVelV(gripperVel.rows());
+
+            for(int i = 0; i < (int)gripperPos.rows(); i++)
+            {
+                gripperPosV[i] = gripperPos(i);
+                gripperVelV[i] = gripperVel(i);
+            }
+
+            gripperState.set__position(gripperPosV);
+            gripperState.set__velocity(gripperVelV);
+            RosTopicManager::getInstance()->publishMessage("arm/hardware/gripper_state", gripperState);
+        }
+
         rate.block();
     }
 }
@@ -86,4 +115,15 @@ void HardwareManager::goalCallback(arm_msgs::msg::HardwareGoal::SharedPtr aGoal)
     }
 
     mComms->sendJointCommand(goal);
+}
+
+void HardwareManager::gripperGoalCallback(arm_msgs::msg::HardwareGoal::SharedPtr aGoal)
+{
+    KDL::JntArray goal(aGoal->position.size());
+    for(int i = 0; i < (int) goal.rows(); i++)
+    {
+        goal(i) = aGoal->position[i];
+    }
+
+    mComms->sendGripperCommand(goal);
 }

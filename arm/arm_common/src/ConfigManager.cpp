@@ -46,45 +46,66 @@ void ConfigManager::loadConfig()
     mConfig.commsMode     = requireScalar<std::string>(mManipRoot, "comms", "manip.yaml");
     mConfig.controlRateHz = optionalScalar<int>(mManipRoot, "rate", 10);
 
-    loadVehicleSection    (manipDir);
     loadManipulatorSection(manipDir);
+    loadGripperSection    ();
     loadMountSection      ();
-    mergeJointData        ();
+
+    // Mobile base is optional — a manipulator with no MobileBase entry is standalone
+    if (topConfig["MobileBase"] && !topConfig["MobileBase"].IsNull())
+    {
+        const std::string baseName = requireScalar<std::string>(topConfig["MobileBase"], "name", "MobileBase");
+
+        const fs::path baseDir     = shareDir / "config" / "mobile_base" / baseName;
+        const fs::path baseYamlPath = baseDir / "base.yaml";
+        if (!fs::exists(baseYamlPath))
+            throw std::runtime_error(
+                "[ConfigManager] base.yaml not found for mobile base '" + baseName +
+                "': " + baseYamlPath.string());
+
+        LOGI << "Loading mobile base config: " << baseYamlPath.string();
+        mBaseRoot = YAML::LoadFile(baseYamlPath.string());
+
+        loadMobileBaseSection(baseDir);
+    }
+
+    mergeJointData();
 
     LOGI << "Config loaded successfully — manipulator: '" << manipName
          << "', " << mConfig.jointNames.size() << " total joints ("
-         << mConfig.vehicle.jointNames.size()     << " vehicle, "
+         << (mConfig.mobileBase ? mConfig.mobileBase->jointNames.size() : 0) << " mobile base, "
          << mConfig.manipulator.jointNames.size()  << " arm)";
     LOGD << YAML::Dump(mManipRoot);
 }
 
 // ---------------------------------------------------------------------------
-// vehicle:
+// mobile_base/<name>/base.yaml:
 // ---------------------------------------------------------------------------
-void ConfigManager::loadVehicleSection(const fs::path& manipDir)
+void ConfigManager::loadMobileBaseSection(const fs::path& baseDir)
 {
-    const std::string ctx = "vehicle";
-    const YAML::Node& v = require(mManipRoot, "vehicle", ctx);
+    const std::string ctx = "mobile_base";
 
-    mConfig.vehicle.urdfPath        = resolvePath(manipDir, requireScalar<std::string>(v, "urdf", ctx));
-    mConfig.vehicle.manipAttachLink = requireScalar<std::string>(v, "manip_attach_link", ctx);
+    MobileBaseConfig mb;
+    mb.urdfPath        = resolvePath(baseDir, requireScalar<std::string>(mBaseRoot, "urdf", ctx));
+    mb.manipAttachLink = requireScalar<std::string>(mBaseRoot, "manip_attach_link", ctx);
 
-    auto jointNames = requireSeq<std::string>(v, "joint_names", ctx);
+    auto jointNames = requireSeq<std::string>(mBaseRoot, "joint_names", ctx);
     const std::size_t n = jointNames.size();
-    mConfig.vehicle.jointNames = std::move(jointNames);
+    mb.jointNames = std::move(jointNames);
 
-    mConfig.vehicle.initialPositions = requireSeq<double>(v, "initial_positions", ctx, n);
-    mConfig.vehicle.accelLimits      = requireSeq<double>(v, "accel_limits",      ctx, n);
-    mConfig.vehicle.jerkLimits       = requireSeq<double>(v, "jerk_limits",       ctx, n);
+    mb.initialPositions = requireSeq<double>(mBaseRoot, "initial_positions", ctx, n);
+    mb.accelLimits      = requireSeq<double>(mBaseRoot, "accel_limits",      ctx, n);
+    mb.jerkLimits       = requireSeq<double>(mBaseRoot, "jerk_limits",       ctx, n);
+
+    mConfig.mobileBase = std::move(mb);
 }
 
 // ---------------------------------------------------------------------------
-// manipulator:
+// manip.yaml (flattened — arm fields live at the root, no more nested key)
 // ---------------------------------------------------------------------------
 void ConfigManager::loadManipulatorSection(const fs::path& manipDir)
 {
-    const std::string ctx = "manipulator";
-    const YAML::Node& m = require(mManipRoot, "manipulator", ctx);
+    const std::string ctx = "manip.yaml";
+    const YAML::Node& m = mManipRoot;
 
     mConfig.manipulator.urdfPath = resolvePath(manipDir, requireScalar<std::string>(m, "urdf", ctx));
     mConfig.manipulator.baseLink = requireScalar<std::string>(m, "base_link", ctx);
@@ -104,6 +125,35 @@ void ConfigManager::loadManipulatorSection(const fs::path& manipDir)
 }
 
 // ---------------------------------------------------------------------------
+// manip.yaml: gripper (optional — absent for a manipulator with no gripper).
+// Deliberately not merged into Config's flat joint vectors — those feed
+// WaypointExecutor/KinematicsHandler and must stay arm(+base)-only.
+// ---------------------------------------------------------------------------
+void ConfigManager::loadGripperSection()
+{
+    const YAML::Node& m = mManipRoot;
+
+    if (!m["gripper"] || m["gripper"].IsNull())
+        return;
+
+    const std::string ctx = "gripper";
+    const YAML::Node& g = m["gripper"];
+
+    GripperConfig gripper;
+
+    auto jointNames = requireSeq<std::string>(g, "joint_names", ctx);
+    const std::size_t n = jointNames.size();
+    gripper.jointNames = std::move(jointNames);
+
+    gripper.initialPositions = requireSeq<double>(g, "initial_positions", ctx, n);
+
+    gripper.openPos   = optionalSeq<double>(g["open"],   "pos", n);
+    gripper.closedPos = optionalSeq<double>(g["closed"], "pos", n);
+
+    mConfig.gripper = std::move(gripper);
+}
+
+// ---------------------------------------------------------------------------
 // mount:
 // ---------------------------------------------------------------------------
 void ConfigManager::loadMountSection()
@@ -120,19 +170,21 @@ void ConfigManager::loadMountSection()
 }
 
 // ---------------------------------------------------------------------------
-// mergeJointData — concatenate [vehicle..., arm...] into flat combined vectors
+// mergeJointData — concatenate [mobile base..., arm...] into flat combined
+// vectors. If there's no mobile base, the combined vectors are arm-only.
 // ---------------------------------------------------------------------------
 void ConfigManager::mergeJointData()
 {
-    append(mConfig.jointNames,       mConfig.vehicle.jointNames);
+    if (mConfig.mobileBase)
+    {
+        append(mConfig.jointNames,       mConfig.mobileBase->jointNames);
+        append(mConfig.initialPositions, mConfig.mobileBase->initialPositions);
+        append(mConfig.accelLimits,      mConfig.mobileBase->accelLimits);
+        append(mConfig.jerkLimits,       mConfig.mobileBase->jerkLimits);
+    }
+
     append(mConfig.jointNames,       mConfig.manipulator.jointNames);
-
-    append(mConfig.initialPositions, mConfig.vehicle.initialPositions);
     append(mConfig.initialPositions, mConfig.manipulator.initialPositions);
-
-    append(mConfig.accelLimits,      mConfig.vehicle.accelLimits);
     append(mConfig.accelLimits,      mConfig.manipulator.accelLimits);
-
-    append(mConfig.jerkLimits,       mConfig.vehicle.jerkLimits);
     append(mConfig.jerkLimits,       mConfig.manipulator.jerkLimits);
 }

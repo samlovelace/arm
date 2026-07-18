@@ -22,6 +22,11 @@ CommandHandler::CommandHandler(std::shared_ptr<StateMachine> msm, std::shared_pt
                                                                                     this,
                                                                                     std::placeholders::_1));
 
+    topicManager->createSubscriber<robot_idl::msg::JointPositionWaypoint>("arm/gripper_position_waypoint",
+                                                                          std::bind(&CommandHandler::gripperPosWaypointCallback,
+                                                                                    this,
+                                                                                    std::placeholders::_1));
+
     topicManager->createSubscriber<robot_idl::msg::Enable>("arm/enable",
                                                            std::bind(&CommandHandler::enableCallback,
                                                                      this,
@@ -66,6 +71,8 @@ void CommandHandler::setNewActiveState(StateMachine::STATE aNewState)
 
 void CommandHandler::enableCallback(const robot_idl::msg::Enable::SharedPtr anEnabledCmd)
 {
+    // TODO: check hardware name in message and use to inform enable behavior
+
     // determine how to transition the state machine
     if(anEnabledCmd->enabled && !mManip->isEnabled())
     {
@@ -92,6 +99,31 @@ void CommandHandler::jointPosWaypointCallback(const robot_idl::msg::JointPositio
     {
         return JointPositionWaypoint(utils::toJntArray(m->positions), utils::toJntArray(m->tolerances));
     });
+}
+
+void CommandHandler::gripperPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg)
+{
+    // TODO: once hardware names used, move gripper pos setting to jointPosWaypoint path, check for gripper name
+
+    if (!mManip->isEnabled())
+    {
+        LOGW << "Manipulator not enabled. Cannot accept gripper waypoint";
+        return;
+    }
+
+    int properSize = mManip->getGripperNrJoints();
+    int goalSize = aMsg->positions.size();
+
+    if (goalSize != properSize)
+    {
+        LOGW << "Rejecting gripper waypoint with goal size (" << goalSize
+             << ") not equal to proper size (" << properSize << ").";
+        return;
+    }
+
+    // Direct pass-through — no WaypointExecutor/Ruckig, no state-machine
+    // transition. Gripper motion doesn't need arm-style arrival tracking.
+    mManip->setGripperGoal(utils::toJntArray(aMsg->positions));
 }
 
 void CommandHandler::jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg)

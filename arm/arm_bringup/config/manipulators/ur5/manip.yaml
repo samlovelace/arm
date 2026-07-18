@@ -1,11 +1,22 @@
 type: ur5
 comms: gazebo
 rate: 10 # Hz
+
 urdf: manipulator.urdf
 irm: IRM.bin
-initial_positions: [0, -1.57, 0, 0, 0, 0, 0, 0]
-accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-jerk_limits: [1, 1, 1, 1, 1, 1, 1, 1]
+base_link: ur5_base_link
+end_link: tool0
+joint_names:
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+
+initial_positions: [0, -1.57, 0, 0, 0, 0]
+accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+jerk_limits: [1, 1, 1, 1, 1, 1]
 vel_limit_fraction: 0.95 # 0-1
 
 mount:
@@ -17,3 +28,15 @@ deploy:
 
 stow:
   pos: [0, 0, 0, 0, 0, 0]
+
+# rg2 gripper fingers — excluded from FK/IK and trajectory generation,
+# commanded directly via the arm/gripper_position_waypoint topic.
+gripper:
+  joint_names:
+    - rg2_finger_joint1
+    - rg2_finger_joint2
+  initial_positions: [0, 0]
+  open:
+    pos: [1.18, 1.18]
+  closed:
+    pos: [0, 0]

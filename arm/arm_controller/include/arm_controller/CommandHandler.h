@@ -24,6 +24,7 @@ private:
     void setNewActiveState(StateMachine::STATE aState); 
 
     void jointPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
+    void gripperPosWaypointCallback(const robot_idl::msg::JointPositionWaypoint::SharedPtr aMsg);
     void taskPosWaypointCallback(const robot_idl::msg::TaskPositionWaypoint::SharedPtr aMsg); 
     void taskVelWaypointCallback(const robot_idl::msg::TaskVelocityWaypoint::SharedPtr aMsg); 
     void jointVelWaypointCallback(const robot_idl::msg::JointVelocityWaypoint::SharedPtr aMsg); 
@@ -54,6 +55,7 @@ private:
         }
 
         auto wp = converter(msg);
+        
         if (!mManip->setGoalWaypoint(std::make_shared<WaypointType>(wp))) {
             LOGW << "Failed to set goal";
             return;

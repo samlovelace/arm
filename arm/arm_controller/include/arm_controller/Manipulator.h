@@ -35,6 +35,11 @@ public:
     void setJointPositionGoal(const KDL::JntArray &aNewJntPos);
     bool setGoalWaypoint(std::shared_ptr<IWaypoint> aWp);
 
+    // Gripper joints bypass WaypointExecutor entirely — sent directly to
+    // hardware, no Ruckig trajectory smoothing or arrival tracking.
+    int getGripperNrJoints() const { return mConfig.gripper ? (int)mConfig.gripper->jointNames.size() : 0; }
+    void setGripperGoal(const KDL::JntArray& aGripperGoal);
+
     std::shared_ptr<IWaypoint> getGoalWaypoint();
     bool isArrived();
     void printArrivedState();

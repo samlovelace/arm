@@ -4,7 +4,8 @@
 #include "arm_common/RateController.hpp"
 #include "arm_hardware/DynamixelManipComms.h"
 
-DynamixelManipComms::DynamixelManipComms(const YAML::Node& aCommsConfig) : mPortHandler(nullptr)
+DynamixelManipComms::DynamixelManipComms(const YAML::Node& aCommsConfig, int aNumArmJoints) :
+    mPortHandler(nullptr), mNumArmJoints(aNumArmJoints)
 {
     mDeviceName = aCommsConfig["device_name"].as<std::string>();
     mProtocolVersion = aCommsConfig["protocol_version"].as<int>();
@@ -71,6 +72,9 @@ bool DynamixelManipComms::init()
 
     mPrevJointPositions.resize(mMotors.size());
     mPrevTime = std::chrono::steady_clock::now();
+
+    mJointCommand.resize(mMotors.size());
+    KDL::SetToZero(mJointCommand);
 
     mCommsThread = std::thread(&DynamixelManipComms::commsLoop, this);
 
@@ -203,24 +207,67 @@ void DynamixelManipComms::readStateFromSerialPort(KDL::JntArray& aJointPositions
 KDL::JntArray DynamixelManipComms::getJointPositions()
 {
     std::lock_guard<std::mutex> lock(mStateMutex);
-    return mJointPositions;
+    KDL::JntArray armPos(mNumArmJoints);
+    for(int i = 0; i < mNumArmJoints; i++)
+    {
+        armPos(i) = mJointPositions(i);
+    }
+    return armPos;
 }
 
 KDL::JntArray DynamixelManipComms::getJointVelocities()
 {
     std::lock_guard<std::mutex> lock(mStateMutex);
-    return mJointVelocities;
+    KDL::JntArray armVel(mNumArmJoints);
+    for(int i = 0; i < mNumArmJoints; i++)
+    {
+        armVel(i) = mJointVelocities(i);
+    }
+    return armVel;
+}
+
+KDL::JntArray DynamixelManipComms::getGripperPositions()
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    const int numGripperJoints = static_cast<int>(mMotors.size()) - mNumArmJoints;
+    KDL::JntArray gripperPos(numGripperJoints);
+    for(int i = 0; i < numGripperJoints; i++)
+    {
+        gripperPos(i) = mJointPositions(mNumArmJoints + i);
+    }
+    return gripperPos;
+}
+
+KDL::JntArray DynamixelManipComms::getGripperVelocities()
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    const int numGripperJoints = static_cast<int>(mMotors.size()) - mNumArmJoints;
+    KDL::JntArray gripperVel(numGripperJoints);
+    for(int i = 0; i < numGripperJoints; i++)
+    {
+        gripperVel(i) = mJointVelocities(mNumArmJoints + i);
+    }
+    return gripperVel;
 }
 
 void DynamixelManipComms::sendJointCommand(const KDL::JntArray &aCmd)
 {
-    setLatestJointCommand(aCmd);
+    setLatestJointCommand(aCmd, 0, mNumArmJoints);
 }
 
-void DynamixelManipComms::setLatestJointCommand(const KDL::JntArray& aCmd)
+void DynamixelManipComms::sendGripperCommand(const KDL::JntArray &aCmd)
+{
+    const int numGripperJoints = static_cast<int>(mMotors.size()) - mNumArmJoints;
+    setLatestJointCommand(aCmd, mNumArmJoints, numGripperJoints);
+}
+
+void DynamixelManipComms::setLatestJointCommand(const KDL::JntArray& aCmd, int aStartIdx, int aCount)
 {
     std::lock_guard<std::mutex> lock(mCmdMutex);
-    mJointCommand = aCmd;
+    for(int i = 0; i < aCount && i < static_cast<int>(aCmd.rows()); i++)
+    {
+        mJointCommand(aStartIdx + i) = aCmd(i);
+    }
 }
 
 KDL::JntArray DynamixelManipComms::getLatestJointCommand()

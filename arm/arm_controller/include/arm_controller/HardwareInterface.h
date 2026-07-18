@@ -17,12 +17,21 @@ public:
     KDL::JntArray getJointVelocities();
     void sendJointCommand(const KDL::JntArray &aCmd);
 
+    KDL::JntArray getGripperPositions();
+    KDL::JntArray getGripperVelocities();
+    void sendGripperCommand(const KDL::JntArray &aCmd);
+
 private:
     void stateCallback(arm_msgs::msg::HardwareState::SharedPtr aState);
+    void gripperStateCallback(arm_msgs::msg::HardwareState::SharedPtr aState);
 
     std::mutex mStateMutex;
     KDL::JntArray mLatestPosition;
     KDL::JntArray mLatestVelocity;
+
+    std::mutex mGripperStateMutex;
+    KDL::JntArray mLatestGripperPosition;
+    KDL::JntArray mLatestGripperVelocity;
 
 };
 #endif

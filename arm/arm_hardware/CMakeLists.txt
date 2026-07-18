@@ -12,6 +12,7 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(arm_common REQUIRED)
 find_package(arm_msgs REQUIRED)
+find_package(ptera_msgs REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(kdl_parser REQUIRED)
@@ -22,7 +23,7 @@ set(DYNAMIXEL_LIB /usr/local/lib/libdxl_x64_cpp.so)
 
 set(SOURCES
     src/DynamixelManipComms.cpp
-    src/GazeboManipComms.cpp
+    src/RosManipComms.cpp
     src/HardwareManager.cpp
     src/main.cpp
     src/ManipulatorFactory.cpp
@@ -41,6 +42,7 @@ ament_target_dependencies(${PROJECT_NAME}
     sensor_msgs
     arm_common
     arm_msgs
+    ptera_msgs
     Eigen3
     kdl_parser
 )
