@@ -5,11 +5,11 @@
 
 MovingNode::MovingNode()
 {
-    mTopicBuffer = std::make_shared<TopicBuffer<robot_idl::msg::ManipulatorState>>();
+    mTopicBuffer = std::make_shared<TopicBuffer<ptera_msgs::msg::ManipulatorState>>();
 
-    RosTopicManager::getInstance()->createSubscriber<robot_idl::msg::ManipulatorState>(
+    RosTopicManager::getInstance()->createSubscriber<ptera_msgs::msg::ManipulatorState>(
         "/arm/state",
-        [this](robot_idl::msg::ManipulatorState::SharedPtr msg)
+        [this](ptera_msgs::msg::ManipulatorState::SharedPtr msg)
         {
             std::lock_guard<std::mutex> lock(mTopicBuffer->mMtx);
             mTopicBuffer->mLastMsg = *msg;
@@ -27,7 +27,7 @@ INode::Status MovingNode::tick()
 {
     if(mTopicBuffer->mHasMsg)
     {   
-        auto arrived = robot_idl::msg::ManipulatorState::ARRIVED; 
+        auto arrived = ptera_msgs::msg::ManipulatorState::ARRIVED; 
         if(arrived == mTopicBuffer->mLastMsg.state)
         {
             LOGV << "Waypoint arrived..."; 

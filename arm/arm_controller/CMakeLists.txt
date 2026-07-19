@@ -12,7 +12,7 @@ find_package(rclcpp REQUIRED)
 find_package(arm_common REQUIRED)
 find_package(arm_msgs REQUIRED)
 
-find_package(robot_idl REQUIRED)
+find_package(ptera_msgs REQUIRED)
 find_package(kdl_parser REQUIRED)
 find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -68,7 +68,7 @@ ament_target_dependencies(${PROJECT_NAME}
   arm_common
   arm_msgs
   std_msgs
-  robot_idl
+  ptera_msgs
   pcl_msgs
   pcl_conversions
 )

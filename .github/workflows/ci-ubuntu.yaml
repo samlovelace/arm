@@ -30,7 +30,7 @@ jobs:
         run: |
           set -eux
           pwd
-          git clone https://github.com/samlovelace/robot_idl.git
+          git clone https://github.com/samlovelace/ptera_msgs.git
           ls
 
       - name: test
@@ -40,7 +40,7 @@ jobs:
           ls src
 
       - name: run setup scripts
-        working-directory: ${{ env.WS }}/src/robot_idl/scripts
+        working-directory: ${{ env.WS }}/src/ptera_msgs/scripts
         run: |
           set -eux
           chmod +x ./setup.sh

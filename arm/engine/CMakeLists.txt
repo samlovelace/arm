@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 
 find_package(arm_common REQUIRED)
 
-find_package(robot_idl REQUIRED)
+find_package(ptera_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yaml-cpp REQUIRED) 
 find_package(urdf REQUIRED)
@@ -55,7 +55,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     arm_common
-    robot_idl
+    ptera_msgs
     kdl_parser
     urdf
     pcl_msgs

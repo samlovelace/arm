@@ -3,7 +3,7 @@
 
 #include "INode.hpp"
 #include "common/TopicBuffer.hpp"
-#include "robot_idl/msg/manipulator_state.hpp"
+#include "ptera_msgs/msg/manipulator_state.hpp"
 
 class MovingNode : public INode
 {
@@ -15,7 +15,7 @@ public:
     Status tick() override; 
 
 private:
-    std::shared_ptr<TopicBuffer<robot_idl::msg::ManipulatorState>> mTopicBuffer;
+    std::shared_ptr<TopicBuffer<ptera_msgs::msg::ManipulatorState>> mTopicBuffer;
 };
 #endif
 

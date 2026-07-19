@@ -9,8 +9,8 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 
-#include "robot_idl/msg/plan_command.hpp"
-#include "robot_idl/msg/plan_response.hpp"
+#include "ptera_msgs/msg/plan_command.hpp"
+#include "ptera_msgs/msg/plan_response.hpp"
 
 namespace utils
 {

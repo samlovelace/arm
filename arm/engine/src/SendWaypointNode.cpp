@@ -2,11 +2,11 @@
 #include "SendWaypointNode.h"
 #include "plog/Log.h"
 #include "common/RosTopicManager.hpp"
-#include "robot_idl/msg/joint_position_waypoint.hpp"
+#include "ptera_msgs/msg/joint_position_waypoint.hpp"
 
 SendWaypointNode::SendWaypointNode(std::shared_ptr<KDL::JntArray> aCurrentWp) : mCurrentWp(aCurrentWp)
 {
-    RosTopicManager::getInstance()->createPublisher<robot_idl::msg::JointPositionWaypoint>("arm/joint_position_waypoint");
+    RosTopicManager::getInstance()->createPublisher<ptera_msgs::msg::JointPositionWaypoint>("arm/joint_position_waypoint");
 }
 
 SendWaypointNode::~SendWaypointNode()
@@ -26,7 +26,7 @@ INode::Status SendWaypointNode::tick()
         tol[i] = 0.05; // hardcoded tolerance because im lazy rn  
     }
 
-    robot_idl::msg::JointPositionWaypoint wp; 
+    ptera_msgs::msg::JointPositionWaypoint wp; 
     wp.set__positions(pos); 
     wp.set__tolerances(tol); 
 

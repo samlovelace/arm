@@ -20,7 +20,7 @@
 
 Engine::Engine() : mActiveTree(nullptr), mGraspPlanner(nullptr), mKinematicsHandler(std::make_shared<KinematicsHandler>())
 {
-    RosTopicManager::getInstance()->createSubscriber<robot_idl::msg::ManipulationCommand>("/arm/command", 
+    RosTopicManager::getInstance()->createSubscriber<ptera_msgs::msg::ManipulationCommand>("/arm/command", 
                                                                                           std::bind(&Engine::commandCallback, 
                                                                                                     this, 
                                                                                                     std::placeholders::_1)); 
@@ -112,9 +112,9 @@ INode::Status Engine::tickActiveTree()
     return mActiveTree->tick(); 
 }
 
-void Engine::commandCallback(robot_idl::msg::ManipulationCommand::SharedPtr aCmd)
+void Engine::commandCallback(ptera_msgs::msg::ManipulationCommand::SharedPtr aCmd)
 {
-    using namespace robot_idl::msg; 
+    using namespace ptera_msgs::msg; 
     NodePtr tree; 
     auto cmd = *aCmd; 
 

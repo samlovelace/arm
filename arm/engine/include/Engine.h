@@ -4,7 +4,7 @@
 #include <mutex>
 #include "Context.hpp"
 
-#include "robot_idl/msg/manipulation_command.hpp"
+#include "ptera_msgs/msg/manipulation_command.hpp"
 #include "INode.hpp"
 
 #include "IGraspPlanner.hpp"
@@ -23,7 +23,7 @@ public:
 
 private:
     INode::Status tickActiveTree(); 
-    void commandCallback(const robot_idl::msg::ManipulationCommand::SharedPtr aCmd);
+    void commandCallback(const ptera_msgs::msg::ManipulationCommand::SharedPtr aCmd);
     
 private: 
     NodePtr mActiveTree; 

@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>arm_configs</depend>
-  <depend>robot_idl</depend>
+  <depend>ptera_msgs</depend>
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>

@@ -14,7 +14,7 @@
 #include "arm_controller/JointPositionWaypoint.h"
 #include "arm_controller/TaskPositionWaypoint.h"
 
-#include "robot_idl/msg/manipulator_state.hpp"
+#include "ptera_msgs/msg/manipulator_state.hpp"
 
 Manipulator::Manipulator(ConfigManager::Config aConfig)
     : mConfig(aConfig), mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)),
@@ -53,7 +53,7 @@ Manipulator::Manipulator(ConfigManager::Config aConfig)
         mHardware->sendGripperCommand(firstGripperWp);
     }
 
-    RosTopicManager::getInstance()->createPublisher<robot_idl::msg::ManipulatorState>("arm/state");
+    RosTopicManager::getInstance()->createPublisher<ptera_msgs::msg::ManipulatorState>("arm/state");
 }
 
 Manipulator::~Manipulator()
@@ -374,13 +374,13 @@ void Manipulator::publishStateLoop()
         KDL::JntArray pos = mHardware->getJointPositions();
         KDL::JntArray vel = mHardware->getJointVelocities();
 
-        robot_idl::msg::ManipulatorState state;
-        state.state = robot_idl::msg::ManipulatorState::MOVING;
+        ptera_msgs::msg::ManipulatorState state;
+        state.state = ptera_msgs::msg::ManipulatorState::MOVING;
 
         bool arrived = isArrived();
         if(arrived)
         {
-            state.state = robot_idl::msg::ManipulatorState::ARRIVED;
+            state.state = ptera_msgs::msg::ManipulatorState::ARRIVED;
         }
 
         std::vector<double> position(pos.rows());
