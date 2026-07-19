@@ -10,8 +10,6 @@ RosManipComms::RosManipComms(const ConfigManager::Config& aConfig) :
         mPrevVehiclePos(3), mPrevVehicleTime(std::chrono::steady_clock::now()),
         mFirstRcvd(false)
 {
-    mArmVersion = versionFromString(aConfig.manipType);
-
     mNumBaseJoints    = aConfig.mobileBase ? static_cast<int>(aConfig.mobileBase->jointNames.size()) : 0;
     mNumArmJoints     = static_cast<int>(aConfig.manipulator.jointNames.size());
     mNumGripperJoints = aConfig.gripper ? static_cast<int>(aConfig.gripper->jointNames.size()) : 0;
@@ -49,19 +47,22 @@ RosManipComms::~RosManipComms()
 
 bool RosManipComms::init()
 {
-    RosTopicManager::getInstance()->createSubscriber<std_msgs::msg::Float64MultiArray>("UR/joint_positions",
-                                                                                       std::bind(&RosManipComms::armStateCallback,
-                                                                                                 this,
-                                                                                                 std::placeholders::_1));
+    RosTopicManager::getInstance()->
+        createSubscriber<std_msgs::msg::Float64MultiArray>("gazebo/joint_positions",
+                                                            std::bind(&RosManipComms::armStateCallback,
+                                                                    this,
+                                                                    std::placeholders::_1));
 
-    RosTopicManager::getInstance()->createPublisher<std_msgs::msg::Float64MultiArray>("UR/joint_commands");
+    RosTopicManager::getInstance()->
+        createPublisher<std_msgs::msg::Float64MultiArray>("gazebo/joint_commands");
 
     if(mNumBaseJoints > 0)
     {
-        RosTopicManager::getInstance()->createSubscriber<ptera_msgs::msg::RobotState>("/robot/state",
-                                                                                       std::bind(&RosManipComms::vehicleStateCallback,
-                                                                                                 this,
-                                                                                                 std::placeholders::_1));
+        RosTopicManager::getInstance()->
+            createSubscriber<ptera_msgs::msg::RobotState>("/robot/state",
+                                                        std::bind(&RosManipComms::vehicleStateCallback,
+                                                                    this,
+                                                                    std::placeholders::_1));
     }
 
     return true;
@@ -147,7 +148,7 @@ void RosManipComms::publishCombinedCommand()
 
     std_msgs::msg::Float64MultiArray cmd;
     cmd.set__data(posCmd);
-    RosTopicManager::getInstance()->publishMessage<std_msgs::msg::Float64MultiArray>("UR/joint_commands", cmd);
+    RosTopicManager::getInstance()->publishMessage<std_msgs::msg::Float64MultiArray>("gazebo/joint_commands", cmd);
 }
 
 void RosManipComms::armStateCallback(std_msgs::msg::Float64MultiArray::SharedPtr msg)
@@ -219,20 +220,4 @@ void RosManipComms::vehicleStateCallback(ptera_msgs::msg::RobotState::SharedPtr 
     mPrevVehiclePos(1) = y;
     mPrevVehiclePos(2) = yaw;
     mPrevVehicleTime = now;
-}
-
-RosManipComms::VERSION RosManipComms::versionFromString(const std::string& anArmVersion)
-{
-    VERSION version = VERSION::UR10;
-
-    if("ur10" == anArmVersion)
-    {
-        version = VERSION::UR10;
-    }
-    else if ("ur5" == anArmVersion)
-    {
-        version = VERSION::UR5;
-    }
-
-    return version;
 }

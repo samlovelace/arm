@@ -1,5 +1,5 @@
 type: dynamixel
-comms: simulated
+comms: ros
 rate: 10 # Hz
 
 urdf: manipulator.urdf
@@ -34,6 +34,10 @@ gripper:
     - left_finger_joint
     - right_finger_joint
   initial_positions: [0, 0]
+  open:
+    pos: [1.18, 1.18]
+  closed:
+    pos: [0, 0]
 
 # NOTE: motor_ids/max_torque/step_conversion below are placeholders — the
 # first 4 entries (arm) were never configured with real hardware IDs prior

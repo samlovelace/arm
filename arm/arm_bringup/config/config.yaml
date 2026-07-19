@@ -1,8 +1,8 @@
 Manipulator:
-  name: ur5
+  name: abv_dxl
 
 MobileBase:
-  name: elm4 # omit this whole key (or leave name blank/null) for a standalone manipulator
+  name: abv # omit this whole key (or leave name blank/null) for a standalone manipulator
 
 StateMachine:
   rate: 25 # Hz

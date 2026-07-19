@@ -28,20 +28,9 @@ private:
     void publishCombinedCommand();
 
 private:
-    enum class VERSION
-    {
-        UR5,
-        UR10,
-        NUM_VERSIONS
-    };
-
-private:
 
     void armStateCallback(std_msgs::msg::Float64MultiArray::SharedPtr msg);
     void vehicleStateCallback(ptera_msgs::msg::RobotState::SharedPtr msg);
-
-    VERSION versionFromString(const std::string& anArmVersion);
-    VERSION mArmVersion;
 
     // Mobile-base DOF count (0 for a standalone manipulator). Every mobile
     // base in this repo is modeled as exactly [x_joint, y_joint, yaw_joint],

@@ -1,5 +1,5 @@
 type: ur5
-comms: gazebo
+comms: ros
 rate: 10 # Hz
 
 urdf: manipulator.urdf

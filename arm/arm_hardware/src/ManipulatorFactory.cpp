@@ -11,7 +11,7 @@ std::shared_ptr<IManipComms> ManipulatorFactory::create()
 {
     auto config = ConfigManager::getInstance()->getConfig();
 
-    if(("ur10" == config.manipType || "ur5" == config.manipType) && "gazebo" == config.commsMode)
+    if("ros" == config.commsMode)
     {
         LOGW << "Using RosManipComms";
         return std::make_shared<RosManipComms>(config);
