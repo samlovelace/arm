@@ -40,6 +40,7 @@ set(SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/src/JointVelocityWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/Manipulator.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/src/MobileBaseInterface.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/StateMachine.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskPositionWaypoint.cpp
   ${CMAKE_CURRENT_LIST_DIR}/src/TaskVelocityWaypoint.cpp

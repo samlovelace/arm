@@ -48,12 +48,22 @@ public:
     bool init(const ConfigManager::Config& aConfig); 
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut);
     bool solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
+    // aMeasuredVel: full joint velocities; the locked joints' (uncontrolled
+    // base) contribution to the EE twist is fed forward and compensated
+    bool solveIK(const KDL::JntArray& anInitPos, const KDL::JntArray& aMeasuredVel,
+                 const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut);
     bool solveFk(const KDL::JntArray& anInitPos, KDL::Frame& aFrameOut, const std::string& aSegmentName = ""); 
 
     void updateCollisionShells(const KDL::JntArray& aCurrentJointState);
     bool checkCollisions(const KDL::JntArray& aJntConfig);
 
     double computeManipulability(const KDL::JntArray& aJntCfg);
+
+    // End link twist (ref point at the end link origin) in the root frame: J(q) * qdot
+    bool solveTaskVelocity(const KDL::JntArray& aJntCfg, const KDL::JntArray& aJntVel, KDL::Twist& aTwistOut);
+
+    // Root segment of the kinematic tree — the frame FK results are expressed in
+    std::string getRootFrame() const { return mTree.getRootSegment()->first; }
 
     KDL::JntArray getJointLimits(const std::string& aLimitType); 
     int getNrJoints() {return mTree.getNrOfJoints(); }
@@ -85,6 +95,7 @@ private:
 
     std::vector<std::string> mJointNames; 
     std::string mManipEndLink; 
+    std::vector<unsigned int> mLockedJoints; // q_nr of joints held fixed by IK (uncontrolled base)
     
     std::map<std::string, KDL::JntArray> mLimitsMap; 
     std::map<std::string, unsigned int> mSegmentNameMap; 

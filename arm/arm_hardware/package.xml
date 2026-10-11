@@ -16,6 +16,7 @@
   <depend>arm_common</depend>
   <depend>arm_msgs</depend>
   <depend>ptera_msgs</depend>
+  <depend>geometry_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

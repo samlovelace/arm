@@ -2,6 +2,7 @@
 #include "plog/Log.h"
 #include <stdexcept>
 #include <filesystem>
+#include <set>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 namespace fs = std::filesystem;
@@ -41,6 +42,8 @@ void ConfigManager::loadConfig()
     LOGI << "Loading manipulator config: " << manipYamlPath.string();
     mManipRoot = YAML::LoadFile(manipYamlPath.string());
 
+    mConfig.manipName = manipName;
+
     // Top-level manip.yaml fields
     mConfig.manipType     = requireScalar<std::string>(mManipRoot, "type",  "manip.yaml");
     mConfig.commsMode     = requireScalar<std::string>(mManipRoot, "comms", "manip.yaml");
@@ -65,7 +68,7 @@ void ConfigManager::loadConfig()
         LOGI << "Loading mobile base config: " << baseYamlPath.string();
         mBaseRoot = YAML::LoadFile(baseYamlPath.string());
 
-        loadMobileBaseSection(baseDir);
+        loadMobileBaseSection(baseDir, topConfig["MobileBase"]);
     }
 
     mergeJointData();
@@ -73,14 +76,15 @@ void ConfigManager::loadConfig()
     LOGI << "Config loaded successfully — manipulator: '" << manipName
          << "', " << mConfig.jointNames.size() << " total joints ("
          << (mConfig.mobileBase ? mConfig.mobileBase->jointNames.size() : 0) << " mobile base, "
-         << mConfig.manipulator.jointNames.size()  << " arm)";
+         << mConfig.manipulator.jointNames.size()  << " arm), "
+         << mConfig.ctrlJointNames.size() << " controlled";
     LOGD << YAML::Dump(mManipRoot);
 }
 
 // ---------------------------------------------------------------------------
 // mobile_base/<name>/base.yaml:
 // ---------------------------------------------------------------------------
-void ConfigManager::loadMobileBaseSection(const fs::path& baseDir)
+void ConfigManager::loadMobileBaseSection(const fs::path& baseDir, const YAML::Node& aBaseSelectNode)
 {
     const std::string ctx = "mobile_base";
 
@@ -95,6 +99,24 @@ void ConfigManager::loadMobileBaseSection(const fs::path& baseDir)
     mb.initialPositions = requireSeq<double>(mBaseRoot, "initial_positions", ctx, n);
     mb.accelLimits      = requireSeq<double>(mBaseRoot, "accel_limits",      ctx, n);
     mb.jerkLimits       = requireSeq<double>(mBaseRoot, "jerk_limits",       ctx, n);
+    mb.jointAxes        = requireSeq<std::string>(mBaseRoot, "joint_axes",   ctx, n);
+
+    static const std::set<std::string> validAxes = {"x", "y", "z", "roll", "pitch", "yaw"};
+    std::set<std::string> seenAxes;
+    for (const auto& axis : mb.jointAxes)
+    {
+        if (!validAxes.count(axis))
+            throw std::runtime_error(
+                "[ConfigManager] Unknown axis '" + axis + "' in '" + ctx +
+                "' joint_axes, expected one of x, y, z, roll, pitch, yaw");
+        if (!seenAxes.insert(axis).second)
+            throw std::runtime_error(
+                "[ConfigManager] Duplicate axis '" + axis + "' in '" + ctx + "' joint_axes");
+    }
+
+    // controllable is a per-deployment choice, so it lives in config.yaml's MobileBase entry
+    mb.controllable = optionalScalar<bool>(aBaseSelectNode, "controllable", false);
+    mb.commandTopic = optionalScalar<std::string>(mBaseRoot, "command_topic", "robot/vehicle/waypoint");
 
     mConfig.mobileBase = std::move(mb);
 }
@@ -187,4 +209,13 @@ void ConfigManager::mergeJointData()
     append(mConfig.initialPositions, mConfig.manipulator.initialPositions);
     append(mConfig.accelLimits,      mConfig.manipulator.accelLimits);
     append(mConfig.jerkLimits,       mConfig.manipulator.jerkLimits);
+
+    mConfig.ctrlOffset = (mConfig.mobileBase && !mConfig.mobileBase->controllable)
+                       ? static_cast<int>(mConfig.mobileBase->jointNames.size()) : 0;
+
+    auto tail = [&](const auto& v) { return std::decay_t<decltype(v)>(v.begin() + mConfig.ctrlOffset, v.end()); };
+    mConfig.ctrlJointNames       = tail(mConfig.jointNames);
+    mConfig.ctrlInitialPositions = tail(mConfig.initialPositions);
+    mConfig.ctrlAccelLimits      = tail(mConfig.accelLimits);
+    mConfig.ctrlJerkLimits       = tail(mConfig.jerkLimits);
 }

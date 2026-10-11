@@ -10,7 +10,7 @@
 #include "arm_common/ConfigManager.h"
 #include "arm_common/RateController.hpp"
 
-#include "arm_msgs/msg/hardware_state.hpp"
+#include "arm_msgs/msg/hardware_telemetry.hpp"
 
 #include "arm_hardware/HardwareManager.h"
 #include "arm_hardware/ManipulatorFactory.h"
@@ -27,15 +27,17 @@ HardwareManager::~HardwareManager()
 
 bool HardwareManager::init()
 {
-    RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareState>("arm/hardware/state");
+    RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareTelemetry>("arm/hardware/telemetry");
     RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareGoal>("arm/hardware/goal",
         std::bind(&HardwareManager::goalCallback, this, std::placeholders::_1));
 
-    mHasGripper = ConfigManager::getInstance()->getConfig().gripper.has_value();
+    const auto& config = ConfigManager::getInstance()->getConfig();
+    mHasGripper = config.gripper.has_value();
+    mNumArmJoints = static_cast<int>(config.manipulator.jointNames.size());
 
     if(mHasGripper)
     {
-        RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareState>("arm/hardware/gripper_state");
+        RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareTelemetry>("arm/hardware/gripper_telemetry");
         RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareGoal>("arm/hardware/gripper_goal",
             std::bind(&HardwareManager::gripperGoalCallback, this, std::placeholders::_1));
     }
@@ -60,9 +62,12 @@ void HardwareManager::run()
     KDL::JntArray pos, vel;
     std::vector<double> posV, velV;
 
-    arm_msgs::msg::HardwareState state;
-    arm_msgs::msg::HardwareState gripperState;
-    // TODO: set name from config
+    const std::string& name = ConfigManager::getInstance()->getConfig().manipName;
+
+    arm_msgs::msg::HardwareTelemetry state;
+    arm_msgs::msg::HardwareTelemetry gripperState;
+    state.set__name(name);
+    gripperState.set__name(name);
 
     while(mRunning)
     {
@@ -81,7 +86,7 @@ void HardwareManager::run()
 
         state.set__position(posV);
         state.set__velocity(velV);
-        RosTopicManager::getInstance()->publishMessage("arm/hardware/state", state);
+        RosTopicManager::getInstance()->publishMessage("arm/hardware/telemetry", state);
 
         if(mHasGripper)
         {
@@ -99,7 +104,7 @@ void HardwareManager::run()
 
             gripperState.set__position(gripperPosV);
             gripperState.set__velocity(gripperVelV);
-            RosTopicManager::getInstance()->publishMessage("arm/hardware/gripper_state", gripperState);
+            RosTopicManager::getInstance()->publishMessage("arm/hardware/gripper_telemetry", gripperState);
         }
 
         rate.block();
@@ -108,8 +113,15 @@ void HardwareManager::run()
 
 void HardwareManager::goalCallback(arm_msgs::msg::HardwareGoal::SharedPtr aGoal)
 {
-    KDL::JntArray goal(aGoal->position.size());
-    for(int i = 0; i < (int) goal.rows(); i++)
+    // Arm joints only — the mobile base is owned by arm_controller
+    if((int)aGoal->position.size() != mNumArmJoints)
+    {
+        LOGW << "Rejecting hardware goal of size " << aGoal->position.size() << ", expected " << mNumArmJoints;
+        return;
+    }
+
+    KDL::JntArray goal(mNumArmJoints);
+    for(int i = 0; i < mNumArmJoints; i++)
     {
         goal(i) = aGoal->position[i];
     }

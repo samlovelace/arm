@@ -1,0 +1,45 @@
+type: rebot
+comms: ros
+rate: 10 # Hz
+
+urdf: manipulator.urdf
+base_link: rebot_base_link
+end_link: rebot_end_link
+joint_names:
+  - rebot_joint1
+  - rebot_joint2
+  - rebot_joint3
+  - rebot_joint4
+  - rebot_joint5
+  - rebot_joint6
+
+initial_positions: [0, 0, 0, 0, 0, 0]
+accel_limits: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+jerk_limits: [5, 5, 5, 5, 5, 5]
+vel_limit_fraction: 0.95 # 0-1
+
+# NOTE: deploy/stow are placeholders — joint2/joint3 limits are [-3.14, 0],
+# so tune these against the real arm before relying on them.
+deploy:
+  pos: [-1.0, -2.0, -1.0, -1.0, 1.0, 0.1]
+
+stow:
+  pos: [0, 0, 0, 0, 0, 0]
+
+# NOTE: placeholder — set to the actual rebot base mount location on top of the abv
+mount:
+  position: [-0.2, 0, 0.3] # xyz
+  quaternion: [0, 0, 0, 1] # xyz w
+
+# parallel gripper fingers — excluded from FK/IK and trajectory generation,
+# commanded directly via the arm/gripper_position_waypoint topic.
+# finger_right mimics finger_left with multiplier -1 in the URDF.
+gripper:
+  joint_names:
+    - rebot_finger_left
+    - rebot_finger_right
+  initial_positions: [0, 0]
+  open:
+    pos: [0.05, -0.05]
+  closed:
+    pos: [0, 0]

@@ -29,6 +29,7 @@ IWaypoint::Type JointVelocityWaypoint::type() const noexcept
 }
 
 bool JointVelocityWaypoint::toJointGoal(const KDL::JntArray& /*q_seed*/,
+                                        const KDL::JntArray& /*qdot_cur*/,
                                         KinematicsHandler& /*kin*/,
                                         KDL::JntArray& q_goal_out) const
 {

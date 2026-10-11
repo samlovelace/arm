@@ -1,8 +1,9 @@
 Manipulator:
-  name: abv_dxl
+  name: abv_rebot
 
 MobileBase:
   name: abv # omit this whole key (or leave name blank/null) for a standalone manipulator
+  controllable: false # true: base joints are planned/commanded; false: base is measured-only (default)
 
 StateMachine:
   rate: 25 # Hz

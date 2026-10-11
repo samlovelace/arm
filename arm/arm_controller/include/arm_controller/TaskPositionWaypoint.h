@@ -14,6 +14,7 @@ public:
   Type type() const noexcept override;
 
   bool toJointGoal(const KDL::JntArray& q_seed,
+                   const KDL::JntArray& qdot_cur,
                    KinematicsHandler& kin,
                    KDL::JntArray& q_goal_out) const override;
 

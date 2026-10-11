@@ -15,29 +15,36 @@
 #include "arm_controller/TaskPositionWaypoint.h"
 
 #include "ptera_msgs/msg/manipulator_state.hpp"
+#include "arm_msgs/msg/hardware_state.hpp"
 
 Manipulator::Manipulator(ConfigManager::Config aConfig)
     : mConfig(aConfig), mWaypointExecutor(std::make_unique<WaypointExecutor>(mConfig)),
       mKinematicsHandler(std::make_shared<KinematicsHandler>()),
-      mEnabled(false), mIsArrived(false)
+      mExecutorReady(false), mEnabled(false), mRunning(true), mIsArrived(false)
 {
     mHardware = std::make_shared<HardwareInterface>();
     mHardware->init();
+
+    if(mConfig.mobileBase)
+    {
+        mBase = std::make_shared<MobileBaseInterface>(*mConfig.mobileBase, mConfig.controlRateHz);
+        mBase->init();
+    }
 
     if(!mKinematicsHandler->init(mConfig))
     {
         throw std::runtime_error("Failed to initialize kinematics");
     }
 
-    int numJoints = mKinematicsHandler->getNrJoints();
-    mWaypointExecutor->init(numJoints, *mKinematicsHandler.get());
+    int numCtrlJoints = getNrCtrlJoints();
+    mWaypointExecutor->init(numCtrlJoints, mConfig.ctrlOffset, *mKinematicsHandler.get());
 
-    KDL::JntArray firstWp(numJoints);
-    KDL::JntArray firstTol(numJoints);
+    KDL::JntArray firstWp(numCtrlJoints);
+    KDL::JntArray firstTol(numCtrlJoints);
 
-    for(int i = 0; i < numJoints; i++)
+    for(int i = 0; i < numCtrlJoints; i++)
     {
-        firstWp(i) = mConfig.initialPositions[i];
+        firstWp(i) = mConfig.ctrlInitialPositions[i];
         firstTol(i) = 0.01;
     }
 
@@ -54,10 +61,18 @@ Manipulator::Manipulator(ConfigManager::Config aConfig)
     }
 
     RosTopicManager::getInstance()->createPublisher<ptera_msgs::msg::ManipulatorState>("arm/state");
+    RosTopicManager::getInstance()->createPublisher<arm_msgs::msg::HardwareState>("arm/hardware/state");
+    mHardwareStateThread = std::thread(&Manipulator::publishHardwareStateLoop, this);
 }
 
 Manipulator::~Manipulator()
 {
+    mRunning = false;
+    if(mHardwareStateThread.joinable())
+    {
+        mHardwareStateThread.join();
+    }
+
     if(mControlThread.joinable())
     {
         mControlThread.join();
@@ -103,57 +118,198 @@ bool Manipulator::isEnabled()
     return mEnabled;
 }
 
-bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp)
+bool Manipulator::setGoalWaypoint(std::shared_ptr<IWaypoint> aWp, bool aResetState)
 {
-    mGoalWaypoint = aWp;
-    auto wpType = aWp->type();
+    std::lock_guard<std::mutex> lock(mGoalMutex);
 
-    // full joint space (including gripper if supported by interface)
-    const KDL::JntArray currentJointPos = mHardware->getJointPositions();
-
-    // get only the arm joints, no gripper
-    int numArmJoints = mKinematicsHandler->getNrJoints();
-    KDL::JntArray q_cur(numArmJoints);
-    KDL::JntArray q_goal(numArmJoints);
-
-    for(int i = 0; i < numArmJoints; i++)
+    if(aResetState)
     {
-        q_cur(i) = currentJointPos(i);
+        mGoalWaypoint = aWp;
+    }
+    else if(aWp != mGoalWaypoint)
+    {
+        // stale refresh — a newer waypoint was set since aWp was read
+        return false;
     }
 
-    if (!mGoalWaypoint->toJointGoal(q_cur, *mKinematicsHandler, q_goal))
+    auto wpType = aWp->type();
+
+    // full kinematic joint space [base..., arm...], no gripper, task
+    // waypoints seed IK with this so the measured base pose is respected
+    const KDL::JntArray q_cur = getFullJointPositions();
+    const KDL::JntArray qdot_cur = getFullJointVelocities();
+
+    if(q_cur.rows() == 0 || qdot_cur.rows() == 0)
+    {
+        // retried every control tick until state arrives — warn once a second
+        static std::chrono::steady_clock::time_point lastWarn;
+        const auto now = std::chrono::steady_clock::now();
+        if(now - lastWarn > std::chrono::seconds(1))
+        {
+            LOGW << "No joint state yet (waiting on arm telemetry"
+                 << (mBase ? " and robot/state" : "") << "); cannot set goal";
+            lastWarn = now;
+        }
+        if(aResetState)
+        {
+            mExecutorReady = false;
+        }
+        return false;
+    }
+
+    // Task position refreshes seed IK from the last solution so the target
+    // only moves with the (measured) uncontrolled base, not with the arm's
+    // tracking error. Controlled joints come from the previous solution.
+    KDL::JntArray q_seed = q_cur;
+    if(!aResetState && wpType == IWaypoint::Type::TaskPosition && mLastTaskSolution.rows() == q_cur.rows())
+    {
+        q_seed = mLastTaskSolution;
+        for(int i = 0; i < mConfig.ctrlOffset; i++)
+        {
+            q_seed(i) = q_cur(i);
+        }
+    }
+
+    // full-size for task waypoints, controlled-size for joint waypoints
+    KDL::JntArray q_goal;
+    if (!mGoalWaypoint->toJointGoal(q_seed, qdot_cur, *mKinematicsHandler, q_goal))
     {
         LOGW << "Could not produce joint-space goal from waypoint";
         return false;
+    }
+
+    if(wpType == IWaypoint::Type::TaskPosition)
+    {
+        mLastTaskSolution = q_goal;
     }
 
     ruckig::ControlInterface controlType = ruckig::ControlInterface::Position;
 
     switch (wpType)
     {
-        case IWaypoint::Type::JointPosition:
         case IWaypoint::Type::TaskPosition:
+            q_goal = toCtrl(q_goal);
+            [[fallthrough]];
+        case IWaypoint::Type::JointPosition:
             controlType = ruckig::ControlInterface::Position;
-            LOGD << "Set ControlInterface to Position";
             break;
 
         case IWaypoint::Type::TaskVelocity:
+            q_goal = toCtrl(q_goal);
+            [[fallthrough]];
         case IWaypoint::Type::JointVelocity:
             controlType = ruckig::ControlInterface::Velocity;
-            LOGD << "Set ControlInterface to Velocity";
-
             break;
         default:
             break;
     }
 
-    for(int i = 0; i < numArmJoints; i++)
+    // Refresh only retargets — Ruckig keeps its own state so the profile
+    // continues rather than restarting from measured state each tick
+    if(!aResetState)
     {
-        LOGD << "Current Joint " << i << ": " << q_cur(i) << ", Goal Joint " << i << ": " << q_goal(i);
+        return mExecutorReady && mWaypointExecutor->setGoalState(q_goal, controlType);
+    }
+
+    LOGD << "Set ControlInterface to "
+         << (controlType == ruckig::ControlInterface::Position ? "Position" : "Velocity");
+
+    const KDL::JntArray q_cur_ctrl = toCtrl(q_cur);
+    for(int i = 0; i < getNrCtrlJoints(); i++)
+    {
+        LOGD << "Current Joint " << i << ": " << q_cur_ctrl(i) << ", Goal Joint " << i << ": " << q_goal(i);
     }
 
     // q_goal is joint pos or joint vel based on waypoint type
-    return mWaypointExecutor->initializeExecutor(q_goal, q_cur, mHardware->getJointVelocities(), controlType);
+    mExecutorReady = mWaypointExecutor->initializeExecutor(q_goal, q_cur_ctrl, toCtrl(qdot_cur), controlType);
+    return mExecutorReady;
+}
+
+KDL::JntArray Manipulator::toCtrl(const KDL::JntArray& aFull) const
+{
+    const int numCtrlJoints = getNrCtrlJoints();
+    KDL::JntArray ctrl(numCtrlJoints);
+
+    for(int i = 0; i < numCtrlJoints; i++)
+    {
+        ctrl(i) = aFull(mConfig.ctrlOffset + i);
+    }
+
+    return ctrl;
+}
+
+KDL::JntArray Manipulator::composeFull(const KDL::JntArray& aBase, const KDL::JntArray& aArm) const
+{
+    const int numBase = mBase ? mBase->getNrJoints() : 0;
+    const int numArm = (int)mConfig.manipulator.jointNames.size();
+
+    if((int)aBase.rows() < numBase || (int)aArm.rows() < numArm)
+    {
+        return KDL::JntArray();
+    }
+
+    KDL::JntArray full(numBase + numArm);
+    for(int i = 0; i < numBase; i++)
+    {
+        full(i) = aBase(i);
+    }
+    for(int i = 0; i < numArm; i++)
+    {
+        full(numBase + i) = aArm(i);
+    }
+
+    return full;
+}
+
+KDL::JntArray Manipulator::getFullJointPositions()
+{
+    if(mBase && !mBase->hasState())
+    {
+        return KDL::JntArray();
+    }
+
+    return composeFull(mBase ? mBase->getJointPositions() : KDL::JntArray(), mHardware->getJointPositions());
+}
+
+KDL::JntArray Manipulator::getFullJointVelocities()
+{
+    if(mBase && !mBase->hasState())
+    {
+        return KDL::JntArray();
+    }
+
+    return composeFull(mBase ? mBase->getJointVelocities() : KDL::JntArray(), mHardware->getJointVelocities());
+}
+
+void Manipulator::sendCommand(const KDL::JntArray& aCtrlCmd)
+{
+    // Controllable base: the controlled joints are [base..., arm...]
+    const int numBaseCmd = (mBase && mConfig.ctrlOffset == 0) ? mBase->getNrJoints() : 0;
+    if(numBaseCmd == 0)
+    {
+        mHardware->sendJointCommand(aCtrlCmd);
+        return;
+    }
+
+    if((int)aCtrlCmd.rows() < numBaseCmd)
+    {
+        LOGW << "Command of size " << aCtrlCmd.rows() << " too small for " << numBaseCmd << " base joints";
+        return;
+    }
+
+    KDL::JntArray baseCmd(numBaseCmd);
+    KDL::JntArray armCmd(aCtrlCmd.rows() - numBaseCmd);
+    for(int i = 0; i < numBaseCmd; i++)
+    {
+        baseCmd(i) = aCtrlCmd(i);
+    }
+    for(unsigned int i = 0; i < armCmd.rows(); i++)
+    {
+        armCmd(i) = aCtrlCmd(numBaseCmd + i);
+    }
+
+    mBase->sendCommand(baseCmd);
+    mHardware->sendJointCommand(armCmd);
 }
 
 void Manipulator::setGripperGoal(const KDL::JntArray& aGripperGoal)
@@ -163,41 +319,40 @@ void Manipulator::setGripperGoal(const KDL::JntArray& aGripperGoal)
 
 std::shared_ptr<IWaypoint> Manipulator::getGoalWaypoint()
 {
+    std::lock_guard<std::mutex> lock(mGoalMutex);
     return mGoalWaypoint;
 }
 
 bool Manipulator::checkArrival()
 {
-    // get only the arm joints, no gripper
-    KDL::JntArray q_cur;
-    int numArmJoints = mKinematicsHandler->getNrJoints();
-    q_cur.resize(numArmJoints);
+    // full kinematic joint space, no gripper
+    const KDL::JntArray currentJointPos = getFullJointPositions();
+    const KDL::JntArray currentJointVel = getFullJointVelocities();
 
-    KDL::JntArray currentJointPos = mHardware->getJointPositions();
-    KDL::JntArray currentJointVel = mHardware->getJointVelocities();
-
-    // current state
-    IWaypoint::ControlInputs s;
-    s.q.resize(numArmJoints);
-    s.qdot.resize(numArmJoints);
-
-    for(int i = 0; i < numArmJoints; i++)
+    if(currentJointPos.rows() == 0 || currentJointVel.rows() == 0)
     {
-        s.q(i) = currentJointPos(i);
-        s.qdot(i) = currentJointVel(i);
+        return false;
     }
 
+    const KDL::JntArray& q_full = currentJointPos;
+
+    // current state — joint waypoints compare against controlled joints only
+    IWaypoint::ControlInputs s;
+    s.q = toCtrl(currentJointPos);
+    s.qdot = toCtrl(currentJointVel);
+
     // Only need to compute FK for task position waypoint
-    if (mGoalWaypoint->type() == IWaypoint::Type::TaskPosition)
+    auto goalWp = getGoalWaypoint();
+    if (goalWp->type() == IWaypoint::Type::TaskPosition)
     {
-        if (!mKinematicsHandler->solveFk(s.q, s.T))
+        if (!mKinematicsHandler->solveFk(q_full, s.T))
         {
             LOGW << "FK failed; not arrived";
             return false;
         }
     }
 
-    return mGoalWaypoint->arrived(s);
+    return goalWp->arrived(s);
 }
 
 bool Manipulator::isArrived()
@@ -214,7 +369,11 @@ void Manipulator::setArrivalState(bool aFlag)
 
 void Manipulator::printArrivedState()
 {
-    KDL::JntArray state = mHardware->getJointPositions();
+    KDL::JntArray state = getFullJointPositions();
+    if(state.rows() == 0)
+    {
+        return;
+    }
 
     switch (mGoalWaypoint->type())
     {
@@ -222,11 +381,12 @@ void Manipulator::printArrivedState()
     {
         std::shared_ptr<JointPositionWaypoint> jointPosWp = std::dynamic_pointer_cast<JointPositionWaypoint>(mGoalWaypoint);
         KDL::JntArray goal = jointPosWp->goal();
+        state = toCtrl(state);
 
         std::stringstream ss;
         ss << std::fixed << std::setprecision(3);
         ss << "Error: " << "\n";
-        for(int i = 0; i < mKinematicsHandler->getNrJoints(); i++)
+        for(int i = 0; i < getNrCtrlJoints(); i++)
         {
             ss << "J" << i << " (deg): " << (180.0/M_PI) * (state(i) - goal(i)) << "\n";
         }
@@ -239,20 +399,9 @@ void Manipulator::printArrivedState()
         std::shared_ptr<TaskPositionWaypoint> taskPosWp = std::dynamic_pointer_cast<TaskPositionWaypoint>(mGoalWaypoint);
         KDL::Frame goal = taskPosWp->goal();
 
-        KDL::Frame state;
-        KDL::JntArray currentJointPos = mHardware->getJointPositions();
-        KDL::JntArray currentJointVel = mHardware->getJointVelocities();
-
-        int numArmJoints = mKinematicsHandler->getNrJoints();
-
         // current state
         IWaypoint::ControlInputs s;
-        s.q.resize(numArmJoints);
-
-        for(int i = 0; i < numArmJoints; i++)
-        {
-            s.q(i) = currentJointPos(i);
-        }
+        s.q = state;
 
         if (!mKinematicsHandler->solveFk(s.q, s.T))
         {
@@ -312,8 +461,37 @@ void Manipulator::controlLoop()
     {
         controlRate.start();
 
-        KDL::JntArray wp = mWaypointExecutor->getNextWaypoint();
-        mHardware->sendJointCommand(wp);
+        auto goalWp = getGoalWaypoint();
+        bool ready;
+        {
+            std::lock_guard<std::mutex> lock(mGoalMutex);
+            ready = mExecutorReady;
+        }
+
+        // The goal couldn't be initialized (e.g. no base/arm state yet) — retry
+        // each tick and hold off commanding until it succeeds
+        if(!ready)
+        {
+            if(!goalWp || !setGoalWaypoint(goalWp))
+            {
+                controlRate.block();
+                continue;
+            }
+        }
+        // Task waypoints are re-solved against the latest measured state so
+        // the goal tracks a moving base. On IK failure the previous target holds.
+        else if(goalWp && (goalWp->type() == IWaypoint::Type::TaskPosition ||
+                           goalWp->type() == IWaypoint::Type::TaskVelocity))
+        {
+            setGoalWaypoint(goalWp, false);
+        }
+
+        KDL::JntArray wp;
+        {
+            std::lock_guard<std::mutex> lock(mGoalMutex);
+            wp = mWaypointExecutor->getNextWaypoint();
+        }
+        sendCommand(wp);
 
         controlRate.block();
     }
@@ -360,6 +538,8 @@ void Manipulator::arrivalLoop()
 
             arrivalTime = std::chrono::time_point<std::chrono::steady_clock>();
         }
+
+        arrivalCheckRate.block();
     }
 }
 
@@ -371,8 +551,14 @@ void Manipulator::publishStateLoop()
     {
         rate.start();
 
-        KDL::JntArray pos = mHardware->getJointPositions();
-        KDL::JntArray vel = mHardware->getJointVelocities();
+        // [base..., arm...] layout
+        KDL::JntArray pos = getFullJointPositions();
+        KDL::JntArray vel = getFullJointVelocities();
+        if(pos.rows() == 0 || vel.rows() == 0)
+        {
+            rate.block();
+            continue;
+        }
 
         ptera_msgs::msg::ManipulatorState state;
         state.state = ptera_msgs::msg::ManipulatorState::MOVING;
@@ -396,6 +582,70 @@ void Manipulator::publishStateLoop()
         state.set__velocity(velocity);
 
         RosTopicManager::getInstance()->publishMessage("arm/state", state);
+        rate.block();
+    }
+}
+
+void Manipulator::publishHardwareStateLoop()
+{
+    RateController rate(mConfig.controlRateHz);
+
+    const int numJoints = mKinematicsHandler->getNrJoints();
+    const std::string rootFrame = mKinematicsHandler->getRootFrame();
+
+    arm_msgs::msg::HardwareState state;
+    state.header.frame_id = rootFrame;
+    state.name = mConfig.manipName;
+
+    while(mRunning)
+    {
+        rate.start();
+
+        // full kinematic joint space [base..., arm...], no gripper
+        const KDL::JntArray pos = getFullJointPositions();
+        const KDL::JntArray vel = getFullJointVelocities();
+
+        // no (or incomplete) telemetry yet
+        if((int)pos.rows() < numJoints || (int)vel.rows() < numJoints)
+        {
+            rate.block();
+            continue;
+        }
+
+        KDL::JntArray q(numJoints);
+        KDL::JntArray qdot(numJoints);
+        for(int i = 0; i < numJoints; i++)
+        {
+            q(i) = pos(i);
+            qdot(i) = vel(i);
+        }
+
+        KDL::Frame T;
+        KDL::Twist twist;
+        if(!mKinematicsHandler->solveFk(q, T) || !mKinematicsHandler->solveTaskVelocity(q, qdot, twist))
+        {
+            rate.block();
+            continue;
+        }
+
+        state.header.stamp = RosTopicManager::getInstance()->now();
+        state.position.assign(q.data.data(), q.data.data() + numJoints);
+        state.velocity.assign(qdot.data.data(), qdot.data.data() + numJoints);
+
+        state.task_pose.position.x = T.p.x();
+        state.task_pose.position.y = T.p.y();
+        state.task_pose.position.z = T.p.z();
+        T.M.GetQuaternion(state.task_pose.orientation.x, state.task_pose.orientation.y,
+                          state.task_pose.orientation.z, state.task_pose.orientation.w);
+
+        state.task_velocity.linear.x  = twist.vel.x();
+        state.task_velocity.linear.y  = twist.vel.y();
+        state.task_velocity.linear.z  = twist.vel.z();
+        state.task_velocity.angular.x = twist.rot.x();
+        state.task_velocity.angular.y = twist.rot.y();
+        state.task_velocity.angular.z = twist.rot.z();
+
+        RosTopicManager::getInstance()->publishMessage("arm/hardware/state", state);
         rate.block();
     }
 }

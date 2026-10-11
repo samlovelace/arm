@@ -5,7 +5,6 @@
 #include <chrono>
 
 #include "std_msgs/msg/float64_multi_array.hpp"
-#include "ptera_msgs/msg/robot_state.hpp"
 #include "arm_hardware/IManipComms.hpp"
 #include "arm_common/ConfigManager.h"
 
@@ -30,12 +29,9 @@ private:
 private:
 
     void armStateCallback(std_msgs::msg::Float64MultiArray::SharedPtr msg);
-    void vehicleStateCallback(ptera_msgs::msg::RobotState::SharedPtr msg);
 
-    // Mobile-base DOF count (0 for a standalone manipulator). Every mobile
-    // base in this repo is modeled as exactly [x_joint, y_joint, yaw_joint],
-    // so /robot/state's position.x/position.y/euler.yaw map onto indices 0-2.
-    int mNumBaseJoints;
+    // Arm only — the mobile base is owned by arm_controller.
+    // State arrays are laid out [arm..., gripper...]
     int mNumArmJoints;
     int mNumGripperJoints;
 
@@ -55,12 +51,6 @@ private:
     // Arm velocity finite-differencing (from UR/joint_positions)
     KDL::JntArray mPrevJointPos;
     std::chrono::time_point<std::chrono::steady_clock> mPrevTime;
-
-    // Vehicle velocity finite-differencing (from /robot/state) — [x, y, yaw]
-    KDL::JntArray mPrevVehiclePos;
-    std::chrono::time_point<std::chrono::steady_clock> mPrevVehicleTime;
-
-    bool mFirstRcvd; // guards the first /robot/state message so it doesn't produce a velocity spike
 
 };
 #endif //ROSMANIPCOMMS_H

@@ -19,7 +19,7 @@ HardwareInterface::~HardwareInterface()
 bool HardwareInterface::init()
 {
     // Create publishers and subscribers to interface with arm_hardware
-    RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareState>("arm/hardware/state",
+    RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareTelemetry>("arm/hardware/telemetry",
                                                                  std::bind(&HardwareInterface::stateCallback,
                                                                            this,
                                                                            std::placeholders::_1));
@@ -28,7 +28,7 @@ bool HardwareInterface::init()
 
     // Parallel gripper channel — unconditionally created; harmless if no
     // gripper is configured (arm_hardware simply never publishes state on it).
-    RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareState>("arm/hardware/gripper_state",
+    RosTopicManager::getInstance()->createSubscriber<arm_msgs::msg::HardwareTelemetry>("arm/hardware/gripper_telemetry",
                                                                  std::bind(&HardwareInterface::gripperStateCallback,
                                                                            this,
                                                                            std::placeholders::_1));
@@ -63,7 +63,7 @@ void HardwareInterface::sendJointCommand(const KDL::JntArray &aCmd)
     RosTopicManager::getInstance()->publishMessage("arm/hardware/goal", goalMsg);
 }
 
-void HardwareInterface::stateCallback(arm_msgs::msg::HardwareState::SharedPtr aState)
+void HardwareInterface::stateCallback(arm_msgs::msg::HardwareTelemetry::SharedPtr aState)
 {
     KDL::JntArray pos(aState->position.size());
     KDL::JntArray vel(aState->velocity.size());
@@ -105,7 +105,7 @@ void HardwareInterface::sendGripperCommand(const KDL::JntArray &aCmd)
     RosTopicManager::getInstance()->publishMessage("arm/hardware/gripper_goal", goalMsg);
 }
 
-void HardwareInterface::gripperStateCallback(arm_msgs::msg::HardwareState::SharedPtr aState)
+void HardwareInterface::gripperStateCallback(arm_msgs::msg::HardwareTelemetry::SharedPtr aState)
 {
     KDL::JntArray pos(aState->position.size());
     KDL::JntArray vel(aState->velocity.size());

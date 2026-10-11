@@ -4,6 +4,7 @@
 #include <iostream>
 #include <set>
 #include <functional>
+#include <limits>
 #include <eigen3/Eigen/Dense>
 
 KinematicsHandler::KinematicsHandler() :
@@ -35,9 +36,27 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
             return false;
         }
 
-        if(!mTree.addTree(manip, aConfig.mobileBase->manipAttachLink))
+        // addTree hangs the children of manip's root onto the hook and drops
+        // the root itself, so first insert the manip base link as a fixed
+        // segment carrying the mount transform, then hang the arm off it
+        const std::string& manipBaseLink = aConfig.manipulator.baseLink;
+        if(manip.getRootSegment()->first != manipBaseLink)
         {
-            LOGE << "Failed to attach manip tree to base at link: " << aConfig.mobileBase->manipAttachLink;
+            LOGE << "Manipulator urdf root link '" << manip.getRootSegment()->first
+                 << "' does not match configured base_link '" << manipBaseLink << "'";
+            return false;
+        }
+
+        const KDL::Segment mount(manipBaseLink, KDL::Joint(manipBaseLink + "_mount_joint", KDL::Joint::Fixed), aConfig.T_V_B);
+        if(!mTree.addSegment(mount, aConfig.mobileBase->manipAttachLink))
+        {
+            LOGE << "Failed to attach manip mount to base at link: " << aConfig.mobileBase->manipAttachLink;
+            return false;
+        }
+
+        if(!mTree.addTree(manip, manipBaseLink))
+        {
+            LOGE << "Failed to attach manip tree at link: " << manipBaseLink;
             return false;
         }
 
@@ -153,8 +172,34 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
     mLimitsMap.insert({"upper",    upper});
     mLimitsMap.insert({"velocity", velocity});
 
+    // A non-controllable base stays in the tree (its measured pose still
+    // places the EE), but is locked out of IK: a 0 joint-space weight keeps
+    // the velocity solver from moving it
+    mLockedJoints.clear();
+    if(aConfig.mobileBase && !aConfig.mobileBase->controllable)
+    {
+        const std::set<std::string> baseJoints(aConfig.mobileBase->jointNames.begin(),
+                                               aConfig.mobileBase->jointNames.end());
+        for(const auto& [segName, elem] : mTree.getSegments())
+        {
+            const KDL::Joint& joint = elem.segment.getJoint();
+            if(joint.getType() != KDL::Joint::Fixed && baseJoints.count(joint.getName()))
+            {
+                mLockedJoints.push_back(elem.q_nr);
+                LOGD << "Locking non-controllable base joint [" << elem.q_nr << "] " << joint.getName() << " in IK";
+            }
+        }
+    }
+
+    // NR_JL clamps every joint to its limits each iteration — unbound the
+    // locked joints so a measured base pose outside its urdf limits survives
     KDL::JntArray q_min = getJointLimits("lower");
     KDL::JntArray q_max = getJointLimits("upper");
+    for(unsigned int idx : mLockedJoints)
+    {
+        q_min(idx) = -std::numeric_limits<double>::max();
+        q_max(idx) =  std::numeric_limits<double>::max();
+    }
 
     mManipEndLink = aConfig.manipulator.endLink; 
     std::vector<std::string> endpoints = {mManipEndLink}; 
@@ -162,12 +207,19 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
     mFkSolver  = std::make_shared<KDL::TreeFkSolverPos_recursive>(mTree);
     mVelSolver = std::make_shared<KDL::TreeIkSolverVel_wdls>(mTree, endpoints);
     mIkSolver  = std::make_shared<KDL::TreeIkSolverPos_NR_JL>(
-        mTree, endpoints, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-1);
+        mTree, endpoints, q_min, q_max, *mFkSolver, *mVelSolver, 200, 1e-3);
     mJacobianSolver = std::make_shared<KDL::TreeJntToJacSolver>(mTree);
 
     Eigen::MatrixXd Wq = Eigen::MatrixXd::Identity(nj, nj);
+    for(unsigned int idx : mLockedJoints)
+    {
+        Wq(idx, idx) = 0.0;
+    }
     mVelSolver->setWeightJS(Wq);
     mVelSolver->setWeightTS(Eigen::MatrixXd::Identity(6 * endpoints.size(), 6 * endpoints.size()));
+    // Default lambda is 0, which yields 0/0 = NaN for zero singular values
+    // (always present when nj > 6, or near singularities)
+    mVelSolver->setLambda(0.01);
 
     LOGD << "KinematicsHandler initialized successfully";
     return true;
@@ -175,14 +227,13 @@ bool KinematicsHandler::init(const ConfigManager::Config& aConfig)
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame& aGoalPose, KDL::JntArray& aResultOut)
 {
-    LOGW << "Tree size: " << mTree.getNrOfJoints() << " anInitPos size: " << anInitPos.rows();
     // TODO: error checking on JntArray sizes
     KDL::Frames goalFrames; 
     goalFrames[mManipEndLink] = aGoalPose; 
 
     if(aResultOut.rows() != anInitPos.rows())
     {
-        LOGW << "Resizing result array from " << aResultOut.rows() << " to " << anInitPos.rows();
+        LOGV << "Resizing result array from " << aResultOut.rows() << " to " << anInitPos.rows();
         aResultOut.resize(anInitPos.rows());
     }
 
@@ -199,15 +250,42 @@ bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Frame
 
 bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut)
 {
-    KDL::Twists goalVels; 
-    goalVels[mManipEndLink] = aGoalVel; 
+    return solveIK(anInitPos, KDL::JntArray(), aGoalVel, aResultOut);
+}
 
-    int result = mVelSolver->CartToJnt(anInitPos, goalVels, aResultOut);
-
-    if(result != 0)
+bool KinematicsHandler::solveIK(const KDL::JntArray& anInitPos, const KDL::JntArray& aMeasuredVel,
+                                const KDL::Twist& aGoalVel, KDL::JntArray& aResultOut)
+{
+    // Locked joints (an uncontrolled base) still move the EE: subtract their
+    // measured contribution J_locked * qdot_locked so the solved joints make
+    // up the difference. Jacobian and twist are both in the root frame with
+    // the ref point at the end link.
+    KDL::Twist goalVel = aGoalVel;
+    if(!mLockedJoints.empty() && aMeasuredVel.rows() == mTree.getNrOfJoints())
     {
-            LOGW << "Failed to solve IK for goal vel. Error code: " << result;
+        KDL::Jacobian jac(mTree.getNrOfJoints());
+        if(mJacobianSolver->JntToJac(anInitPos, jac, mManipEndLink) < 0)
+        {
+            LOGW << "Failed to compute Jacobian for locked joint feedforward";
             return false;
+        }
+
+        for(unsigned int idx : mLockedJoints)
+        {
+            goalVel = goalVel - jac.getColumn(idx) * aMeasuredVel(idx);
+        }
+    }
+
+    KDL::Twists goalVels; 
+    goalVels[mManipEndLink] = goalVel; 
+
+    double result = mVelSolver->CartToJnt(anInitPos, goalVels, aResultOut);
+
+    // Returns the norm of the weighted input twist on success, negative on error
+    if(result < 0)
+    {
+        LOGW << "Failed to solve IK for goal vel. Error code: " << result;
+        return false;
     }
 
     return true;
@@ -325,4 +403,24 @@ double KinematicsHandler::computeManipulability(const KDL::JntArray& aJntCnfg)
         return 0.0;
 
     return std::sqrt(det);
+}
+
+bool KinematicsHandler::solveTaskVelocity(const KDL::JntArray& aJntCfg, const KDL::JntArray& aJntVel, KDL::Twist& aTwistOut)
+{
+    KDL::Jacobian jac(mTree.getNrOfJoints());
+
+    if(mJacobianSolver->JntToJac(aJntCfg, jac, mManipEndLink) < 0)
+    {
+        LOGW << "Failed to compute Jacobian for task velocity";
+        return false;
+    }
+
+    if(aJntVel.rows() != jac.columns())
+    {
+        LOGW << "Failed to compute task velocity: joint velocity size mismatch";
+        return false;
+    }
+
+    KDL::MultiplyJacobian(jac, aJntVel, aTwistOut);
+    return true;
 }

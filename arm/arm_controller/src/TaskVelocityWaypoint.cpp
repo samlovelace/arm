@@ -26,13 +26,15 @@ IWaypoint::Type TaskVelocityWaypoint::type() const noexcept
 }
 
 bool TaskVelocityWaypoint::toJointGoal(const KDL::JntArray& q_seed,
+                                       const KDL::JntArray& qdot_cur,
                                        KinematicsHandler& aKinematicsHandler,
                                        KDL::JntArray& q_goal_out) const
 {
     int numJoints = q_seed.rows();
     KDL::JntArray q_dot_goal(numJoints);
 
-    if(!aKinematicsHandler.solveIK(q_seed, mGoal, q_dot_goal))
+    // qdot_cur lets IK cancel the EE motion induced by the uncontrolled base
+    if(!aKinematicsHandler.solveIK(q_seed, qdot_cur, mGoal, q_dot_goal))
     {
         LOGW << "Failed to generate joint vel goal from task vel";
         return false;

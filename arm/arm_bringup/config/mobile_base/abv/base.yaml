@@ -4,6 +4,10 @@ joint_names:
   - x_joint
   - y_joint
   - yaw_joint
+# Rigid-body DOF each joint above represents (x, y, z, roll, pitch, yaw).
+# Virtual joints must chain translations first, then yaw -> pitch -> roll
+# (any subset), so rotational joint angles/rates equal ZYX Euler angles/rates.
+joint_axes: [x, y, yaw]
 initial_positions: [0, 0, 0]
 accel_limits: [0.5, 0.5, 0.5]
 jerk_limits: [5, 5, 5]

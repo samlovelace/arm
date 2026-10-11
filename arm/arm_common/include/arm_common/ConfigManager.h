@@ -36,6 +36,15 @@ public:
         std::vector<double>      initialPositions;
         std::vector<double>      accelLimits;
         std::vector<double>      jerkLimits;
+
+        // Parallel to jointNames: which rigid-body DOF of the base pose each
+        // virtual joint represents — one of x, y, z, roll, pitch, yaw
+        std::vector<std::string> jointAxes;
+
+        // false: base joints stay in the kinematics (measured, held fixed by
+        // IK) but are excluded from trajectory generation and commands
+        bool        controllable = false;
+        std::string commandTopic;    // VehicleWaypoint topic when controllable
     };
 
     struct ManipulatorConfig
@@ -69,6 +78,7 @@ public:
     struct Config
     {
         // Top-level
+        std::string manipName;      // config.yaml Manipulator.name, e.g. "abv_rebot"
         std::string manipType;      // e.g. "dynamixel"
         std::string commsMode;      // "simulated" | "hardware"
         int         controlRateHz = 10;
@@ -88,6 +98,16 @@ public:
         std::vector<double>      initialPositions;
         std::vector<double>      accelLimits;
         std::vector<double>      jerkLimits;
+
+        // Controlled subset of the combined vectors — the combined vectors
+        // from ctrlOffset onward. ctrlOffset is the mobile base joint count
+        // when the base isn't controllable, else 0. Use for trajectory
+        // generation, joint-space waypoints and hardware commands.
+        int                      ctrlOffset = 0;
+        std::vector<std::string> ctrlJointNames;
+        std::vector<double>      ctrlInitialPositions;
+        std::vector<double>      ctrlAccelLimits;
+        std::vector<double>      ctrlJerkLimits;
 
         // Transform: attach point (mobile base's attach link, or world if
         // standalone) -> manipulator base frame
@@ -232,7 +252,7 @@ private:
     // -----------------------------------------------------------------------
     // Section loaders
     // -----------------------------------------------------------------------
-    void loadMobileBaseSection (const std::filesystem::path& baseDir);
+    void loadMobileBaseSection (const std::filesystem::path& baseDir, const YAML::Node& aBaseSelectNode);
     void loadManipulatorSection(const std::filesystem::path& manipDir);
     void loadGripperSection    ();
     void loadMountSection      ();

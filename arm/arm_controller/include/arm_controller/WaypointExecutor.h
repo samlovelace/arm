@@ -17,9 +17,13 @@ public:
     WaypointExecutor(ConfigManager::Config& aConfig);
     ~WaypointExecutor();
 
-    void init(int aNumDof, KinematicsHandler& aKinematicsHandler);
+    // aNumDof controlled joints, starting at aOffset in the kinematics' joint indexing
+    void init(int aNumDof, int aOffset, KinematicsHandler& aKinematicsHandler);
     bool initializeExecutor(KDL::JntArray aGoalJointPos, KDL::JntArray aCurrentJointPos, KDL::JntArray aCurrentJointVel, ruckig::ControlInterface aControlType);
     KDL::JntArray getNextWaypoint();
+
+    // Retarget without touching current state (Ruckig carries it via pass_to_input)
+    bool setGoalState(KDL::JntArray aGoalJointPos, ruckig::ControlInterface aControlType);
 
 private:
     std::unique_ptr<ruckig::Ruckig<0>> mExecutor; // 0 indicates dynamic
@@ -36,7 +40,6 @@ private:
     int mNumDof;
 
     void setInitialState(const KDL::JntArray& aPos, const KDL::JntArray& aVel);
-    bool setGoalState(KDL::JntArray aGoalJointPos, ruckig::ControlInterface aControlType);
 
 };
 #endif //WAYPOINTEXECUTOR_H

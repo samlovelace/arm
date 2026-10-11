@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(arm_common REQUIRED)
 find_package(arm_msgs REQUIRED)
 find_package(ptera_msgs REQUIRED)
@@ -49,6 +50,21 @@ ament_target_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} ${DYNAMIXEL_LIB} plog::plog)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+# Standalone 6-DOF mobile base simulator (publishes robot/state)
+add_executable(base_sim src/BaseSimNode.cpp)
+
+target_include_directories(base_sim PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/include
+)
+
+ament_target_dependencies(base_sim
+    rclcpp
+    sensor_msgs
+    geometry_msgs
+    arm_common
+    ptera_msgs
+)
+
+install(TARGETS ${PROJECT_NAME} base_sim DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

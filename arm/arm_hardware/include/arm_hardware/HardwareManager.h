@@ -26,5 +26,6 @@ private:
     std::shared_ptr<IManipComms> mComms;
     std::atomic_bool mRunning;
     bool mHasGripper;
+    int mNumArmJoints;
 };
 #endif

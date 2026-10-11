@@ -23,6 +23,7 @@ IWaypoint::Type TaskPositionWaypoint::type() const noexcept
 }
 
 bool TaskPositionWaypoint::toJointGoal(const KDL::JntArray& q_seed,
+                                  const KDL::JntArray& /*qdot_cur*/,
                                   KinematicsHandler& kin,
                                   KDL::JntArray& q_goal_out) const
 {

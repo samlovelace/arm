@@ -4,7 +4,7 @@
 #include <mutex>
 #include <kdl/jntarray.hpp>
 
-#include "arm_msgs/msg/hardware_state.hpp"
+#include "arm_msgs/msg/hardware_telemetry.hpp"
 
 class HardwareInterface
 {
@@ -22,8 +22,8 @@ public:
     void sendGripperCommand(const KDL::JntArray &aCmd);
 
 private:
-    void stateCallback(arm_msgs::msg::HardwareState::SharedPtr aState);
-    void gripperStateCallback(arm_msgs::msg::HardwareState::SharedPtr aState);
+    void stateCallback(arm_msgs::msg::HardwareTelemetry::SharedPtr aState);
+    void gripperStateCallback(arm_msgs::msg::HardwareTelemetry::SharedPtr aState);
 
     std::mutex mStateMutex;
     KDL::JntArray mLatestPosition;

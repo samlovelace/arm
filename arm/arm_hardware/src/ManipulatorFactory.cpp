@@ -25,7 +25,7 @@ std::shared_ptr<IManipComms> ManipulatorFactory::create()
     else if("simulated" == config.commsMode)
     {
         // any manip type can use this comms type
-        return std::make_shared<SimManipComms>(config.jointNames,
+        return std::make_shared<SimManipComms>(config.manipulator.jointNames,
                                                  config.gripper ? config.gripper->jointNames : std::vector<std::string>{});
     }
     else

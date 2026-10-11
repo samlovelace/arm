@@ -91,7 +91,7 @@ void CommandHandler::enableCallback(const ptera_msgs::msg::Enable::SharedPtr anE
 
 void CommandHandler::jointPosWaypointCallback(const ptera_msgs::msg::JointPositionWaypoint::SharedPtr aMsg)
 {
-    int numJoints = mManip->getKinematicsHandler()->getNrJoints();
+    int numJoints = mManip->getNrCtrlJoints();
     int goalSize = aMsg->positions.size();
 
     handleWaypoint<ptera_msgs::msg::JointPositionWaypoint,
@@ -128,7 +128,7 @@ void CommandHandler::gripperPosWaypointCallback(const ptera_msgs::msg::JointPosi
 
 void CommandHandler::jointVelWaypointCallback(const ptera_msgs::msg::JointVelocityWaypoint::SharedPtr aMsg)
 {
-    int numJoints = mManip->getKinematicsHandler()->getNrJoints();
+    int numJoints = mManip->getNrCtrlJoints();
     int goalSize = aMsg->velocities.size();
 
     handleWaypoint<ptera_msgs::msg::JointVelocityWaypoint, JointVelocityWaypoint>(aMsg, goalSize, numJoints,

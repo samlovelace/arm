@@ -56,6 +56,7 @@ public:
     KDL::JntArray getJointPositions() override { return mPositions; }
     KDL::JntArray getJointVelocities() override { return mVelocities; }
 
+    // Arm joints only — the mobile base is owned by arm_controller
     void sendJointCommand(const KDL::JntArray &aCmd) override
     {
         if (aCmd.rows() != mGoal.rows())
@@ -68,8 +69,8 @@ public:
         LOGV << "Received joint command: ";
         for(int i = 0; i < aCmd.rows(); i++)        {
             LOGV << "aCmd(" << i << "): " << aCmd(i);
+            mGoal(i) = aCmd(i);
         }
-        mGoal = aCmd;
     }
 
     KDL::JntArray getGripperPositions() override { return mGripperPositions; }
